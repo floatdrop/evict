@@ -445,7 +445,7 @@ func (s *Slab[K, V]) retire(idx uint32) {
 	// than it has patience for, because readers had them pinned, the slab
 	// waits for some more to come in before it looks again.
 	if s.waiting > s.patience && s.waiting >= s.retryAt {
-		s.reclaim(false)
+		s.reclaim(forRoom)
 	}
 }
 
@@ -476,7 +476,7 @@ func (s *Slab[K, V]) Overdue() bool { return s.overdue.Load() }
 
 // Reclaim releases the keys and the values of the entries that have left and
 // that no reader is looking at. It is for writers.
-func (s *Slab[K, V]) Reclaim() { s.reclaim(true) }
+func (s *Slab[K, V]) Reclaim() { s.reclaim(forSure) }
 
 // Released does what Reclaim does and reports whether the slab has let go of
 // every entry that had left it by the time of mark, which is what
@@ -484,7 +484,7 @@ func (s *Slab[K, V]) Reclaim() { s.reclaim(true) }
 // on to what was removed is not acceptable: calling it until it says so waits
 // for the readers that are in the way.
 func (s *Slab[K, V]) Released(mark uint64) bool {
-	s.reclaim(true)
+	s.reclaim(forSure)
 	return s.limbo == 0 || s.Links[s.limbo].left() > mark
 }
 
@@ -509,12 +509,22 @@ func (s *Slab[K, V]) alloc() uint32 {
 		// entries, so some are waiting. If readers have every one of those
 		// pinned, enough of them are held up to use up the spare nodes,
 		// and the slab has to let them get on.
-		if !s.reclaim(true) {
+		if !s.reclaim(forOne) {
 			s.waits++
 			runtime.Gosched()
 		}
 	}
 }
+
+// What a slab reclaims its waiting nodes for.
+const (
+	// forRoom: more nodes are waiting than the slab has patience for.
+	forRoom = iota
+	// forOne: a node is needed and none is free.
+	forOne
+	// forSure: whatever no reader is looking at right now has to go.
+	forSure
+)
 
 // reclaim releases the key and the value of the waiting nodes that no reader
 // is looking at and makes those nodes available again. It reports whether
@@ -523,19 +533,17 @@ func (s *Slab[K, V]) alloc() uint32 {
 // Finding out what the readers are looking at means going through all of
 // their slots, which takes the longer the more CPUs there are. But what one
 // slab has found out holds for all the slabs that share the slots, for the
-// nodes that had left by then. So unless it is told to look for itself, a
-// slab first makes do with the latest look that another one has taken.
-func (s *Slab[K, V]) reclaim(look bool) bool {
+// nodes that had left by then. So unless it is to be sure, a slab first makes
+// do with the latest look that another one has taken, and looks for itself
+// only if that did not get it what it came for: a node, if it needs one, and
+// in any case no more nodes waiting than it has patience for.
+func (s *Slab[K, V]) reclaim(what int) bool {
 	if s.limbo == 0 {
 		return false
 	}
 
-	released := false
-	if !look {
-		released = s.borrow()
-		look = s.waiting > s.patience
-	}
-	if look {
+	released := what != forSure && s.borrow()
+	if what == forSure || what == forOne && !released || s.waiting > s.patience {
 		released = s.look() || released
 	}
 
