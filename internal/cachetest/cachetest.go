@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"sync"
 	"testing"
+	"time"
 	"weak"
 
 	"github.com/floatdrop/evict"
@@ -25,6 +26,42 @@ type Factory[K comparable, V any] func(capacity, shards int) evict.Cache[K, V]
 // Blob is a value that is large enough for the garbage collector to keep
 // track of it on its own, which the tests for letting go of values rely on.
 type Blob [32]byte
+
+// Alive returns how many of the blobs are still alive after the garbage
+// collector has had its chance, and gives the collector more chances while
+// there are more than limit of them.
+//
+// What a cache holds on to stays alive however often the collector runs, so a
+// cache that fails to let go is found out all the same. But the collector is
+// not exact about stacks: of a goroutine that it stops in the middle of
+// something, it searches the topmost frame for anything that looks like a
+// pointer, and that may be what an earlier use of the memory has left behind.
+// A blob that is alive for that reason is gone a few collections later, when
+// the goroutine has moved on. The tests of this module have come across it on
+// a 32-bit platform, where everything that a function is handed goes through
+// the stack.
+func Alive(refs []weak.Pointer[Blob], limit int) int {
+	alive := 0
+	for try := range 20 {
+		if try > 0 {
+			time.Sleep(time.Millisecond)
+		}
+		// The first collection finds the blobs unreachable; it takes
+		// another one to be sure that the weak pointers know.
+		runtime.GC()
+		runtime.GC()
+		alive = 0
+		for _, ref := range refs {
+			if ref.Value() != nil {
+				alive++
+			}
+		}
+		if alive <= limit {
+			break
+		}
+	}
+	return alive
+}
 
 // Factories make the caches that the suite needs.
 type Factories struct {
@@ -650,20 +687,6 @@ func testKeyIdentity(t *testing.T, newCache Factory[float64, int]) {
 func letsGo[K comparable, V any](t *testing.T, newCache Factory[K, V], ghosts float64, entry func(i int) (K, V, *Blob)) {
 	t.Helper()
 
-	alive := func(refs []weak.Pointer[Blob]) int {
-		// The first collection finds the blobs unreachable; it takes
-		// another one to be sure that the weak pointers know.
-		runtime.GC()
-		runtime.GC()
-		n := 0
-		for _, ref := range refs {
-			if ref.Value() != nil {
-				n++
-			}
-		}
-		return n
-	}
-
 	for _, tt := range []struct{ capacity, shards int }{{1, 1}, {64, 1}, {1000, 4}, {4096, 0}} {
 		c := newCache(tt.capacity, tt.shards)
 		// A cache may be slow to let go of what it has dropped, but only
@@ -682,7 +705,7 @@ func letsGo[K comparable, V any](t *testing.T, newCache Factory[K, V], ghosts fl
 				c.Delete(key)
 			}
 		}
-		if got, limit := alive(refs), c.Len()+slack; got > limit {
+		if got, limit := Alive(refs, c.Len()+slack), c.Len()+slack; got > limit {
 			t.Errorf("capacity %d, %d shards: %d blobs are alive with %d entries in the cache, want at most %d",
 				tt.capacity, tt.shards, got, c.Len(), limit)
 		}
@@ -698,7 +721,7 @@ func letsGo[K comparable, V any](t *testing.T, newCache Factory[K, V], ghosts fl
 			c.Delete(key)
 		}
 		clear(keys)
-		if got := alive(refs); c.Len() != 0 || got > slack {
+		if got := Alive(refs, slack); c.Len() != 0 || got > slack {
 			t.Errorf("capacity %d, %d shards: %d blobs are alive and Len() = %d after every entry was deleted, want at most %d and 0",
 				tt.capacity, tt.shards, got, c.Len(), slack)
 		}
@@ -709,7 +732,7 @@ func letsGo[K comparable, V any](t *testing.T, newCache Factory[K, V], ghosts fl
 			c.Set(key, value)
 		}
 		c.Clear()
-		if got := alive(refs); got != 0 {
+		if got := Alive(refs, 0); got != 0 {
 			t.Errorf("capacity %d, %d shards: %d blobs are alive after Clear", tt.capacity, tt.shards, got)
 		}
 
