@@ -35,6 +35,7 @@ fuzz: ## Fuzz every target for FUZZTIME (default 30s) each.
 	$(GO) test -run='^$$' -fuzz=FuzzAgainstModel -fuzztime=$(FUZZTIME) ./twoq
 	$(GO) test -run='^$$' -fuzz=FuzzAgainstModel -fuzztime=$(FUZZTIME) ./sieve
 	$(GO) test -run='^$$' -fuzz=FuzzAgainstModel -fuzztime=$(FUZZTIME) ./s3fifo
+	$(GO) test -run='^$$' -fuzz=FuzzAgainstModel -fuzztime=$(FUZZTIME) ./tinylfu
 	cd bench && $(GO) test -run='^$$' -fuzz=FuzzRead -fuzztime=$(FUZZTIME) ./trace
 
 .PHONY: bench
