@@ -75,8 +75,10 @@ The four packages have the same methods, which are also the interface
 | `Clear()` | Removes every entry. |
 | `All()` | Iterates over the entries. |
 
-`New` takes options. All four packages have `WithShards`; `twoq` also has `WithRecentRatio`
-and `WithGhostRatio` for the sizes of its queues.
+`New` takes options. All four packages have `WithShards`. `twoq` has `WithRecentRatio` and
+`WithGhostRatio` for the sizes of its queues, and `s3fifo` has `WithSmallRatio`,
+`WithGhostRatio`, `WithPromotionReads` and `WithGhostReturns` for tuning it to a workload
+that is known; see [what that is worth](bench/results/tuning.md).
 
 ## Choosing a policy
 

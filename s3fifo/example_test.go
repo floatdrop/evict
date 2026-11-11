@@ -48,3 +48,26 @@ func ExampleCache_Set() {
 	// replaced a=first
 	// evicted a=second
 }
+
+// A larger small queue gives a new entry longer to be asked for again.
+func ExampleWithSmallRatio() {
+	for _, ratio := range []float64{0.1, 0.5} {
+		cache := s3fifo.New[int, string](10, s3fifo.WithShards(1), s3fifo.WithSmallRatio(ratio))
+		for key := 1; key <= 10; key++ {
+			cache.Set(key, "")
+		}
+
+		cache.Set(100, "new")
+		// Three more entries arrive before anyone asks for it again.
+		for key := 11; key <= 13; key++ {
+			cache.Set(key, "")
+		}
+
+		_, ok := cache.Get(100)
+		fmt.Printf("with %2.0f%% for the small queue it is still there: %t\n", 100*ratio, ok)
+	}
+
+	// Output:
+	// with 10% for the small queue it is still there: false
+	// with 50% for the small queue it is still there: true
+}

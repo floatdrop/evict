@@ -25,6 +25,10 @@ type Set struct {
 	mask  uint32
 
 	count int
+
+	// asked says, for every place in ring, how often the hash there has
+	// been asked for with Recall. It is nil in a set that does not count.
+	asked []uint8
 }
 
 // present is the bit that every hash in the ring has set.
@@ -52,6 +56,14 @@ func (s *Set) Init(capacity int) {
 	s.index = make([]uint32, size)
 	s.mask = uint32(size - 1)
 	s.next, s.count = 0, 0
+	s.asked = nil
+}
+
+// InitCounting is Init for a set that keeps count of how often each hash is
+// asked for with [Set.Recall], at the price of a byte for each.
+func (s *Set) InitCounting(capacity int) {
+	s.Init(capacity)
+	s.asked = make([]uint8, capacity)
 }
 
 // Len returns the number of hashes in the set.
@@ -82,6 +94,9 @@ func (s *Set) Add(hash uint64) {
 	}
 
 	s.ring[s.next] = hash
+	if s.asked != nil {
+		s.asked[s.next] = 0
+	}
 	i := uint32(hash) & s.mask
 	for s.index[i] != 0 {
 		i = (i + 1) & s.mask
@@ -108,7 +123,30 @@ func (s *Set) Remove(hash uint64) bool {
 	return true
 }
 
-// Reset empties the set.
+// Recall is Remove for a caller who wants to be asked more than once: it takes
+// a hash out of the set and reports that it did only when the hash has been
+// asked for the given number of times, this one included. Until then the hash
+// stays where it is, and is forgotten when its turn comes like any other. A
+// set that does not count, or a number below two, makes Recall the same as
+// Remove.
+func (s *Set) Recall(hash uint64, times int) bool {
+	slot, ok := s.find(hash | present)
+	if !ok {
+		return false
+	}
+	place := s.index[slot] - 1
+	if int(place) < len(s.asked) && int(s.asked[place])+1 < times {
+		s.asked[place]++
+		return false
+	}
+	s.ring[place] = 0
+	s.unindex(slot)
+	s.count--
+	return true
+}
+
+// Reset empties the set. The counts of a set that counts need no clearing: a
+// hash that is added starts with a count of its own.
 func (s *Set) Reset() {
 	clear(s.ring)
 	clear(s.index)

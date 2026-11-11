@@ -2,6 +2,7 @@ package s3fifo
 
 import (
 	"hash/maphash"
+	"math"
 	"math/rand/v2"
 	"runtime"
 	"testing"
@@ -95,6 +96,96 @@ func TestQueueSizes(t *testing.T) {
 	for i := range c.shards {
 		if s := &c.shards[i]; s.capacity != 125 || s.mainCap != 113 {
 			t.Errorf("shard %d holds %d entries, %d of them in the main queue; want 125 and 113", i, s.capacity, s.mainCap)
+		}
+	}
+}
+
+// TestShare checks the arithmetic of the ratios: a share is rounded down, and
+// the defaults come out as the tenth and the nine tenths that they stand for,
+// whatever the capacity.
+func TestShare(t *testing.T) {
+	t.Parallel()
+
+	for capacity := range 1 << 21 {
+		if small, ghosts := share(0.1, capacity), share(0.9, capacity); small != capacity/10 || ghosts != capacity*9/10 {
+			t.Fatalf("capacity %d: a share of 0.1 is %d and one of 0.9 is %d, want %d and %d",
+				capacity, small, ghosts, capacity/10, capacity*9/10)
+		}
+	}
+	for _, tt := range []struct {
+		ratio float64
+		n     int
+		want  int
+	}{
+		{0, 99, 0},
+		{1, 12345, 12345},
+		{0.5, 7, 3},
+		{0.3, 1000, 300},
+		{6, 100, 600},
+		{2.85, 500, 1425},
+		// In binary, 0.57 times 100 is a hair less than 57, and 0.7 times 10
+		// a hair less than 7.
+		{0.57, 100, 57},
+		{0.7, 10, 7},
+		{0.29, 100, 29},
+		{0.999, 1000, 999},
+		{0.9999, 1000, 999},
+		{1.0 / 3, 3, 1},
+		{2.0 / 3, 3, 2},
+	} {
+		if got := share(tt.ratio, tt.n); got != tt.want {
+			t.Errorf("share(%v, %d) = %d, want %d", tt.ratio, tt.n, got, tt.want)
+		}
+	}
+}
+
+// TestOptions checks what the options that tune a cache make of its shards,
+// and that they keep to their ranges.
+func TestOptions(t *testing.T) {
+	t.Parallel()
+
+	nan := math.NaN()
+	for _, tt := range []struct {
+		name             string
+		options          []Option
+		mainCap, ghosts  int
+		promote, returns int
+	}{
+		{"defaults", nil, 90, 90, 2, 1},
+		{"small queue", []Option{WithSmallRatio(0.3)}, 70, 90, 2, 1},
+		{"no small queue", []Option{WithSmallRatio(0)}, 100, 90, 2, 1},
+		{"nothing but a small queue", []Option{WithSmallRatio(1)}, 0, 90, 2, 1},
+		{"small queue below the range", []Option{WithSmallRatio(-0.5)}, 100, 90, 2, 1},
+		{"small queue above the range", []Option{WithSmallRatio(1.5)}, 0, 90, 2, 1},
+		{"small queue that is not a number", []Option{WithSmallRatio(nan)}, 100, 90, 2, 1},
+		{"ghosts", []Option{WithGhostRatio(3)}, 90, 300, 2, 1},
+		{"no ghosts", []Option{WithGhostRatio(0)}, 90, 0, 2, 1},
+		{"ghosts below the range", []Option{WithGhostRatio(-1)}, 90, 0, 2, 1},
+		{"ghosts above the range", []Option{WithGhostRatio(100)}, 90, 800, 2, 1},
+		{"ghosts that are not a number", []Option{WithGhostRatio(nan)}, 90, 0, 2, 1},
+		{"promotion", []Option{WithPromotionReads(1)}, 90, 90, 1, 1},
+		{"promotion below the range", []Option{WithPromotionReads(-3)}, 90, 90, 1, 1},
+		{"promotion above the range", []Option{WithPromotionReads(9)}, 90, 90, 3, 1},
+		{"returns", []Option{WithGhostReturns(2)}, 90, 90, 2, 2},
+		{"returns below the range", []Option{WithGhostReturns(0)}, 90, 90, 2, 1},
+		{"returns above the range", []Option{WithGhostReturns(1000)}, 90, 90, 2, 255},
+		{"the last one counts", []Option{WithSmallRatio(0.5), WithGhostRatio(2), WithSmallRatio(0.2)}, 80, 200, 2, 1},
+		{"all of them", []Option{WithSmallRatio(0.5), WithGhostRatio(6), WithPromotionReads(3), WithGhostReturns(2)}, 50, 600, 3, 2},
+	} {
+		c := New[int, int](100, append(tt.options, WithShards(1))...)
+		s := &c.shards[0]
+		if s.mainCap != tt.mainCap || s.ghosts.Cap() != tt.ghosts || int(s.promote) != tt.promote || s.returns != tt.returns {
+			t.Errorf("%s: the main queue has room for %d, there are %d ghosts, promotion takes %d reads and a ghost %d returns; want %d, %d, %d and %d",
+				tt.name, s.mainCap, s.ghosts.Cap(), s.promote, s.returns, tt.mainCap, tt.ghosts, tt.promote, tt.returns)
+		}
+	}
+
+	// The shares are those of each shard.
+	c := New[int, int](1000, WithShards(8), WithSmallRatio(0.2), WithGhostRatio(2))
+	for i := range c.shards {
+		if s := &c.shards[i]; s.capacity != 125 || s.mainCap != 100 || s.ghosts.Cap() != 250 {
+			t.Errorf("shard %d holds %d entries, %d of them in the main queue, and %d ghosts; want 125, 100 and 250",
+				i, s.capacity, s.mainCap, s.ghosts.Cap())
 		}
 	}
 }

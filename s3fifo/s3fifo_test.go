@@ -302,19 +302,195 @@ func TestMainQueue(t *testing.T) {
 	expect(in{"u", "v"}, in{"s"})
 }
 
+// TestTuning follows single entries through caches that are not as the paper
+// has them, one option at a time.
+func TestTuning(t *testing.T) {
+	t.Parallel()
+
+	type in = []int
+	// full returns a cache of ten entries with the given options that holds
+	// the keys from 1 to 10, and a function that checks its queues.
+	full := func(t *testing.T, options ...s3fifo.Option) (c *s3fifo.Cache[int, string], expect func(inMain, inSmall []int)) {
+		t.Helper()
+		c = s3fifo.New[int, string](10, append(options, s3fifo.WithShards(1))...)
+		for key := 1; key <= 10; key++ {
+			c.Set(key, "")
+		}
+		return c, func(inMain, inSmall []int) {
+			t.Helper()
+			if gotMain, gotSmall := c.Queues(); !slices.Equal(gotMain, inMain) || !slices.Equal(gotSmall, inSmall) {
+				t.Fatalf("the main queue holds %v and the small queue %v, want %v and %v", gotMain, gotSmall, inMain, inSmall)
+			}
+		}
+	}
+	evicts := func(t *testing.T, c *s3fifo.Cache[int, string], key, want int) {
+		t.Helper()
+		if k, _, displaced := c.Set(key, ""); !displaced || k != want {
+			t.Fatalf("Set(%d) evicted %d, %t, want %d", key, k, displaced, want)
+		}
+	}
+
+	t.Run("small queue", func(t *testing.T) {
+		t.Parallel()
+
+		// Half of the room: the small queue takes five entries while the
+		// cache fills up, and a new entry outlasts four more arrivals.
+		c, expect := full(t, s3fifo.WithSmallRatio(0.5))
+		expect(in{10, 9, 8, 7, 6}, in{5, 4, 3, 2, 1})
+		for key := 11; key <= 14; key++ {
+			evicts(t, c, key, key-10)
+		}
+		expect(in{10, 9, 8, 7, 6}, in{14, 13, 12, 11, 5})
+
+		// No room at all: once the cache is full, a new entry is the next
+		// one to go, unless it is read twice before that.
+		c, expect = full(t, s3fifo.WithSmallRatio(0))
+		expect(in{10, 9, 8, 7, 6, 5, 4, 3, 2, 1}, nil)
+		evicts(t, c, 11, 1)
+		expect(in{10, 9, 8, 7, 6, 5, 4, 3, 2}, in{11})
+		evicts(t, c, 12, 11)
+		c.Get(12)
+		c.Get(12)
+		evicts(t, c, 13, 2)
+		expect(in{12, 10, 9, 8, 7, 6, 5, 4, 3}, in{13})
+	})
+
+	t.Run("promotion", func(t *testing.T) {
+		t.Parallel()
+
+		// One read is enough to move up.
+		c, expect := full(t, s3fifo.WithPromotionReads(1))
+		c.Get(1)
+		evicts(t, c, 11, 2)
+		expect(in{1, 10, 9, 8, 7, 6, 5, 4, 3}, in{11})
+
+		// Three reads it takes, and two are not enough.
+		c, expect = full(t, s3fifo.WithPromotionReads(3))
+		c.Get(1)
+		c.Get(1)
+		evicts(t, c, 11, 1)
+		c.Get(11)
+		c.Get(11)
+		c.Get(11)
+		evicts(t, c, 12, 2)
+		expect(in{11, 10, 9, 8, 7, 6, 5, 4, 3}, in{12})
+	})
+
+	t.Run("ghosts", func(t *testing.T) {
+		t.Parallel()
+
+		// With none, a key that comes back is as new as any other.
+		c, expect := full(t, s3fifo.WithGhostRatio(0))
+		evicts(t, c, 11, 1)
+		evicts(t, c, 1, 11)
+		expect(in{10, 9, 8, 7, 6, 5, 4, 3, 2}, in{1})
+
+		// With three times as many as entries, a key is remembered through
+		// twenty-nine others that were evicted after it, and not through
+		// thirty.
+		for _, others := range []int{29, 30} {
+			c, expect = full(t, s3fifo.WithGhostRatio(3))
+			evicts(t, c, 11, 1)
+			for key := 12; key < 12+others; key++ {
+				evicts(t, c, key, key-1)
+			}
+			last := 11 + others
+			evicts(t, c, 1, last)
+			if others == 29 {
+				expect(in{1, 10, 9, 8, 7, 6, 5, 4, 3, 2}, nil)
+			} else {
+				expect(in{10, 9, 8, 7, 6, 5, 4, 3, 2}, in{1})
+			}
+		}
+	})
+
+	t.Run("returns", func(t *testing.T) {
+		t.Parallel()
+
+		// The first time a key comes back it goes through the small queue
+		// again, and the second time it goes to the main queue.
+		c, expect := full(t, s3fifo.WithGhostReturns(2))
+		evicts(t, c, 11, 1)
+		evicts(t, c, 1, 11)
+		expect(in{10, 9, 8, 7, 6, 5, 4, 3, 2}, in{1})
+		evicts(t, c, 12, 1)
+		evicts(t, c, 1, 12)
+		expect(in{1, 10, 9, 8, 7, 6, 5, 4, 3, 2}, nil)
+
+		// The ghost keeps its place in line the while. There is room for
+		// nine ghosts, so it is forgotten when nine more keys have become
+		// one since it first did, not since it last came back.
+		for _, last := range []int{19, 20} {
+			c, expect = full(t, s3fifo.WithGhostReturns(2))
+			evicts(t, c, 11, 1) // 1 is a ghost.
+			evicts(t, c, 12, 11)
+			evicts(t, c, 13, 12)
+			evicts(t, c, 1, 13) // It comes back for the first time,
+			evicts(t, c, 14, 1) // and leaves again.
+			for key := 15; key <= last; key++ {
+				evicts(t, c, key, key-1)
+			}
+			// The ghosts that have come after it are 11, 12, 13 and those
+			// from 14 on: eight of them if 19 was the last key to be set,
+			// and nine if 20 was.
+			evicts(t, c, 1, last)
+			if last == 19 {
+				expect(in{1, 10, 9, 8, 7, 6, 5, 4, 3, 2}, nil)
+			} else {
+				expect(in{10, 9, 8, 7, 6, 5, 4, 3, 2}, in{1})
+			}
+		}
+	})
+}
+
+// TestTunedNoAllocs is not parallel: counting allocations needs the process
+// to itself.
+func TestTunedNoAllocs(t *testing.T) {
+	c := s3fifo.New[int, int](256,
+		s3fifo.WithSmallRatio(0.3), s3fifo.WithGhostRatio(3), s3fifo.WithPromotionReads(1), s3fifo.WithGhostReturns(2))
+	allocs := testing.AllocsPerRun(1, func() {
+		for i := range 20_000 {
+			key := i * 7 % 1000
+			if _, ok := c.Get(key); !ok {
+				c.Set(key, i)
+			}
+			if i%50 == 0 {
+				c.Delete(key)
+			}
+		}
+		c.Clear()
+	})
+	if allocs != 0 {
+		t.Errorf("%v allocations, want 0", allocs)
+	}
+}
+
 // model is S3-FIFO at its simplest: a slice for each queue, with the newest
 // entry first, and the keys of the ghosts in the order they became one.
 type model struct {
 	capacity, mainCap, ghostCap int
+	// promote is the number of reads that take an entry from the small
+	// queue to the main one, and returns the number of times that a ghost
+	// has to come back to go there at once.
+	promote, returns int
 	// evicted says that the cache has been full since it was made or
 	// cleared.
 	evicted bool
 
 	small, main []*entry
 	// ghosts holds a place for each of the last ghostCap ghosts. The place
-	// of one that has come back, or that was deleted, is empty, which is
-	// -1.
-	ghosts []int
+	// of one that has come back for good, or that was deleted, is empty.
+	ghosts []ghost
+}
+
+// ghost is a key that the model remembers, and how often it has come back
+// since. A place that is empty has the key -1.
+type ghost struct {
+	key, returned int
+}
+
+func (m *model) ghostOf(key int) int {
+	return slices.IndexFunc(m.ghosts, func(g ghost) bool { return g.key == key })
 }
 
 type entry struct {
@@ -358,10 +534,15 @@ func (m *model) Set(key, value int) (oldKey, oldValue int, displaced bool) {
 		return key, value, true
 	}
 
-	// Whether the key has a ghost is settled before room is made for it.
-	ghost := slices.Index(m.ghosts, key)
-	if ghost >= 0 {
-		m.ghosts[ghost] = -1
+	// Whether the key has a ghost is settled before room is made for it,
+	// and so is whether the ghost has come back often enough to count.
+	remembered := false
+	if at := m.ghostOf(key); at >= 0 {
+		m.ghosts[at].returned++
+		if m.ghosts[at].returned >= m.returns {
+			m.ghosts[at].key = -1
+			remembered = true
+		}
 	}
 	if len(m.small)+len(m.main) == m.capacity {
 		oldKey, oldValue = m.evict()
@@ -371,7 +552,7 @@ func (m *model) Set(key, value int) (oldKey, oldValue int, displaced bool) {
 	// A cache that has never been full does not put more into the small
 	// queue than its share.
 	e := &entry{key: key, value: value}
-	if ghost >= 0 || !m.evicted && len(m.small) >= m.capacity-m.mainCap {
+	if remembered || !m.evicted && len(m.small) >= m.capacity-m.mainCap {
 		m.main = slices.Insert(m.main, 0, e)
 	} else {
 		m.small = slices.Insert(m.small, 0, e)
@@ -391,14 +572,16 @@ func (m *model) evict() (key, value int) {
 		e := m.small[last]
 		m.small = m.small[:last]
 
-		if e.reads > 1 {
+		if e.reads >= m.promote {
 			e.reads = 0
 			m.main = slices.Insert(m.main, 0, e)
 			continue
 		}
 
-		if m.ghostCap > 0 {
-			m.ghosts = append(m.ghosts, e.key)
+		// A key whose ghost is still there, because it has not come back
+		// often enough, keeps that one.
+		if m.ghostCap > 0 && m.ghostOf(e.key) < 0 {
+			m.ghosts = append(m.ghosts, ghost{key: e.key})
 			if len(m.ghosts) > m.ghostCap {
 				m.ghosts = m.ghosts[1:]
 			}
@@ -422,8 +605,8 @@ func (m *model) Delete(key int) (int, bool) {
 	e := m.find(key)
 	if e == nil {
 		// A key that is only remembered is forgotten.
-		if ghost := slices.Index(m.ghosts, key); ghost >= 0 {
-			m.ghosts[ghost] = -1
+		if at := m.ghostOf(key); at >= 0 {
+			m.ghosts[at].key = -1
 		}
 		return 0, false
 	}
@@ -451,7 +634,72 @@ func (m *model) All() iter.Seq2[int, int] {
 }
 
 func newModel(capacity int) *model {
-	return &model{capacity: capacity, mainCap: capacity - capacity/10, ghostCap: capacity * 9 / 10}
+	return &model{capacity: capacity, mainCap: capacity - capacity/10, ghostCap: capacity * 9 / 10, promote: 2, returns: 1}
+}
+
+// A setting is a cache that is not as the paper has it, and the model of it.
+type setting struct {
+	name    string
+	options []s3fifo.Option
+	model   func(capacity int) *model
+}
+
+// settings are the ways of tuning the cache that the model is compared with,
+// the plain one first.
+var settings = []setting{
+	{"default", nil, newModel},
+	{"small=0.3", []s3fifo.Option{s3fifo.WithSmallRatio(0.3)}, func(c int) *model {
+		m := newModel(c)
+		m.mainCap = c - c*3/10
+		return m
+	}},
+	{"small=0", []s3fifo.Option{s3fifo.WithSmallRatio(0)}, func(c int) *model {
+		m := newModel(c)
+		m.mainCap = c
+		return m
+	}},
+	{"small=1", []s3fifo.Option{s3fifo.WithSmallRatio(1)}, func(c int) *model {
+		m := newModel(c)
+		m.mainCap = 0
+		return m
+	}},
+	{"ghosts=0", []s3fifo.Option{s3fifo.WithGhostRatio(0)}, func(c int) *model {
+		m := newModel(c)
+		m.ghostCap = 0
+		return m
+	}},
+	{"ghosts=3", []s3fifo.Option{s3fifo.WithGhostRatio(3)}, func(c int) *model {
+		m := newModel(c)
+		m.ghostCap = 3 * c
+		return m
+	}},
+	{"promotion=1", []s3fifo.Option{s3fifo.WithPromotionReads(1)}, func(c int) *model {
+		m := newModel(c)
+		m.promote = 1
+		return m
+	}},
+	{"promotion=3", []s3fifo.Option{s3fifo.WithPromotionReads(3)}, func(c int) *model {
+		m := newModel(c)
+		m.promote = 3
+		return m
+	}},
+	{"returns=2", []s3fifo.Option{s3fifo.WithGhostReturns(2)}, func(c int) *model {
+		m := newModel(c)
+		m.returns = 2
+		return m
+	}},
+	{"returns=3", []s3fifo.Option{s3fifo.WithGhostReturns(3), s3fifo.WithGhostRatio(2)}, func(c int) *model {
+		m := newModel(c)
+		m.returns, m.ghostCap = 3, 2*c
+		return m
+	}},
+	{"all at once", []s3fifo.Option{
+		s3fifo.WithSmallRatio(0.5), s3fifo.WithGhostRatio(6), s3fifo.WithPromotionReads(1), s3fifo.WithGhostReturns(2),
+	}, func(c int) *model {
+		m := newModel(c)
+		m.mainCap, m.ghostCap, m.promote, m.returns = c-c/2, 6*c, 1, 2
+		return m
+	}},
 }
 
 func TestAgainstModel(t *testing.T) {
@@ -472,14 +720,20 @@ func TestAgainstModel(t *testing.T) {
 		{300, 1000, 50_000},
 	} {
 		// Once the way it is meant to be, and once with readers that have
-		// to take the lock.
+		// to take the lock; and each with every setting.
 		for _, crowded := range []bool{false, true} {
-			c := s3fifo.New[int, int](tt.capacity, s3fifo.WithShards(1))
-			if crowded {
-				c.OccupyReaders(0)
+			for _, set := range settings {
+				t.Run(fmt.Sprintf("%s/capacity=%d/crowded=%t", set.name, tt.capacity, crowded), func(t *testing.T) {
+					t.Parallel()
+
+					c := s3fifo.New[int, int](tt.capacity, append(set.options, s3fifo.WithShards(1))...)
+					if crowded {
+						c.OccupyReaders(0)
+					}
+					rng := rand.New(rand.NewPCG(uint64(i), 1))
+					cachetest.Compare(t, c, set.model(tt.capacity), cachetest.RandomOps(rng, tt.keys, tt.steps))
+				})
 			}
-			rng := rand.New(rand.NewPCG(uint64(i), 1))
-			cachetest.Compare(t, c, newModel(tt.capacity), cachetest.RandomOps(rng, tt.keys, tt.steps))
 		}
 	}
 }
@@ -814,16 +1068,18 @@ func TestCrowdedReaders(t *testing.T) {
 }
 
 func FuzzAgainstModel(f *testing.F) {
-	f.Add(3, []byte{})
-	f.Add(1, []byte{128, 129, 0, 130, 1})
-	f.Add(3, []byte{128, 129, 130, 131, 128, 129, 130, 0, 131})
-	f.Add(10, []byte("an arbitrary sequence of operations \xff on a small cache"))
+	f.Add(3, uint8(0), []byte{})
+	f.Add(1, uint8(0), []byte{128, 129, 0, 130, 1})
+	f.Add(3, uint8(8), []byte{128, 129, 130, 131, 128, 129, 130, 0, 131})
+	f.Add(10, uint8(0), []byte("an arbitrary sequence of operations \xff on a small cache"))
+	f.Add(20, uint8(10), []byte("the same \x80\x81\x82\x83 on a cache \x80\x81 that is tuned"))
 
-	f.Fuzz(func(t *testing.T, capacity int, ops []byte) {
+	f.Fuzz(func(t *testing.T, capacity int, tuned uint8, ops []byte) {
 		capacity %= 40
+		set := settings[int(tuned)%len(settings)]
 		cachetest.Compare(t,
-			s3fifo.New[int, int](capacity, s3fifo.WithShards(1)),
-			newModel(max(capacity, 0)),
+			s3fifo.New[int, int](capacity, append(set.options, s3fifo.WithShards(1))...),
+			set.model(max(capacity, 0)),
 			cachetest.BytesOps(ops),
 		)
 	})

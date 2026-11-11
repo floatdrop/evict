@@ -8,7 +8,8 @@
 // small queue moves on to the main queue instead, which has the rest of the
 // room. The third queue holds no entries, only the ghosts of those that left
 // from the small queue: if the key of one comes back in time, it goes
-// straight into the main queue.
+// straight into the main queue. The sizes of the queues and what it takes to
+// move from one to the other can be changed; see Tuning below.
 //
 // The main queue gives an entry that has been read since it was last looked
 // at another round rather than evicting it, up to three times in a row for an
@@ -37,6 +38,29 @@
 // worse than an LRU cache of the same size. For caches as small as that,
 // the lru package is the better choice; see also [WithShards].
 //
+// # Tuning
+//
+// The numbers above are the ones that the paper recommends, and they serve a
+// wide range of workloads well. They are not the best for each of them. When
+// the eleven traces that this module is measured with were replayed with 84
+// settings, four of them gained next to nothing from the best of those, and
+// two a great deal: eight and nearly sixteen points of hit ratio. The small
+// queue that served a trace best had a twentieth of the room for six of them,
+// a tenth for three and a fifth for two. Four traces did best with three or
+// six times as many ghosts, and five by sending a key to the main queue only
+// when it comes back for the second time. No one setting was good for all:
+// the one that did best for the eleven together did worse than the standard
+// one for six of them. The numbers are in bench/results/tuning.md.
+//
+// So the options [WithSmallRatio], [WithGhostRatio], [WithPromotionReads] and
+// [WithGhostReturns] are for a workload that is known, or better, recorded:
+// replay it with the settings in question and compare. They are four of the
+// five knobs of S4-FIFO, which picks its settings with a model that was
+// trained in advance ("Learning-Augmented Heuristics: Simple, yet Smart,
+// Robust and Interpretable Cache Eviction" by Xia, Nixon, Marthen, Bhandari
+// and others, 2026). A cache of this package does not pick: it does as it is
+// told.
+//
 // # Memory
 //
 // So that readers need no lock, an entry that leaves the cache is not taken
@@ -55,8 +79,9 @@
 // place.
 //
 // Of a ghost the cache keeps a hash of the key and nothing else: sixteen
-// bytes or so, for nine tenths as many ghosts as there are entries. The key
-// itself is let go like the rest of the entry.
+// bytes or so, for nine tenths as many ghosts as there are entries unless
+// [WithGhostRatio] says otherwise. The key itself is let go like the rest of
+// the entry.
 //
 // A cache also has a table in which its readers say what they are looking
 // at. It takes between 2 and 4 KiB for every CPU that Go may use when the
@@ -67,6 +92,7 @@ package s3fifo
 import (
 	"hash/maphash"
 	"iter"
+	"math"
 	"math/rand/v2"
 	"runtime"
 	"slices"
@@ -117,6 +143,12 @@ type shard[K comparable, V any] struct {
 	capacity int // entries in both queues together
 	mainCap  int // entries that the main queue has room for
 
+	// promote is how often an entry must have been read in the small queue
+	// to move on to the main one, and returns is how often a key must come
+	// back while it is a ghost to go there straight away.
+	promote uint32
+	returns int
+
 	// evicted says that the shard has been full since it was made or last
 	// cleared. Until then, new entries are not all sent through the small
 	// queue; see set.
@@ -153,8 +185,20 @@ const maxFrequency = 3
 type Option func(*config)
 
 type config struct {
-	shards int
+	shards     int
+	smallRatio float64
+	ghostRatio float64
+	promote    int
+	returns    int
 }
+
+// The defaults are the numbers of the paper.
+func defaults() config {
+	return config{smallRatio: 0.1, ghostRatio: 0.9, promote: 2, returns: 1}
+}
+
+// maxGhostRatio is as far as [WithGhostRatio] goes.
+const maxGhostRatio = 8
 
 // WithShards sets the number of shards, which is rounded up to a power of two
 // and limited to the capacity. Zero or less stands for the default.
@@ -175,10 +219,82 @@ func WithShards(n int) Option {
 	return func(c *config) { c.shards = n }
 }
 
+// WithSmallRatio sets the share of the capacity that the small queue has; the
+// main queue has the rest. The default is 0.1.
+//
+// New entries wait in the small queue to be read again. A larger one gives
+// them longer, which suits a workload whose entries are asked for again soon
+// or not at all, and takes the room from the entries that have proven
+// themselves. With a share of 0 a new entry has until the next one arrives,
+// and with a share of 1 the main queue holds only what has just moved up.
+//
+// The ratio is brought into the range from 0 to 1 if it is outside, and is 0
+// if it is not a number. The share of a shard is rounded down to whole
+// entries.
+func WithSmallRatio(ratio float64) Option {
+	return func(c *config) { c.smallRatio = clamp(ratio, 1) }
+}
+
+// WithGhostRatio sets the number of ghosts, the keys that the cache remembers
+// after it has evicted their entries from the small queue, as a share of the
+// capacity. The default is 0.9: as many as the main queue has entries.
+//
+// The more ghosts, the longer a key may stay away and still be recognized
+// when it comes back, which is what tells an entry that is asked for every
+// now and then from one that is new. A ghost takes about sixteen bytes, so a
+// ratio of 6 costs about a hundred bytes for every entry. With a ratio of 0
+// nothing is remembered, and an entry gets to the main queue only by being
+// read in the small one.
+//
+// The ratio is brought into the range from 0 to 8 if it is outside, and is 0
+// if it is not a number. The number for a shard is rounded down to whole
+// keys.
+func WithGhostRatio(ratio float64) Option {
+	return func(c *config) { c.ghostRatio = clamp(ratio, maxGhostRatio) }
+}
+
+// WithPromotionReads sets how often an entry has to be read while it is in
+// the small queue to move on to the main queue when its turn to leave comes.
+// The default is 2. With 1, a single read is enough, which lets more entries
+// through; with 3, an entry has to be read as often as the cache counts at
+// all. The number is brought into the range from 1 to 3 if it is outside.
+func WithPromotionReads(n int) Option {
+	return func(c *config) { c.promote = min(max(n, 1), maxFrequency) }
+}
+
+// WithGhostReturns sets how often a key has to come back while the cache
+// remembers it to go straight into the main queue. The default is 1: a ghost
+// that is asked for is as good as an entry that was read twice.
+//
+// With 2, the key goes through the small queue once more the first time it
+// comes back, and its ghost stays. That keeps out keys that come round at long
+// intervals without ever being asked for in between, as in a scan that
+// repeats; it costs a byte for every ghost. The number is brought into the
+// range from 1 to 255 if it is outside.
+func WithGhostReturns(n int) Option {
+	return func(c *config) { c.returns = min(max(n, 1), math.MaxUint8) }
+}
+
+// clamp returns the ratio in the range from 0 to most that is closest to x.
+// That is 0 if x is not a number.
+func clamp(x, most float64) float64 {
+	if math.IsNaN(x) {
+		return 0
+	}
+	return min(max(x, 0), most)
+}
+
+// share returns the given share of n, rounded down. A ratio is a fraction in
+// binary, and its product with n may come out a hair below the whole number
+// that it stands for; that hair is not allowed to cost an entry.
+func share(ratio float64, n int) int {
+	return int(ratio*float64(n) + 1e-6)
+}
+
 // New returns a cache that holds up to capacity entries. A cache with a
 // capacity of zero or less holds nothing.
 func New[K comparable, V any](capacity int, opts ...Option) *Cache[K, V] {
-	var cfg config
+	cfg := defaults()
 	for _, opt := range opts {
 		opt(&cfg)
 	}
@@ -196,13 +312,18 @@ func New[K comparable, V any](capacity int, opts ...Option) *Cache[K, V] {
 	for i := range c.shards {
 		s := &c.shards[i]
 		s.capacity = shards.Capacity(capacity, n, i)
-		// A tenth of the room is for the small queue. There are as many
-		// ghosts as the main queue has entries.
-		s.mainCap = s.capacity - s.capacity/10
+		// By default a tenth of the room is for the small queue, and there
+		// are nine tenths as many ghosts as entries. Both are rounded
+		// down, so that is not always as many ghosts as the main queue
+		// has room for entries.
+		s.mainCap = s.capacity - share(cfg.smallRatio, s.capacity)
+		s.promote, s.returns = uint32(cfg.promote), cfg.returns
 		s.slab.Init(s.capacity, queues, c.readers)
-		// Nine tenths as many ghosts as entries, rounded down, which is
-		// not always what the main queue has room for.
-		s.ghosts.Init(s.capacity * 9 / 10)
+		if ghosts := min(share(cfg.ghostRatio, s.capacity), ghost.MaxCapacity); cfg.returns > 1 {
+			s.ghosts.InitCounting(ghosts)
+		} else {
+			s.ghosts.Init(ghosts)
+		}
 	}
 	return c
 }
@@ -323,7 +444,7 @@ func (s *shard[K, V]) set(h uint64, key K, value V) (oldKey K, oldValue V, displ
 	// Whether the key has a ghost is settled first: the entry that is about
 	// to be evicted may leave a ghost of its own, and that must not push
 	// out the one that is being asked for.
-	remembered := s.ghosts.Remove(ghostOf(hash, tagOf(h, small)))
+	remembered := s.ghosts.Recall(ghostOf(hash, tagOf(h, small)), s.returns)
 	if s.smalls+s.mains == s.capacity {
 		oldKey, oldValue = s.evict()
 		displaced = true
@@ -368,7 +489,7 @@ func (s *shard[K, V]) evict() (key K, value V) {
 		sl.Unlink(idx)
 		s.smalls--
 
-		if n.Meta.Load() > 1 {
+		if n.Meta.Load() >= s.promote {
 			n.Meta.Store(0)
 			links[idx].Tag |= main
 			sl.PushFront(main, idx)

@@ -60,6 +60,12 @@ bench-throughput: ## Measure throughput on CPUS (default 1,2,4,8) CPUs, COUNT (d
 bench-memory: ## Measure memory per entry and the cost to the garbage collector, for caches of CAPACITIES entries.
 	cd bench && $(GO) run ./cmd/memory -capacities $(CAPACITIES) -out results > /dev/null
 
+# Not part of bench: it takes half an hour, and what it reports changes only
+# when s3fifo does.
+.PHONY: bench-tuning
+bench-tuning: ## Replay the traces against s3fifo with 84 settings, to see what tuning it is worth.
+	cd bench && $(GO) run ./cmd/tune -out results
+
 .PHONY: help
 help: ## Show this help.
 	@awk 'BEGIN {FS = ":.*## "} /^[a-zA-Z_-]+:.*## / {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
