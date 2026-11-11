@@ -857,6 +857,211 @@ func TestReleasedMark(t *testing.T) {
 	check(t, &s, map[int]int{})
 }
 
+// fullWithOnePinned returns two slabs that share readers. Both are full; in b
+// a reader looks at the node that key 0 was in, and b has replaced as many
+// values as it has spare nodes, so its next write finds no node free. Nobody
+// has looked at the slots yet.
+func fullWithOnePinned(t *testing.T) (readers *Readers, a, b *Slab[int, int], pinned uint32, held *Slot) {
+	t.Helper()
+
+	const capacity = 256 // Patience for 32 nodes, and as many to spare.
+
+	readers = newReaders(64)
+	a, b = new(Slab[int, int]), new(Slab[int, int])
+	a.Init(capacity, 1, readers)
+	b.Init(capacity, 1, readers)
+	for key := range capacity {
+		a.PushFront(0, a.Insert(uint32(key), key, 1000+key))
+		b.PushFront(0, b.Insert(uint32(key), key, 1000+key))
+	}
+
+	pinned = b.Find(0, 0)
+	held = pin(t, b, pinned)
+	for key := range 32 {
+		b.Replace(b.Find(uint32(key), key), key, 2000+key)
+	}
+	if b.waiting != 32 || b.free != 0 || int(b.fresh) != len(b.Nodes) {
+		t.Fatalf("b has %d nodes waiting, free list at %d, fresh at %d of %d", b.waiting, b.free, b.fresh, len(b.Nodes))
+	}
+	if got := readers.time.Load(); got != 1 {
+		t.Fatalf("time is %d before anyone had a reason to look", got)
+	}
+	return readers, a, b, pinned, held
+}
+
+// TestAllocBorrowsAroundPin checks that a slab which needs a node makes do with
+// the look of another slab, that it leaves alone the node which that look
+// found a reader at, and that it looks for itself once the borrowed look is
+// of no more use.
+func TestAllocBorrowsAroundPin(t *testing.T) {
+	t.Parallel()
+
+	readers, a, b, pinned, held := fullWithOnePinned(t)
+	intact := func(when string) {
+		t.Helper()
+		if n := &b.Nodes[pinned]; n.Key != 0 || n.Value != 1000 {
+			t.Fatalf("%s: the node that a reader looks at holds %d=%d", when, n.Key, n.Value)
+		}
+	}
+
+	// a looks, and sees the reader of b's node.
+	idx := a.Find(7, 7)
+	a.Unlink(idx)
+	a.Remove(idx)
+	a.Reclaim()
+	looked := readers.time.Load()
+	if looked != 2 {
+		t.Fatalf("time is %d after one look", looked)
+	}
+
+	// b needs a node: it goes by the look of a, and leaves the pinned one.
+	b.Replace(b.Find(40, 40), 40, 2040)
+	intact("after a borrowed look")
+	if got := readers.time.Load(); got != looked {
+		t.Errorf("b looked for itself (time %d -> %d)", looked, got)
+	}
+	if b.waiting != 2 || b.Overdue() || b.Waits() != 0 {
+		t.Errorf("b: %d waiting, overdue %t, waits %d; want 2, false, 0", b.waiting, b.Overdue(), b.Waits())
+	}
+
+	// The same look is of no further use: b looks, and still leaves the node.
+	for key := 41; key < 41+31; key++ {
+		b.Replace(b.Find(uint32(key), key), key, 2000+key)
+		intact("in the second round")
+	}
+	if got := readers.time.Load(); got != looked+1 {
+		t.Errorf("time is %d, want one look by b on top of %d", got, looked)
+	}
+	if b.waiting != 2 {
+		t.Errorf("b: %d waiting after its own look, want 2", b.waiting)
+	}
+
+	// The reader leaves. The look that b goes by next still names the node,
+	// which gets b nothing, so it looks again and the node is released.
+	held.Unpin()
+	for key := 80; key < 80+31; key++ {
+		b.Replace(b.Find(uint32(key), key), key, 2000+key)
+	}
+	if got := readers.time.Load(); got != looked+2 {
+		t.Errorf("time is %d, want two looks by b on top of %d", got, looked)
+	}
+	if n := &b.Nodes[pinned]; n.Value == 1000 {
+		t.Errorf("the node is still held on to after the reader left: %d=%d, %d waiting", n.Key, n.Value, b.waiting)
+	}
+	if b.Waits() != 0 {
+		t.Errorf("b waited %d times", b.Waits())
+	}
+}
+
+// TestAllocAndTooManyPins checks that a slab which needs a node does not go by
+// a look that found more readers than it could write down.
+func TestAllocAndTooManyPins(t *testing.T) {
+	t.Parallel()
+
+	readers, a, b, pinned, held := fullWithOnePinned(t)
+	defer held.Unpin()
+
+	// a looks while more slots are taken than a look writes down.
+	release := readers.Occupy(0)
+	defer release()
+	idx := a.Find(7, 7)
+	a.Unlink(idx)
+	a.Remove(idx)
+	a.Reclaim()
+	looked := readers.time.Load()
+	if got := readers.sharedFound.Load(); got != -1 {
+		t.Fatalf("the look wrote down %d pins, want -1 for too many", got)
+	}
+
+	b.Replace(b.Find(40, 40), 40, 2040)
+	if n := &b.Nodes[pinned]; n.Key != 0 || n.Value != 1000 {
+		t.Fatalf("the node that a reader looks at holds %d=%d", n.Key, n.Value)
+	}
+	if got := readers.time.Load(); got != looked+1 {
+		t.Errorf("time went from %d to %d, want b to look for itself", looked, got)
+	}
+	if b.waiting != 2 || b.Waits() != 0 {
+		t.Errorf("b: %d waiting, %d waits; want 2, 0", b.waiting, b.Waits())
+	}
+}
+
+// TestReviewStress has several full slabs that share readers do nothing but
+// replace values, which is the path that now borrows looks in alloc, while
+// readers look entries up and other goroutines hold nodes pinned for a while
+// and watch them.
+// TestSharedLooks checks that the slabs of a cache make do with each other's
+// looks at the readers' slots, whichever kind of write it is that uses up
+// their spare nodes. A look goes through every slot there is, and a slab that
+// takes one whenever it runs out of nodes makes every write pay for the
+// number of CPUs.
+func TestSharedLooks(t *testing.T) {
+	t.Parallel()
+
+	const (
+		slabs    = 16
+		capacity = 256 // Patience for 32 nodes, and as many to spare.
+		writes   = 200_000
+	)
+	type contents = map[int]int
+	kinds := map[string]func(s *Slab[int, int], has contents, rng *rand.Rand, fresh int){
+		// The value of an entry is replaced, which moves it to another node.
+		"replacing": func(s *Slab[int, int], _ contents, rng *rand.Rand, _ int) {
+			idx := s.Links[0].Prev
+			for range rng.IntN(8) {
+				idx = s.Links[idx].Prev
+				if idx == 0 {
+					idx = s.Links[0].Prev
+				}
+			}
+			s.Replace(idx, s.Nodes[idx].Key, 0)
+		},
+		// The oldest entry goes and a new one comes.
+		"evicting": func(s *Slab[int, int], has contents, _ *rand.Rand, fresh int) {
+			idx := s.Links[0].Prev
+			delete(has, s.Nodes[idx].Key)
+			s.Unlink(idx)
+			s.Remove(idx)
+			s.PushFront(0, s.Insert(uint32(fresh), fresh, 0))
+			has[fresh] = 0
+		},
+	}
+	for name, write := range kinds {
+		readers := newReaders(64)
+		all := make([]Slab[int, int], slabs)
+		has := make([]contents, slabs)
+		for i := range all {
+			all[i].Init(capacity, 1, readers)
+			has[i] = contents{}
+			for key := range capacity {
+				all[i].PushFront(0, all[i].Insert(uint32(key), key, 0))
+				has[i][key] = 0
+			}
+		}
+
+		rng := rand.New(rand.NewPCG(1, 2))
+		before := readers.time.Load()
+		for i := range writes {
+			at := rng.IntN(slabs)
+			write(&all[at], has[at], rng, capacity+i)
+		}
+		looks := int(readers.time.Load() - before)
+
+		// A slab that looks for itself every time does so once for as many
+		// writes as it has spare nodes. With sixteen slabs to share with,
+		// a quarter of that is nothing to be proud of.
+		if alone := writes / int(all[0].patience); looks > alone/4 {
+			t.Errorf("%d %s writes to %d slabs took %d looks at the readers; each slab on its own would take %d",
+				writes, name, slabs, looks, alone)
+		} else {
+			t.Logf("%d %s writes to %d slabs took %d looks at the readers; each slab on its own would take %d",
+				writes, name, slabs, looks, alone)
+		}
+		for i := range all {
+			check(t, &all[i], has[i])
+		}
+	}
+}
+
 // TestBorrowedLook checks that a slab makes do with what another slab of the
 // same cache has found out about the readers, where that is enough.
 func TestBorrowedLook(t *testing.T) {
