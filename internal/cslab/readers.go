@@ -87,7 +87,13 @@ type Slot struct {
 	// that its reader is looking at: the number of the slab in the upper
 	// half, which is never zero, and the index of the node in the lower.
 	pin atomic.Uint64
-	_   [cacheLine - 8]byte
+
+	// hits counts the lookups that found their key with this slot and were
+	// asked to say so; see [Slab.Lookup]. Whoever has used the slot has
+	// added to it. It is in the line that a reader writes to anyway.
+	hits atomic.Uint64
+
+	_ [cacheLine - 16]byte
 }
 
 // NewReaders returns a Readers for a new cache. Its slots take up a few
@@ -165,6 +171,18 @@ func (r *Readers) PinAny(node uint64) *Slot {
 
 // Unpin clears the slot. The node it named is no longer safe to look at.
 func (s *Slot) Unpin() { s.pin.Store(0) }
+
+// Hits returns the number of lookups, by any slab of this Readers, that have
+// found their key and were asked to tally it. It looks at every slot, which
+// takes a while: a slot to every 128 bytes that [NewReaders] speaks of. A
+// lookup that is under way may or may not have been counted.
+func (r *Readers) Hits() uint64 {
+	var hits uint64
+	for i := range r.slots {
+		hits += r.slots[i].hits.Load()
+	}
+	return hits
+}
 
 // Occupy takes the slots that are free and returns a function that gives them
 // back. In between, nobody can pin a node, and whoever wants to read has to

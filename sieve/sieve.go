@@ -184,7 +184,7 @@ func (c *Cache[K, V]) Get(key K) (value V, ok bool) {
 	// The lookup marks the entry, unless it is marked already: popular
 	// entries are, and not writing to them again keeps their cache line
 	// shared between the CPUs that read it.
-	value, ok, certain := s.slab.Lookup(hash, key, visited)
+	value, ok, certain := s.slab.Lookup(hash, key, visited, false)
 	if s.slab.Overdue() {
 		s.help()
 	}
@@ -210,7 +210,7 @@ func (c *Cache[K, V]) Peek(key K) (value V, ok bool) {
 	h := maphash.Comparable(c.seed, key)
 	s, hash := &c.shards[uint32(h>>32)&c.mask], uint32(h)
 
-	value, ok, certain := s.slab.Lookup(hash, key, 0)
+	value, ok, certain := s.slab.Lookup(hash, key, 0, false)
 	if s.slab.Overdue() {
 		s.help()
 	}

@@ -352,7 +352,7 @@ func (c *Cache[K, V]) Get(key K) (value V, ok bool) {
 	// two of them may count as one. That is close enough. An entry that is
 	// read all the time has reached the limit, and is not written to
 	// again: its cache line stays shared between the CPUs.
-	value, ok, certain := s.slab.Lookup(hash, key, maxFrequency)
+	value, ok, certain := s.slab.Lookup(hash, key, maxFrequency, false)
 	if s.slab.Overdue() {
 		s.help()
 	}
@@ -378,7 +378,7 @@ func (c *Cache[K, V]) Peek(key K) (value V, ok bool) {
 	h := maphash.Comparable(c.seed, key)
 	s, hash := &c.shards[uint32(h>>32)&c.mask], uint32(h)
 
-	value, ok, certain := s.slab.Lookup(hash, key, 0)
+	value, ok, certain := s.slab.Lookup(hash, key, 0, false)
 	if s.slab.Overdue() {
 		s.help()
 	}
