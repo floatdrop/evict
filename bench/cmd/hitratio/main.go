@@ -166,7 +166,7 @@ type input struct {
 
 // defaultCaches are the columns of the report: the caches of this module,
 // the ones they are compared with, and the best that any cache could do.
-var defaultCaches = []string{"evict/lru", "evict/twoq", "evict/sieve", "evict/s3fifo", "otter", "golang-lru/2q", report.Bound}
+var defaultCaches = []string{"evict/lru", "evict/twoq", "evict/sieve", "evict/s3fifo", "evict/tinylfu", "otter", "golang-lru/2q", report.Bound}
 
 func allPlayers() []player {
 	var players []player
@@ -246,7 +246,7 @@ func shardingPlayers() []player {
 			continue
 		}
 		players = append(players,
-			player{kind.Name, false, func(t *input, capacity int) int {
+			player{kind.Name, kind.Varies, func(t *input, capacity int) int {
 				return replay.Hits(kind.Exact(capacity), t.keys)
 			}},
 			player{kind.Name + " in shards", true, func(t *input, capacity int) int {

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 380" width="640" height="380" role="img" aria-labelledby="title desc">
 <title id="title">P8</title>
-<desc id="desc">Line chart of Hit ratio, % by Cache capacity, entries for evict/lru, evict/twoq, evict/sieve, evict/s3fifo, otter, golang-lru/2q, optimal. The numbers are in the table that goes with it.</desc>
+<desc id="desc">Line chart of Hit ratio, % by Cache capacity, entries for evict/lru, evict/twoq, evict/sieve, evict/s3fifo, evict/tinylfu, otter, golang-lru/2q, optimal. The numbers are in the table that goes with it.</desc>
 <style>
 text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
 .title { font-size: 15px; font-weight: 600; }
@@ -22,6 +22,7 @@ text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
 .s1 { stroke: #eb6834; } .m1 { fill: #eb6834; }
 .s2 { stroke: #1baf7a; } .m2 { fill: #1baf7a; }
 .s3 { stroke: #eda100; } .m3 { fill: #eda100; }
+.s7 { stroke: #e34948; } .m7 { fill: #e34948; }
 .s4 { stroke: #e87ba4; } .m4 { fill: #e87ba4; }
 .s6 { stroke: #6250d6; } .m6 { fill: #6250d6; }
 @media (prefers-color-scheme: dark) {
@@ -37,6 +38,7 @@ text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
   .s1 { stroke: #d95926; } .m1 { fill: #d95926; }
   .s2 { stroke: #199e70; } .m2 { fill: #199e70; }
   .s3 { stroke: #c98500; } .m3 { fill: #c98500; }
+  .s7 { stroke: #e66767; } .m7 { fill: #e66767; }
   .s4 { stroke: #d55181; } .m4 { fill: #d55181; }
   .s6 { stroke: #9085e9; } .m6 { fill: #9085e9; }
 }
@@ -48,9 +50,10 @@ text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
 <path class="line s1" d="M131,66 h24"/><path class="mark m1" d="M139.4,62.4L146.6,62.4L146.6,69.6L139.4,69.6Z"/><text class="legend" x="161" y="70">evict/twoq</text>
 <path class="line s2" d="M249,66 h24"/><path class="mark m2" d="M261,61.2L265.6,69.4L256.4,69.4Z"/><text class="legend" x="279" y="70">evict/sieve</text>
 <path class="line s3" d="M374,66 h24"/><path class="mark m3" d="M386,61L391,66L386,71L381,66Z"/><text class="legend" x="404" y="70">evict/s3fifo</text>
-<path class="line s4" d="M506,66 h24"/><path class="mark m4" d="M518,70.8L522.6,62.6L513.4,62.6Z"/><text class="legend" x="536" y="70">otter</text>
-<path class="line s6" d="M20,86 h24"/><path class="mark m6" d="M29.7,82L34.3,82L36.6,86L34.3,90L29.7,90L27.4,86Z"/><text class="legend" x="50" y="90">golang-lru/2q</text>
-<path class="ref" d="M159,86 h24"/><text class="legend" x="189" y="90">optimal</text>
+<path class="line s7" d="M20,86 h24"/><path class="mark m7" d="M30,81.6L34,81.6L36.4,84L36.4,88L34,90.4L30,90.4L27.6,88L27.6,84Z"/><text class="legend" x="50" y="90">evict/tinylfu</text>
+<path class="line s4" d="M159,86 h24"/><path class="mark m4" d="M171,90.8L175.6,82.6L166.4,82.6Z"/><text class="legend" x="189" y="90">otter</text>
+<path class="line s6" d="M242,86 h24"/><path class="mark m6" d="M251.7,82L256.3,82L258.6,86L256.3,90L251.7,90L249.4,86Z"/><text class="legend" x="272" y="90">golang-lru/2q</text>
+<path class="ref" d="M381,86 h24"/><text class="legend" x="411" y="90">optimal</text>
 <path class="axis" d="M52,328 h568"/><text class="tick" x="44" y="332" text-anchor="end">0</text>
 <path class="grid" d="M52,272 h568"/><text class="tick" x="44" y="276" text-anchor="end">20</text>
 <path class="grid" d="M52,216 h568"/><text class="tick" x="44" y="220" text-anchor="end">40</text>
@@ -69,7 +72,8 @@ text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
 <path class="line s1" d="M52,300.7L133.1,277.1L214.3,257.6L295.4,241.4L376.6,225.6L457.7,213.1L538.9,200.8L620,188.5"/>
 <path class="line s2" d="M52,310.7L133.1,287.5L214.3,268.7L295.4,250.9L376.6,234.7L457.7,227.2L538.9,218.5L620,206.5"/>
 <path class="line s3" d="M52,293.6L133.1,268.7L214.3,249L295.4,231.6L376.6,217.1L457.7,202.9L538.9,190.7L620,179.6"/>
-<path class="line s4" d="M52,297.7L133.1,271L214.3,246.5L295.4,229.3L376.6,211.8L457.7,195.6L538.9,184L620,176.8"/>
+<path class="line s7" d="M52,294.1L133.1,266.3L214.3,242.2L295.4,223L376.6,205.9L457.7,192.7L538.9,180.9L620,170.8"/>
+<path class="line s4" d="M52,297.8L133.1,270.4L214.3,248.1L295.4,229.2L376.6,211.6L457.7,195.3L538.9,184L620,176.9"/>
 <path class="line s6" d="M52,301.7L133.1,278.3L214.3,258.8L295.4,242.3L376.6,227.7L457.7,215L538.9,203.3L620,192.4"/>
 <path class="ref" d="M52,254.6L133.1,219.7L214.3,195.4L295.4,177L376.6,162L457.7,149.4L538.9,138.4L620,128.6"/>
 <g><title>evict/lru at 10K: 3.34</title><circle class="mark m0" cx="52" cy="318.6" r="4"/></g>
@@ -104,14 +108,22 @@ text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
 <g><title>evict/s3fifo at 60K: 44.67</title><path class="mark m3" d="M457.7,197.9L462.7,202.9L457.7,207.9L452.7,202.9Z"/></g>
 <g><title>evict/s3fifo at 70K: 49.02</title><path class="mark m3" d="M538.9,185.7L543.9,190.7L538.9,195.7L533.9,190.7Z"/></g>
 <g><title>evict/s3fifo at 80K: 53.01</title><path class="mark m3" d="M620,174.6L625,179.6L620,184.6L615,179.6Z"/></g>
-<g><title>otter at 10K: 10.81</title><path class="mark m4" d="M52,302.5L56.6,294.3L47.4,294.3Z"/></g>
-<g><title>otter at 20K: 20.35</title><path class="mark m4" d="M133.1,275.8L137.7,267.6L128.5,267.6Z"/></g>
-<g><title>otter at 30K: 29.12</title><path class="mark m4" d="M214.3,251.3L218.9,243.1L209.7,243.1Z"/></g>
-<g><title>otter at 40K: 35.26</title><path class="mark m4" d="M295.4,234.1L300,225.9L290.8,225.9Z"/></g>
-<g><title>otter at 50K: 41.49</title><path class="mark m4" d="M376.6,216.6L381.2,208.4L372,208.4Z"/></g>
-<g><title>otter at 60K: 47.29</title><path class="mark m4" d="M457.7,200.4L462.3,192.2L453.1,192.2Z"/></g>
-<g><title>otter at 70K: 51.42</title><path class="mark m4" d="M538.9,188.8L543.5,180.6L534.3,180.6Z"/></g>
-<g><title>otter at 80K: 53.98</title><path class="mark m4" d="M620,181.6L624.6,173.4L615.4,173.4Z"/></g>
+<g><title>evict/tinylfu at 10K: 12.09</title><path class="mark m7" d="M50,289.7L54,289.7L56.4,292.1L56.4,296.1L54,298.5L50,298.5L47.6,296.1L47.6,292.1Z"/></g>
+<g><title>evict/tinylfu at 20K: 22.04</title><path class="mark m7" d="M131.1,261.9L135.1,261.9L137.5,264.3L137.5,268.3L135.1,270.7L131.1,270.7L128.7,268.3L128.7,264.3Z"/></g>
+<g><title>evict/tinylfu at 30K: 30.66</title><path class="mark m7" d="M212.3,237.8L216.3,237.8L218.7,240.2L218.7,244.2L216.3,246.6L212.3,246.6L209.9,244.2L209.9,240.2Z"/></g>
+<g><title>evict/tinylfu at 40K: 37.50</title><path class="mark m7" d="M293.4,218.6L297.4,218.6L299.8,221L299.8,225L297.4,227.4L293.4,227.4L291,225L291,221Z"/></g>
+<g><title>evict/tinylfu at 50K: 43.60</title><path class="mark m7" d="M374.6,201.5L378.6,201.5L381,203.9L381,207.9L378.6,210.3L374.6,210.3L372.2,207.9L372.2,203.9Z"/></g>
+<g><title>evict/tinylfu at 60K: 48.34</title><path class="mark m7" d="M455.7,188.3L459.7,188.3L462.1,190.7L462.1,194.7L459.7,197.1L455.7,197.1L453.3,194.7L453.3,190.7Z"/></g>
+<g><title>evict/tinylfu at 70K: 52.54</title><path class="mark m7" d="M536.9,176.5L540.9,176.5L543.3,178.9L543.3,182.9L540.9,185.3L536.9,185.3L534.5,182.9L534.5,178.9Z"/></g>
+<g><title>evict/tinylfu at 80K: 56.16</title><path class="mark m7" d="M618,166.4L622,166.4L624.4,168.8L624.4,172.8L622,175.2L618,175.2L615.6,172.8L615.6,168.8Z"/></g>
+<g><title>otter at 10K: 10.77</title><path class="mark m4" d="M52,302.6L56.6,294.4L47.4,294.4Z"/></g>
+<g><title>otter at 20K: 20.58</title><path class="mark m4" d="M133.1,275.2L137.7,267L128.5,267Z"/></g>
+<g><title>otter at 30K: 28.55</title><path class="mark m4" d="M214.3,252.9L218.9,244.7L209.7,244.7Z"/></g>
+<g><title>otter at 40K: 35.30</title><path class="mark m4" d="M295.4,234L300,225.8L290.8,225.8Z"/></g>
+<g><title>otter at 50K: 41.59</title><path class="mark m4" d="M376.6,216.4L381.2,208.2L372,208.2Z"/></g>
+<g><title>otter at 60K: 47.38</title><path class="mark m4" d="M457.7,200.1L462.3,191.9L453.1,191.9Z"/></g>
+<g><title>otter at 70K: 51.44</title><path class="mark m4" d="M538.9,188.8L543.5,180.6L534.3,180.6Z"/></g>
+<g><title>otter at 80K: 53.96</title><path class="mark m4" d="M620,181.7L624.6,173.5L615.4,173.5Z"/></g>
 <g><title>golang-lru/2q at 10K: 9.39</title><path class="mark m6" d="M49.7,297.7L54.3,297.7L56.6,301.7L54.3,305.7L49.7,305.7L47.4,301.7Z"/></g>
 <g><title>golang-lru/2q at 20K: 17.74</title><path class="mark m6" d="M130.8,274.3L135.4,274.3L137.7,278.3L135.4,282.3L130.8,282.3L128.5,278.3Z"/></g>
 <g><title>golang-lru/2q at 30K: 24.73</title><path class="mark m6" d="M212,254.8L216.6,254.8L218.9,258.8L216.6,262.8L212,262.8L209.7,258.8Z"/></g>
