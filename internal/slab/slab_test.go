@@ -132,8 +132,9 @@ func TestIndexSize(t *testing.T) {
 			t.Errorf("indexSize(%d) = %d, want %d", tt.capacity, got, tt.want)
 		}
 		// An empty slot is what ends a probe for a missing key, and the
-		// load factor stays at or below 2/3.
-		if 2*got < 3*uint(tt.capacity) || got <= uint(tt.capacity) {
+		// load factor stays at or below 2/3. Twice the largest index is
+		// more than 32 bits hold.
+		if 2*uint64(got) < 3*uint64(tt.capacity) || got <= uint(tt.capacity) {
 			t.Errorf("indexSize(%d) = %d is too small", tt.capacity, got)
 		}
 	}

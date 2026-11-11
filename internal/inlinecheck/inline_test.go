@@ -19,6 +19,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -38,6 +39,16 @@ func TestHotPathsAreInlined(t *testing.T) {
 
 	if testing.Short() {
 		t.Skip("compiles a package")
+	}
+	// What the compiler can inline depends on the platform. On these two
+	// an atomic operation is an instruction or two. On others, 386 among
+	// them, it is a call to a few lines of assembly whatever this module
+	// does, and helpers that are made of such calls are too large to be
+	// inlined in turn.
+	switch runtime.GOARCH {
+	case "amd64", "arm64":
+	default:
+		t.Skipf("what is inlined on %s is not what this test expects", runtime.GOARCH)
 	}
 	goTool, err := exec.LookPath("go")
 	if err != nil {
