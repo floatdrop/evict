@@ -38,19 +38,26 @@
 // worse than an LRU cache of the same size. For caches as small as that,
 // the lru package is the better choice; see also [WithShards].
 //
+// All of this is the cache as it is made by default. The options change the
+// numbers in it, and [WithGhostReturns] the rule for ghosts.
+//
 // # Tuning
 //
 // The numbers above are the ones that the paper recommends, and they serve a
-// wide range of workloads well. They are not the best for each of them. When
-// the eleven traces that this module is measured with were replayed with 84
-// settings, four of them gained next to nothing from the best of those, and
-// two a great deal: eight and nearly sixteen points of hit ratio. The small
-// queue that served a trace best had a twentieth of the room for six of them,
-// a tenth for three and a fifth for two. Four traces did best with three or
-// six times as many ghosts, and five by sending a key to the main queue only
-// when it comes back for the second time. No one setting was good for all:
-// the one that did best for the eleven together did worse than the standard
-// one for six of them. The numbers are in bench/results/tuning.md.
+// wide range of workloads well. They are not the best for each of them. The
+// eleven traces that this module is measured with were replayed with 84
+// settings, and for each trace the setting was picked that answered the most
+// requests, averaged over eight cache sizes. On four traces that one gained
+// next to nothing, and on two a great deal: eight and nearly sixteen points
+// of hit ratio. The small queue of the setting that served a trace best had a
+// twentieth of the room for six of them, a tenth for three and a fifth for
+// two. Four traces did best with three or six times as many ghosts, and five
+// by sending a key to the main queue only when it comes back for the second
+// time. No one setting was good for all: the one that did best for the eleven
+// together did worse than the standard one for six of them. The numbers are
+// in bench/results/tuning.md. They say what there is to gain at the most: a
+// setting that is picked for the requests it is then measured with has seen
+// them before, which no cache in use has.
 //
 // So the options [WithSmallRatio], [WithGhostRatio], [WithPromotionReads] and
 // [WithGhostReturns] are for a workload that is known, or better, recorded:
@@ -58,7 +65,7 @@
 // five knobs of S4-FIFO, which picks its settings with a model that was
 // trained in advance ("Learning-Augmented Heuristics: Simple, yet Smart,
 // Robust and Interpretable Cache Eviction" by Xia, Nixon, Marthen, Bhandari
-// and others, 2026). A cache of this package does not pick: it does as it is
+// and Yang, 2026). A cache of this package does not pick: it does as it is
 // told.
 //
 // # Memory
@@ -267,10 +274,13 @@ func WithPromotionReads(n int) Option {
 // that is asked for is as good as an entry that was read twice.
 //
 // With 2, the key goes through the small queue once more the first time it
-// comes back, and its ghost stays. That keeps out keys that come round at long
-// intervals without ever being asked for in between, as in a scan that
-// repeats; it costs a byte for every ghost. The number is brought into the
-// range from 1 to 255 if it is outside.
+// comes back, and its ghost stays: until the key comes back again, until its
+// entry gets into the main queue by being read, until the key is deleted, or
+// until the ghost's turn to be forgotten comes, as it would have without the
+// entry. That keeps out keys that come round at long intervals without ever
+// being asked for in between, as in a scan that repeats; it costs a byte for
+// every ghost. The number is brought into the range from 1 to 255 if it is
+// outside.
 func WithGhostReturns(n int) Option {
 	return func(c *config) { c.returns = min(max(n, 1), math.MaxUint8) }
 }
@@ -401,8 +411,9 @@ func (s *shard[K, V]) help() {
 }
 
 // Set stores value under key. A key that the cache does not know goes into
-// the small queue, and one whose ghost it still has into the main queue. For
-// an entry that is cached already, the write counts as a read.
+// the small queue, and one whose ghost it still has into the main queue, or
+// into the small queue once more if [WithGhostReturns] asks for that. For an
+// entry that is cached already, the write counts as a read.
 //
 // A cache that has not been full yet, or not since it was cleared, puts no
 // more new entries into the small queue than that has room for by its share;
@@ -480,7 +491,8 @@ func (s *shard[K, V]) evict() (key K, value V) {
 	// The small queue is the one to evict from if it has at least its
 	// share, which is the case exactly when the main queue has no more
 	// than its own. Its oldest entries move to the main queue instead if
-	// they have been read more than once, however full that gets: it is
+	// they have been read often enough, which is more than once unless
+	// [WithPromotionReads] says otherwise, however full that gets: it is
 	// the main queue's turn the next time. If all of them move, it is its
 	// turn now.
 	for fromSmall := s.mains <= s.mainCap; fromSmall && s.smalls > 0; {
@@ -494,6 +506,14 @@ func (s *shard[K, V]) evict() (key K, value V) {
 			links[idx].Tag |= main
 			sl.PushFront(main, idx)
 			s.mains++
+			// An entry may have a ghost if ghosts have to come back
+			// more than once: this one may be here on its first return.
+			// It has made it now, and that is the end of the ghost. Were
+			// it to stay, the key would get in more easily the next time
+			// than if it had to come back only once.
+			if s.returns > 1 {
+				s.ghosts.Remove(ghostOf(sl.Hash(idx), links[idx].Tag))
+			}
 			continue
 		}
 
@@ -528,8 +548,9 @@ func (s *shard[K, V]) evict() (key K, value V) {
 	return key, value
 }
 
-// Delete removes key and returns the value it had. If the cache has no entry
-// for key but a ghost, the ghost goes: the cache forgets the key altogether.
+// Delete removes key and returns the value it had. If the cache has a ghost
+// for key, with or without an entry, the ghost goes: the cache forgets the
+// key altogether.
 func (c *Cache[K, V]) Delete(key K) (value V, ok bool) {
 	h := maphash.Comparable(c.seed, key)
 	s, hash := &c.shards[uint32(h>>32)&c.mask], uint32(h)
@@ -544,7 +565,10 @@ func (c *Cache[K, V]) Delete(key K) (value V, ok bool) {
 		}
 		s.slab.Unlink(idx)
 		s.slab.Remove(idx)
-	} else {
+	}
+	// An entry has no ghost, unless ghosts have to come back more than
+	// once and this one has only come back.
+	if !ok || s.returns > 1 {
 		s.ghosts.Remove(ghostOf(hash, tagOf(h, small)))
 	}
 	s.mu.Unlock()

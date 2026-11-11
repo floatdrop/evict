@@ -440,6 +440,45 @@ func TestTuning(t *testing.T) {
 				expect(in{10, 9, 8, 7, 6, 5, 4, 3, 2}, in{1})
 			}
 		}
+
+		// Deleting a key makes the cache forget it, also when the key has an
+		// entry and a ghost at once, as one does that has come back for the
+		// first time. Set again, it is like any key that is new.
+		c, expect = full(t, s3fifo.WithGhostReturns(2))
+		evicts(t, c, 11, 1)
+		evicts(t, c, 1, 11)
+		if _, ok := c.Delete(1); !ok {
+			t.Fatal("Delete(1) found nothing")
+		}
+		c.Set(1, "")
+		expect(in{10, 9, 8, 7, 6, 5, 4, 3, 2}, in{1})
+		// And 11, whose ghost nobody has deleted, has come back for the
+		// first time.
+		evicts(t, c, 11, 1)
+		expect(in{10, 9, 8, 7, 6, 5, 4, 3, 2}, in{11})
+
+		// An entry that gets into the main queue by being read leaves no
+		// ghost behind either. Here 1 does so on its first return, with
+		// room for ghosts to spare. Then nine entries that were read twice
+		// each push the main queue round until 1 has left it again.
+		c, expect = full(t, s3fifo.WithGhostReturns(2), s3fifo.WithGhostRatio(8))
+		evicts(t, c, 11, 1)
+		evicts(t, c, 1, 11)
+		c.Get(1)
+		c.Get(1)
+		evicts(t, c, 12, 2)
+		expect(in{1, 10, 9, 8, 7, 6, 5, 4, 3}, in{12})
+		for key := 13; key <= 21; key++ {
+			c.Get(key - 1)
+			c.Get(key - 1)
+			evicts(t, c, key, []int{3, 4, 5, 6, 7, 8, 9, 10, 1}[key-13])
+		}
+		expect(in{20, 19, 18, 17, 16, 15, 14, 13, 12}, in{21})
+		// When it comes back now, it is as for the first time: had the
+		// ghost stayed, this would have been the second, and 1 would be in
+		// the main queue.
+		evicts(t, c, 1, 21)
+		expect(in{20, 19, 18, 17, 16, 15, 14, 13, 12}, in{1})
 	})
 }
 
@@ -491,6 +530,13 @@ type ghost struct {
 
 func (m *model) ghostOf(key int) int {
 	return slices.IndexFunc(m.ghosts, func(g ghost) bool { return g.key == key })
+}
+
+// forget empties the place of the ghost of key, if it has one.
+func (m *model) forget(key int) {
+	if at := m.ghostOf(key); at >= 0 {
+		m.ghosts[at].key = -1
+	}
 }
 
 type entry struct {
@@ -575,6 +621,8 @@ func (m *model) evict() (key, value int) {
 		if e.reads >= m.promote {
 			e.reads = 0
 			m.main = slices.Insert(m.main, 0, e)
+			// A key that has made it to the main queue is no ghost.
+			m.forget(e.key)
 			continue
 		}
 
@@ -602,12 +650,10 @@ func (m *model) evict() (key, value int) {
 }
 
 func (m *model) Delete(key int) (int, bool) {
+	// A key that is remembered is forgotten, with its entry or without.
+	m.forget(key)
 	e := m.find(key)
 	if e == nil {
-		// A key that is only remembered is forgotten.
-		if at := m.ghostOf(key); at >= 0 {
-			m.ghosts[at].key = -1
-		}
 		return 0, false
 	}
 	same := func(other *entry) bool { return other == e }

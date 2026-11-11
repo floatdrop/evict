@@ -12,6 +12,7 @@ import (
 	"github.com/floatdrop/evict/bench/dataset"
 	"github.com/floatdrop/evict/bench/replay"
 	"github.com/floatdrop/evict/bench/trace"
+	"github.com/floatdrop/evict/s3fifo"
 )
 
 // requests is the trace that the tests tune for: short, so that eighty-odd
@@ -92,6 +93,119 @@ func TestStandardSetting(t *testing.T) {
 	}
 	if different < len(grid())/2 {
 		t.Errorf("only %d of %d settings answer the trace differently from the standard one", different, len(grid())-1)
+	}
+}
+
+// TestSettingsReachTheCache checks that every part of a setting gets to the
+// cache as the option that it stands for.
+func TestSettingsReachTheCache(t *testing.T) {
+	t.Parallel()
+
+	const capacity = 100
+	keys := requests()
+	hits := func(options ...s3fifo.Option) int {
+		return replay.Hits(tuned{s3fifo.New[uint64, uint64](capacity, append(options, s3fifo.WithShards(1))...)}, keys)
+	}
+	plain := hits()
+
+	for _, tt := range []struct {
+		setting setting
+		option  s3fifo.Option
+	}{
+		{setting{0.3, 0.9, 2, 1}, s3fifo.WithSmallRatio(0.3)},
+		{setting{0.1, 6, 2, 1}, s3fifo.WithGhostRatio(6)},
+		{setting{0.1, 0.9, 1, 1}, s3fifo.WithPromotionReads(1)},
+		{setting{0.1, 0.9, 2, 2}, s3fifo.WithGhostReturns(2)},
+	} {
+		got, want := replay.Hits(tt.setting.cache(capacity), keys), hits(tt.option)
+		if got != want {
+			t.Errorf("%v: answered %d requests, a cache with that one option answers %d", tt.setting, got, want)
+		}
+		// The check is only worth something if the option makes a difference.
+		if want == plain {
+			t.Errorf("%v: the option changes nothing about the %d requests that the cache answers as it is", tt.setting, plain)
+		}
+	}
+}
+
+// TestReport checks what the report makes of results: the averages, which
+// settings it calls the best, and which one it names when several are.
+func TestReport(t *testing.T) {
+	t.Parallel()
+
+	a, b := setting{0.05, 0.9, 2, 1}, setting{0.2, 3, 1, 2}
+	settings := []setting{standard, a, b}
+	results := []result{
+		{
+			workload: workload{name: "x", title: "X", capacities: []int{10, 20, 30}},
+			requests: 1000,
+			// One setting is the best at 10, another at 20, and at 30
+			// the two are as good as each other.
+			hits: [][]int{{100, 350, 300}, {500, 400, 600}, {700, 800, 800}},
+		},
+		{
+			workload: workload{name: "y", title: "Y", capacities: []int{5}},
+			requests: 2000,
+			// Nothing beats the standard setting.
+			hits: [][]int{{1000, 1000, 400}},
+		},
+	}
+
+	var out strings.Builder
+	if err := markdown(&out, "go run ./cmd/tune", settings, results); err != nil {
+		t.Fatal(err)
+	}
+	for _, line := range []string{
+		"Here it is replayed with 3 settings:",
+		"| trace | as it is | one setting for all | best setting for the trace | best setting for each capacity | the best setting for the trace is |",
+		// 1300, 1550, 1700 and 350+600+800 of 3000 requests.
+		"| X | 43.33 | 51.67 | 56.67 | 58.33 | " + b.String() + " |",
+		"| Y | 50.00 | 50.00 | 50.00 | 50.00 | " + standard.String() + " |",
+		"| **mean** | 46.67 | 50.83 | 53.33 | 54.17 | |",
+		// The best for both together is the best for neither.
+		"The one setting that does best for all of these traces together is: " + a.String() + ".",
+		"### X\n\n1,000 requests.",
+		"| 10 | 10.00 | 35.00 | " + a.String() + " |",
+		"| 20 | 50.00 | 60.00 | " + b.String() + " |",
+		// Of two that are as good, the one that comes first in the grid.
+		"| 30 | 70.00 | 80.00 | " + a.String() + " |",
+		"### Y\n\n2,000 requests.",
+		// And the standard one before any other.
+		"| 5 | 50.00 | 50.00 | " + standard.String() + " |",
+	} {
+		if !strings.Contains(out.String(), line) {
+			t.Errorf("the report lacks the line %q:\n%s", line, out.String())
+		}
+	}
+
+	// A report on one trace has nothing to say about all of them.
+	out.Reset()
+	if err := markdown(&out, "go run ./cmd/tune", settings, results[:1]); err != nil {
+		t.Fatal(err)
+	}
+	for _, line := range []string{
+		"| trace | as it is | best setting for the trace | best setting for each capacity | the best setting for the trace is |",
+		"| X | 43.33 | 56.67 | 58.33 | " + b.String() + " |",
+	} {
+		if !strings.Contains(out.String(), line) {
+			t.Errorf("the report on one trace lacks the line %q:\n%s", line, out.String())
+		}
+	}
+	for _, not := range []string{"one setting for all", "**mean**", "does best for all"} {
+		if strings.Contains(out.String(), not) {
+			t.Errorf("the report on one trace has %q in it:\n%s", not, out.String())
+		}
+	}
+
+	// The table of everything has a line for every setting at every capacity.
+	out.Reset()
+	if err := csv(&out, settings, results); err != nil {
+		t.Fatal(err)
+	}
+	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
+	if len(lines) != 1+3*3+3 || lines[0] != "dataset,capacity,small_ratio,ghost_ratio,promotion_reads,ghost_returns,requests,hits" ||
+		lines[5] != "x,20,0.05,0.9,2,1,1000,400" || lines[12] != "y,5,0.2,3,1,2,2000,400" {
+		t.Errorf("the table is:\n%s", out.String())
 	}
 }
 
@@ -250,6 +364,8 @@ func TestRunErrors(t *testing.T) {
 		{[]string{"-trace", filepath.Join(dir, "missing.txt"), "-capacities", "10"}, "no such file"},
 		{[]string{"-trace", empty, "-capacities", "10"}, "holds no requests"},
 		{[]string{"-no-such-flag"}, "flag provided but not defined"},
+		{[]string{file}, `there is nothing to do with "` + file + `"`},
+		{[]string{"-trace", file, "-capacities", "10", "-datasets", "small"}, "-datasets and -trace do not go together"},
 	} {
 		err := run(t.Context(), append(tt.args, "-out", filepath.Join(dir, "out")))
 		if err == nil || !strings.Contains(err.Error(), tt.want) {

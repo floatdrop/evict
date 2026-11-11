@@ -20,20 +20,24 @@ Produced by `go run ./cmd/tune -out results` with go1.27.3.
 
 The hit ratio in percent, averaged over the capacities at which a trace was replayed.
 
+A best setting is picked by the very requests that it is then measured with. What it gains
+is therefore the most that tuning has to offer for a trace, and more than the same setting
+will gain on requests that are yet to come.
+
 | trace | as it is | one setting for all | best setting for the trace | best setting for each capacity | the best setting for the trace is |
 |:---|---:|---:|---:|---:|:---|
 | Zipf | 38.25 | 37.86 | 38.79 | 39.03 | small 0.05, ghosts 3, promotion 1, returns 1 |
 | S3 | 38.90 | 40.18 | 41.75 | 43.05 | small 0.05, ghosts 0.9, promotion 1, returns 2 |
 | DS1 | 37.05 | 43.06 | 45.46 | 45.57 | small 0.05, ghosts 0.9, promotion 1, returns 2 |
 | OLTP | 39.11 | 38.45 | 40.64 | 40.71 | small 0.2, ghosts 6, promotion 2, returns 2 |
-| P8 | 35.31 | 35.99 | 37.11 | 37.62 | small 0.05, ghosts 0.9, promotion 2, returns 2 |
+| P8 | 35.31 | 35.99 | 37.11 | 37.63 | small 0.05, ghosts 0.9, promotion 2, returns 2 |
 | Glimpse | 43.24 | 44.67 | 44.84 | 44.91 | small 0.05, ghosts 0.9, promotion 1, returns 2 |
-| Mixed | 43.84 | 56.37 | 59.53 | 60.54 | small 0.1, ghosts 6, promotion 2, returns 1 |
+| Mixed | 43.84 | 56.39 | 59.53 | 61.06 | small 0.1, ghosts 6, promotion 2, returns 1 |
 | Scarab | 61.60 | 60.72 | 61.71 | 62.18 | small 0.2, ghosts 0.9, promotion 2, returns 1 |
 | Twitter | 60.32 | 60.11 | 60.47 | 60.52 | small 0.1, ghosts 3, promotion 2, returns 1 |
 | MSR | 67.22 | 67.14 | 67.23 | 67.42 | small 0.1, ghosts 0.9, promotion 1, returns 1 |
 | CloudPhysics | 27.59 | 27.46 | 27.70 | 28.42 | small 0.05, ghosts 0.9, promotion 2, returns 1 |
-| **mean** | 44.77 | 46.55 | 47.75 | 48.18 | |
+| **mean** | 44.77 | 46.55 | 47.75 | 48.23 | |
 
 The one setting that does best for all of these traces together is: small 0.05, ghosts 3, promotion 2, returns 2.
 
@@ -66,7 +70,7 @@ The one setting that does best for all of these traces together is: small 0.05, 
 | 400,000 | 34.62 | 40.25 | small 0.05, ghosts 0.9, promotion 1, returns 2 |
 | 500,000 | 41.42 | 49.31 | small 0.05, ghosts 0.9, promotion 1, returns 2 |
 | 600,000 | 49.21 | 56.23 | small 0.05, ghosts 0.9, promotion 2, returns 2 |
-| 700,000 | 56.97 | 62.50 | small 0.05, ghosts 0.9, promotion 1, returns 2 |
+| 700,000 | 56.97 | 62.51 | small 0.05, ghosts 0.9, promotion 1, returns 2 |
 | 800,000 | 64.31 | 68.22 | small 0.05, ghosts 0.9, promotion 1, returns 2 |
 
 ### DS1
@@ -79,9 +83,9 @@ The one setting that does best for all of these traces together is: small 0.05, 
 | 2,000,000 | 25.32 | 27.83 | small 0.05, ghosts 0.9, promotion 1, returns 2 |
 | 3,000,000 | 30.85 | 38.59 | small 0.05, ghosts 0.9, promotion 1, returns 2 |
 | 4,000,000 | 31.96 | 43.87 | small 0.05, ghosts 0.9, promotion 1, returns 2 |
-| 5,000,000 | 37.31 | 50.23 | small 0.05, ghosts 0.9, promotion 1, returns 2 |
+| 5,000,000 | 37.31 | 50.21 | small 0.05, ghosts 0.9, promotion 1, returns 2 |
 | 6,000,000 | 40.03 | 56.51 | small 0.05, ghosts 0.9, promotion 1, returns 2 |
-| 7,000,000 | 51.97 | 62.36 | small 0.05, ghosts 0.9, promotion 1, returns 2 |
+| 7,000,000 | 51.97 | 62.35 | small 0.05, ghosts 0.9, promotion 1, returns 2 |
 | 8,000,000 | 64.91 | 69.98 | small 0.05, ghosts 0.9, promotion 1, returns 2 |
 
 ### OLTP
@@ -91,9 +95,9 @@ The one setting that does best for all of these traces together is: small 0.05, 
 | capacity | as it is | best | with |
 |---:|---:|---:|:---|
 | 250 | 21.65 | 26.30 | small 0.3, ghosts 3, promotion 2, returns 2 |
-| 500 | 32.40 | 35.15 | small 0.3, ghosts 3, promotion 2, returns 2 |
+| 500 | 32.40 | 35.14 | small 0.3, ghosts 3, promotion 2, returns 2 |
 | 750 | 37.70 | 39.29 | small 0.2, ghosts 6, promotion 2, returns 2 |
-| 1,000 | 40.82 | 41.85 | small 0.2, ghosts 6, promotion 2, returns 2 |
+| 1,000 | 40.82 | 41.84 | small 0.2, ghosts 6, promotion 2, returns 2 |
 | 1,250 | 42.91 | 43.73 | small 0.2, ghosts 6, promotion 2, returns 2 |
 | 1,500 | 44.53 | 45.24 | small 0.2, ghosts 6, promotion 2, returns 2 |
 | 1,750 | 45.88 | 46.51 | small 0.2, ghosts 6, promotion 2, returns 2 |
@@ -135,9 +139,9 @@ The one setting that does best for all of these traces together is: small 0.05, 
 
 | capacity | as it is | best | with |
 |---:|---:|---:|:---|
-| 250 | 9.50 | 21.82 | small 0.2, ghosts 6, promotion 2, returns 2 |
-| 500 | 11.70 | 33.87 | small 0.2, ghosts 3, promotion 2, returns 2 |
-| 750 | 11.73 | 49.60 | small 0.3, ghosts 3, promotion 2, returns 1 |
+| 250 | 9.50 | 21.90 | small 0.2, ghosts 6, promotion 1, returns 2 |
+| 500 | 11.70 | 35.40 | small 0.1, ghosts 3, promotion 1, returns 2 |
+| 750 | 11.73 | 52.07 | small 0.05, ghosts 3, promotion 1, returns 2 |
 | 1,000 | 11.76 | 72.61 | small 0.05, ghosts 3, promotion 2, returns 1 |
 | 1,250 | 76.44 | 76.59 | small 0.9, ghosts 0.9, promotion 2, returns 1 |
 | 1,500 | 76.49 | 76.61 | small 0.7, ghosts 0.9, promotion 2, returns 1 |
@@ -152,7 +156,7 @@ The one setting that does best for all of these traces together is: small 0.05, 
 |---:|---:|---:|:---|
 | 1,000 | 35.22 | 35.91 | small 0.1, ghosts 6, promotion 2, returns 2 |
 | 5,000 | 47.75 | 47.93 | small 0.1, ghosts 6, promotion 2, returns 2 |
-| 10,000 | 53.51 | 53.57 | small 0.05, ghosts 6, promotion 2, returns 2 |
+| 10,000 | 53.51 | 53.58 | small 0.05, ghosts 6, promotion 2, returns 2 |
 | 25,000 | 62.41 | 62.58 | small 0.05, ghosts 3, promotion 2, returns 1 |
 | 50,000 | 69.47 | 70.14 | small 0.3, ghosts 0.9, promotion 1, returns 1 |
 | 75,000 | 72.99 | 73.93 | small 0.3, ghosts 0.9, promotion 1, returns 1 |
@@ -200,6 +204,6 @@ The one setting that does best for all of these traces together is: small 0.05, 
 | 5,000 | 15.22 | 16.03 | small 0.05, ghosts 6, promotion 2, returns 2 |
 | 10,000 | 17.84 | 18.82 | small 0.05, ghosts 6, promotion 2, returns 2 |
 | 25,000 | 27.62 | 27.82 | small 0.05, ghosts 0.9, promotion 2, returns 1 |
-| 50,000 | 33.87 | 34.36 | small 0.2, ghosts 3, promotion 1, returns 2 |
+| 50,000 | 33.87 | 34.37 | small 0.2, ghosts 3, promotion 1, returns 2 |
 | 100,000 | 43.28 | 43.43 | small 0.1, ghosts 0.9, promotion 1, returns 1 |
 | 200,000 | 54.81 | 58.78 | small 0.1, ghosts 0.9, promotion 1, returns 2 |
