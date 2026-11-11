@@ -49,7 +49,7 @@ func check[K, V comparable](t *testing.T, s *Slab[K, V], want map[K]V) {
 		if got := s.Find(hash, n.Key); got != idx {
 			t.Fatalf("Find(%v) = %d, want %d", n.Key, got, idx)
 		}
-		if got, found, certain := s.Lookup(hash, n.Key, 0); got != n.Value || !found || !certain {
+		if got, found, certain := s.Lookup(hash, n.Key, 0, false); got != n.Value || !found || !certain {
 			t.Fatalf("Lookup(%v) = %v, %t, %t, want %v", n.Key, got, found, certain, n.Value)
 		}
 	}
@@ -164,7 +164,7 @@ func TestInit(t *testing.T) {
 				t.Errorf("Init(%d, %d): list %d = %v, want empty", tt.capacity, tt.heads, head, got)
 			}
 		}
-		if v, found, certain := s.Lookup(42, 42, 1); v != 0 || found || !certain {
+		if v, found, certain := s.Lookup(42, 42, 1, false); v != 0 || found || !certain {
 			t.Errorf("Init(%d, %d): Lookup on empty slab = %d, %t, %t", tt.capacity, tt.heads, v, found, certain)
 		}
 		check(t, &s, map[int]int{})
@@ -197,7 +197,7 @@ func TestInsertReplaceRemove(t *testing.T) {
 	if got := s.Find(1, "x"); got != 0 {
 		t.Errorf(`Find("x") = %d, want 0`, got)
 	}
-	if got, found, certain := s.Lookup(1, "x", 1); got != 0 || found || !certain {
+	if got, found, certain := s.Lookup(1, "x", 1, false); got != 0 || found || !certain {
 		t.Errorf(`Lookup("x") = %d, %t, %t, want a certain miss`, got, found, certain)
 	}
 	now := func() uint64 { return s.readers.time.Load() }
@@ -647,14 +647,14 @@ func TestLookupWithoutSlot(t *testing.T) {
 	s.PushFront(0, s.Insert(1, 10, 100))
 
 	release := readers.Occupy(0)
-	if v, found, certain := s.Lookup(1, 10, 1); v != 0 || found || certain {
+	if v, found, certain := s.Lookup(1, 10, 1, false); v != 0 || found || certain {
 		t.Errorf("Lookup of a key that is there = %d, %t, %t without a slot to be had, want an uncertain miss", v, found, certain)
 	}
 	// The same hash, another key: only a look at the node could tell.
-	if v, found, certain := s.Lookup(1, 11, 1); v != 0 || found || certain {
+	if v, found, certain := s.Lookup(1, 11, 1, false); v != 0 || found || certain {
 		t.Errorf("Lookup of a key with the hash of another = %d, %t, %t without a slot to be had, want an uncertain miss", v, found, certain)
 	}
-	if v, found, certain := s.Lookup(2, 20, 1); v != 0 || found || !certain {
+	if v, found, certain := s.Lookup(2, 20, 1, false); v != 0 || found || !certain {
 		t.Errorf("Lookup of a key that is not there = %d, %t, %t, want a certain miss", v, found, certain)
 	}
 
@@ -668,12 +668,12 @@ func TestLookupWithoutSlot(t *testing.T) {
 	}
 
 	release()
-	if v, found, certain := s.Lookup(1, 10, 1); v != 99 || !found || !certain {
+	if v, found, certain := s.Lookup(1, 10, 1, false); v != 99 || !found || !certain {
 		t.Fatalf("Lookup = %d, %t, %t after the slots were given back", v, found, certain)
 	}
 	// A key with the same hash is told apart, and the value of the other
 	// one does not leak out.
-	if v, found, certain := s.Lookup(1, 11, 1); v != 0 || found || !certain {
+	if v, found, certain := s.Lookup(1, 11, 1, false); v != 0 || found || !certain {
 		t.Errorf("Lookup of a key with the hash of another = %d, %t, %t, want a certain miss", v, found, certain)
 	}
 	// No lookup leaves a node pinned.
@@ -712,7 +712,7 @@ func TestLookupWhileReplaced(t *testing.T) {
 		wg.Go(func() {
 			n, u := 0, 0
 			for !stop.Load() {
-				switch _, found, certain := s.Lookup(7, 7, 1); {
+				switch _, found, certain := s.Lookup(7, 7, 1, false); {
 				case !found && certain:
 					t.Error("Lookup is certain that the key is missing, and it was there all along")
 					return
@@ -748,25 +748,25 @@ func TestLookupCounts(t *testing.T) {
 	meta := &s.Nodes[idx].Meta
 
 	for range 3 {
-		s.Lookup(1, 10, 0)
+		s.Lookup(1, 10, 0, false)
 	}
 	if got := meta.Load(); got != 0 {
 		t.Errorf("Meta = %d after lookups with a limit of 0, want it untouched", got)
 	}
 	for i := range 5 {
-		s.Lookup(1, 10, 3)
+		s.Lookup(1, 10, 3, false)
 		if got, want := meta.Load(), uint32(min(i+1, 3)); got != want {
 			t.Errorf("Meta = %d after %d lookups with a limit of 3, want %d", got, i+1, want)
 		}
 	}
 	// A limit below what has been counted leaves it alone as well.
-	s.Lookup(1, 10, 1)
+	s.Lookup(1, 10, 1, false)
 	if got := meta.Load(); got != 3 {
 		t.Errorf("Meta = %d after a lookup with a limit of 1, want 3", got)
 	}
 	// A miss counts nothing.
-	s.Lookup(1, 11, 3)
-	s.Lookup(2, 10, 3)
+	s.Lookup(1, 11, 3, false)
+	s.Lookup(2, 10, 3, false)
 	if got := meta.Load(); got != 3 {
 		t.Errorf("Meta = %d after misses, want 3", got)
 	}
@@ -784,31 +784,86 @@ func TestLookupCounts(t *testing.T) {
 		return [2]uint32{same.Nodes[first].Meta.Load(), same.Nodes[second].Meta.Load()}
 	}
 
-	if v, ok, _ := same.Lookup(7, 2, 3); !ok || v != 20 {
+	if v, ok, _ := same.Lookup(7, 2, 3, false); !ok || v != 20 {
 		t.Fatalf("Lookup of the second of two keys with one hash = %d, %v", v, ok)
 	}
 	if got, want := counts(), [2]uint32{0, 1}; got != want {
 		t.Errorf("counts = %v after a read of the second key, want %v", got, want)
 	}
-	if _, ok, certain := same.Lookup(7, 3, 3); ok || !certain {
+	if _, ok, certain := same.Lookup(7, 3, 3, false); ok || !certain {
 		t.Fatalf("Lookup of a key that is absent = %v, certain %v", ok, certain)
 	}
 	if got, want := counts(), [2]uint32{0, 1}; got != want {
 		t.Errorf("counts = %v after a read of a key that is absent, want %v", got, want)
 	}
 	// Nor does a count that is there already go missing.
-	same.Lookup(7, 1, 3)
-	same.Lookup(7, 1, 3)
-	same.Lookup(7, 2, 3)
-	same.Lookup(7, 3, 3)
+	same.Lookup(7, 1, 3, false)
+	same.Lookup(7, 1, 3, false)
+	same.Lookup(7, 2, 3, false)
+	same.Lookup(7, 3, 3, false)
 	if got, want := counts(), [2]uint32{2, 2}; got != want {
 		t.Errorf("counts = %v after two reads of the first key and one more of the second, want %v", got, want)
 	}
 	// The same with a count that is at the limit of the read.
-	same.Lookup(7, 2, 2)
-	same.Lookup(7, 3, 2)
+	same.Lookup(7, 2, 2, false)
+	same.Lookup(7, 3, 2, false)
 	if got, want := counts(), [2]uint32{2, 2}; got != want {
 		t.Errorf("counts = %v after reads with a limit that has been reached, want %v", got, want)
+	}
+}
+
+// TestLookupTallies checks that the readers' tally of hits counts the lookups
+// that found their key and were asked to count, and only those.
+func TestLookupTallies(t *testing.T) {
+	t.Parallel()
+
+	r := NewReaders()
+	var s, other Slab[int, int]
+	s.Init(8, 1, r)
+	other.Init(8, 1, r)
+	for _, sl := range []*Slab[int, int]{&s, &other} {
+		for _, key := range []int{1, 2} {
+			// Two keys with one hash: a lookup of one passes the other.
+			sl.PushFront(0, sl.Insert(7, key, 10*key))
+		}
+	}
+
+	s.Lookup(7, 1, 3, true)
+	s.Lookup(7, 2, 0, true) // Whatever the limit of the count on the node.
+	s.Lookup(7, 1, 3, false)
+	s.Lookup(7, 3, 3, true) // Absent, past two nodes with the same hash.
+	s.Lookup(8, 1, 3, true) // Absent, and no node with its hash.
+	other.Lookup(7, 2, 3, true)
+	if got := r.Hits(); got != 3 {
+		t.Errorf("Hits() = %d after three lookups that found their key and were to be tallied, want 3", got)
+	}
+
+	// A reader that finds no slot to pin with reads as a writer instead,
+	// and the tally is the caller's business then.
+	release := r.Occupy(0)
+	if _, found, certain := s.Lookup(7, 1, 3, true); found || certain {
+		t.Fatalf("Lookup without a slot = %t, certain %t", found, certain)
+	}
+	release()
+	if got := r.Hits(); got != 3 {
+		t.Errorf("Hits() = %d after a lookup that found no slot, want 3", got)
+	}
+
+	// Many readers at once lose no hit, whichever slots they share.
+	var wg sync.WaitGroup
+	for g := range 16 {
+		wg.Go(func() {
+			for i := range 1000 {
+				if _, found, _ := s.Lookup(7, 1+(g+i)%2, 3, true); !found {
+					t.Error("Lookup did not find a key with no writer about")
+					return
+				}
+			}
+		})
+	}
+	wg.Wait()
+	if got := r.Hits(); got != 3+16*1000 {
+		t.Errorf("Hits() = %d after 16,000 more hits, want %d", got, 3+16*1000)
 	}
 }
 
@@ -1406,7 +1461,7 @@ func TestConcurrentReaders(t *testing.T) {
 				key := rng.IntN(keys)
 				before := present[key].Load()
 
-				v, found, certain := s.Lookup(hashOf(key), key, 1)
+				v, found, certain := s.Lookup(hashOf(key), key, 1, false)
 
 				if found && (v.a != key || v.c != v.a^v.b^sum) {
 					t.Errorf("Lookup(%d) found the value %v", key, v)
@@ -1460,7 +1515,7 @@ func TestNoAllocs(t *testing.T) {
 			s.PushFront(0, s.Insert(uint32(i%3), key, value))
 		}
 		for i, key := range keys {
-			s.Lookup(uint32(i%3), key, 1)
+			s.Lookup(uint32(i%3), key, 1, false)
 
 			idx := s.Replace(s.Find(uint32(i%3), key), key, value)
 			s.Unlink(idx)

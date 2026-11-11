@@ -222,11 +222,16 @@ func (s *Slab[K, V]) Hash(idx uint32) uint32 { return s.Links[idx].hash }
 // its Meta at that very moment: that one may come out one too high or one
 // too low, though never above the limit.
 //
+// If tally is set, a lookup that finds its key also adds one to the hits of
+// the slot it pinned the node with, which is a count that, unlike the Meta of
+// a node, knows no limit; see [Readers.Hits]. A lookup that finds nothing, or
+// does not get to pin anything, adds nothing.
+//
 // Lookup is for readers. If it finds no value, certain says whether the key
 // is known to be absent. It is not if entries were on the move in the
 // meantime, or if no slot was to be had for pinning a node. The caller should
 // then ask again as a writer, with [Slab.Find].
-func (s *Slab[K, V]) Lookup(hash uint32, key K, limit uint32) (value V, found, certain bool) {
+func (s *Slab[K, V]) Lookup(hash uint32, key K, limit uint32, tally bool) (value V, found, certain bool) {
 	seq := s.seq.Load()
 
 	slots, mask := s.slots, s.mask
@@ -275,6 +280,11 @@ func (s *Slab[K, V]) Lookup(hash uint32, key K, limit uint32) (value V, found, c
 		slot.Unpin()
 
 		if k == key {
+			// The slot is no longer this reader's, but the count is
+			// atomic, and its line is still in this CPU's cache.
+			if tally {
+				slot.hits.Add(1)
+			}
 			return value, true, true
 		}
 		// The node belongs to another key with the same hash, which is
