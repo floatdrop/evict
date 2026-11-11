@@ -3,6 +3,7 @@ package cslab
 import (
 	"math/bits"
 	"math/rand/v2"
+	"runtime"
 	"slices"
 	"sync"
 	"sync/atomic"
@@ -489,11 +490,25 @@ func TestWriterWaitsForSpareNode(t *testing.T) {
 		t.Fatalf("%d nodes are waiting, want all %d spare ones", s.waiting, spare)
 	}
 
+	looks := readers.time.Load()
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
 		s.Replace(s.Find(1, 1), 1, "new") // Needs a node, and has to wait for one.
 	}()
+	// The writer looks for a node again and again. By its second look it
+	// has come away with nothing at least once; until then it may not even
+	// have begun, on a machine that is busy.
+	for deadline := time.Now().Add(10 * time.Second); readers.time.Load() < looks+2; runtime.Gosched() {
+		select {
+		case <-done:
+			t.Fatal("Replace found a node to use while readers were looking at all the spare ones")
+		default:
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("the writer is not looking for a node")
+		}
+	}
 	select {
 	case <-done:
 		t.Fatal("Replace found a node to use while readers were looking at all the spare ones")
