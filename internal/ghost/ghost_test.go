@@ -10,22 +10,39 @@ import (
 // added, with a zero where one has been removed.
 type model struct {
 	capacity int
+	counting bool
 	ring     []uint64
+	asked    []int // for every place in ring: how often its hash was asked for
 }
 
 func (m *model) add(hash uint64) {
 	if m.capacity == 0 || slices.Contains(m.ring, hash) {
 		return
 	}
-	m.ring = append(m.ring, hash)
+	m.ring, m.asked = append(m.ring, hash), append(m.asked, 0)
 	if len(m.ring) > m.capacity {
-		m.ring = m.ring[1:]
+		m.ring, m.asked = m.ring[1:], m.asked[1:]
 	}
 }
 
 func (m *model) remove(hash uint64) bool {
 	i := slices.Index(m.ring, hash)
 	if i < 0 {
+		return false
+	}
+	m.ring[i] = 0
+	return true
+}
+
+// recall removes the hash if this is at least the given number of times that
+// it has been asked for, or if the model does not count.
+func (m *model) recall(hash uint64, times int) bool {
+	i := slices.Index(m.ring, hash)
+	if i < 0 {
+		return false
+	}
+	m.asked[i]++
+	if m.counting && m.asked[i] < times {
 		return false
 	}
 	m.ring[i] = 0
@@ -144,7 +161,11 @@ func TestNoCapacity(t *testing.T) {
 func TestAgainstModel(t *testing.T) {
 	t.Parallel()
 
-	for _, capacity := range []int{1, 2, 3, 10, 40, 300} {
+	for _, tt := range []struct {
+		capacity int
+		counting bool
+	}{{1, false}, {2, false}, {3, false}, {10, false}, {40, false}, {300, false}, {1, true}, {2, true}, {10, true}, {40, true}, {300, true}} {
+		capacity := tt.capacity
 		rng := rand.New(rand.NewPCG(uint64(capacity), 9))
 		hashOf := func() uint64 {
 			h := uint64(rng.IntN(3 * capacity))
@@ -159,18 +180,30 @@ func TestAgainstModel(t *testing.T) {
 		}
 
 		var s Set
-		s.Init(capacity)
-		m := model{capacity: capacity}
+		if tt.counting {
+			s.InitCounting(capacity)
+		} else {
+			s.Init(capacity)
+		}
+		m := model{capacity: capacity, counting: tt.counting}
 
 		for step := range 20_000 {
 			hash := hashOf()
-			if rng.IntN(3) == 0 {
+			switch rng.IntN(4) {
+			case 0:
 				// The set tells hashes apart by all bits but the highest.
 				got, want := s.Remove(hash), m.remove(hash|present)
 				if got != want {
 					t.Fatalf("capacity %d, step %d: Remove(%#x) = %t, want %t", capacity, step, hash, got, want)
 				}
-			} else {
+			case 1:
+				times := rng.IntN(4)
+				got, want := s.Recall(hash, times), m.recall(hash|present, times)
+				if got != want {
+					t.Fatalf("capacity %d, counting %t, step %d: Recall(%#x, %d) = %t, want %t",
+						capacity, tt.counting, step, hash, times, got, want)
+				}
+			default:
 				s.Add(hash)
 				m.add(hash | present)
 			}
@@ -195,11 +228,83 @@ func TestAgainstModel(t *testing.T) {
 	}
 }
 
+// TestRecall checks the count that a set keeps of how often a hash has been
+// asked for: it is the hash's own, starts over when the hash is added anew,
+// and is not there at all in a set that was not made to count.
+func TestRecall(t *testing.T) {
+	t.Parallel()
+
+	var s Set
+	s.InitCounting(2)
+
+	s.Add(1)
+	if s.Recall(1, 2) || s.Len() != 1 {
+		t.Fatal("Recall took a hash out the first time it was asked for, where it takes two")
+	}
+	s.Add(1) // It is there already, and stays as it is.
+	if !s.Recall(1, 2) || s.Len() != 0 {
+		t.Fatal("Recall did not take a hash out the second time it was asked for")
+	}
+	if s.Recall(1, 2) || s.Recall(1, 1) {
+		t.Fatal("Recall found a hash that it had taken out")
+	}
+
+	// A hash that is added again has not been asked for.
+	s.Add(1)
+	if s.Recall(1, 2) {
+		t.Fatal("a hash that was added again counts from where it had been before")
+	}
+	// Nor has the hash that takes the place of another.
+	s.Add(2)
+	s.Add(3) // The set has room for two: this one takes the place of 1.
+	if s.Recall(1, 1) {
+		t.Fatal("the set has room for two hashes and remembers a third")
+	}
+	if s.Recall(3, 2) {
+		t.Fatal("a hash has inherited the count of the one whose place it took")
+	}
+	if !s.Recall(3, 2) {
+		t.Fatal("Recall did not take a hash out the second time it was asked for")
+	}
+	// A count of one, or of none, is reached the first time.
+	if !s.Recall(2, 1) {
+		t.Fatal("Recall for the first time did not take the hash out")
+	}
+	s.Add(7)
+	if !s.Recall(7, 0) || s.Len() != 0 {
+		t.Fatal("Recall with no count to reach did not take the hash out")
+	}
+
+	// Reset forgets the counts with the hashes.
+	s.Add(4)
+	s.Recall(4, 3)
+	s.Recall(4, 3)
+	s.Reset()
+	s.Add(4)
+	if s.Recall(4, 2) {
+		t.Fatal("a count has outlived Reset")
+	}
+
+	// A set that does not count takes a hash out whatever it is told.
+	s.Init(2)
+	s.Add(5)
+	if !s.Recall(5, 100) {
+		t.Fatal("a set that does not count has kept a hash that was asked for")
+	}
+	// And one that is set up again without counting has stopped.
+	s.InitCounting(2)
+	s.Init(2)
+	s.Add(6)
+	if !s.Recall(6, 2) {
+		t.Fatal("Init has left the set counting")
+	}
+}
+
 // TestNoAllocs is not parallel: counting allocations needs the process to
 // itself.
 func TestNoAllocs(t *testing.T) {
 	var s Set
-	s.Init(100)
+	s.InitCounting(100)
 
 	hash, step := uint64(0), uint64(0x9e3779b97f4a7c15)
 	allocs := testing.AllocsPerRun(1, func() {
@@ -207,6 +312,7 @@ func TestNoAllocs(t *testing.T) {
 			hash += step
 			s.Add(hash)
 			s.Remove(hash - 50*step)
+			s.Recall(hash-20*step, 2)
 		}
 		s.Reset()
 	})

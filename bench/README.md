@@ -11,6 +11,10 @@ Three questions about a cache, three benchmarks:
 `make bench` runs all of them. The targets are in the Makefile at the root of the repository;
 each is a `go` command that can just as well be run from this directory.
 
+A fourth question is only about `evict/s3fifo`: what would it answer with other numbers
+for its queues? `make bench-tuning` replays the traces with 84 settings and writes
+[results/tuning.md](results/tuning.md); see [Tuning S3-FIFO](#tuning-s3-fifo) below.
+
 The benchmarks are a Go module of their own, so that the caches do not depend on the
 libraries they are compared with.
 
@@ -103,6 +107,25 @@ are reported with their range.
 `-caches evict/sieve,evict/sieve@16,evict/sieve@256` puts caches with a number of shards of
 one's choosing next to each other.
 
+### Tuning S3-FIFO
+
+`evict/s3fifo` has four options that change the numbers of the paper: the share of the
+small queue, the number of ghosts, the reads that it takes to move up from the small queue,
+and the times a ghost has to come back. `go run ./cmd/tune` replays every trace with each of
+84 combinations of them, in one piece, and reports what the cache answers as it is, with
+the one setting that is best for all traces, and with the setting that is best for each.
+
+To find the setting for a workload of your own, record its keys and replay the recording:
+
+```
+go run ./cmd/tune -trace requests.txt -format lirs -capacities 10000,100000 -out tuned
+```
+
+A recording in the format `lirs` is a text file with a number for every request, one per
+line; hash your keys to numbers if they are something else. The other formats are those of
+the published traces: `arc`, `oraclegeneral` and `bigendian`. The file may be compressed
+with gzip, zstd or xz. The report names the options to pass to `s3fifo.New`.
+
 ## Throughput
 
 `go test -bench . -cpu 1,2,4,8` runs [throughput_test.go](throughput_test.go). Every
@@ -177,6 +200,6 @@ which does: it is given as the least and the most of seven collections.
 | `caches/` | The caches under one interface. |
 | `replay/` | The replay of a trace against a cache, and the optimal cache. |
 | `report/` | The tables and the charts. |
-| `cmd/hitratio`, `cmd/memory`, `cmd/benchtable` | The commands. |
+| `cmd/hitratio`, `cmd/tune`, `cmd/memory`, `cmd/benchtable` | The commands. |
 | `throughput_test.go` | The throughput benchmarks. |
 | `results/` | What the benchmarks measured the last time they were run for this repository. |
