@@ -9,6 +9,7 @@ import (
 	"github.com/floatdrop/evict/lru"
 	"github.com/floatdrop/evict/s3fifo"
 	"github.com/floatdrop/evict/sieve"
+	"github.com/floatdrop/evict/tinylfu"
 	"github.com/floatdrop/evict/twoq"
 )
 
@@ -105,6 +106,21 @@ func All[K comparable, V any]() []Kind[K, V] {
 			},
 		},
 		{
+			Name: "evict/tinylfu",
+			New: func(capacity int) Cache[K, V] {
+				return tinylfuCache[K, V]{tinylfu.New[K, V](capacity)}
+			},
+			Exact: func(capacity int) Cache[K, V] {
+				return tinylfuCache[K, V]{tinylfu.New[K, V](capacity, tinylfu.WithShards(1))}
+			},
+			Shards: func(capacity, shards int) Cache[K, V] {
+				return tinylfuCache[K, V]{tinylfu.New[K, V](capacity, tinylfu.WithShards(shards))}
+			},
+			// Which keys share counters in its sketch is up to a hash that
+			// is seeded at random.
+			Varies: true,
+		},
+		{
 			Name: "otter",
 			// Setting the initial capacity is not a default, but it is what
 			// otter's own benchmarks do, and it spares otter from growing
@@ -169,6 +185,11 @@ type s3fifoCache[K comparable, V any] struct{ c *s3fifo.Cache[K, V] }
 
 func (c s3fifoCache[K, V]) Get(key K) (V, bool) { return c.c.Get(key) }
 func (c s3fifoCache[K, V]) Set(key K, value V)  { c.c.Set(key, value) }
+
+type tinylfuCache[K comparable, V any] struct{ c *tinylfu.Cache[K, V] }
+
+func (c tinylfuCache[K, V]) Get(key K) (V, bool) { return c.c.Get(key) }
+func (c tinylfuCache[K, V]) Set(key K, value V)  { c.c.Set(key, value) }
 
 type otterCache[K comparable, V any] struct{ c *otter.Cache[K, V] }
 

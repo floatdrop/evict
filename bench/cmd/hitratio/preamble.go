@@ -45,16 +45,17 @@ it is missing. The column `+"`optimal`"+` is not a cache but the bound that no c
 beat: what one would score that knew the requests to come.
 
 The caches of this module run in one piece here, with a single shard, and otter evicts on
-the spot rather than in the background, as it does in its own simulator. The caches of
-this module and those of golang-lru then evict the same way every time, and their numbers
-are the same on every run. Otter's are not: it admits some entries at random, which moves
-its hit ratio from one replay to the next, in this run %s.
-Its number is the median of %d replays, which is also what the charts show, and the column
-next to it has the lowest and the highest of them. That is not all the range there is:
-of further replays, about %d in a hundred would come out below it or above it.
+the spot rather than in the background, as it does in its own simulator. Most of the
+caches then evict the same way every time, and their numbers are the same on every run.
+Two do not. Otter admits some entries at random, and `+"`evict/tinylfu`"+` counts requests in a
+sketch in which keys share counters, by a hash that is seeded at random. That moves their
+hit ratios from one replay to the next, in this run %s.
+Their numbers are the medians of %d replays, which is also what the charts show, and the
+column next to each has the lowest and the highest of them. That is not all the range
+there is: of further replays, about %d in a hundred would come out below it or above it.
 
 A number is in bold if the cache did better in that row than every other one, on each of
-their replays. Where the range of otter reaches the best of the others, the row has no
+their replays. Where the range of one cache reaches the best of the others, the row has no
 winner.
 
 A program does not get the caches of this module in one piece unless it asks for that: by
@@ -100,6 +101,11 @@ entries one shard, and a larger one the largest power of two of them that leaves
 so the hit ratio of a cache in shards differs from run to run. The number is the
 difference for the median of %d replays, and the brackets hold the differences for the
 worst and for the best of them.
+
+`+"`evict/tinylfu`"+` differs from run to run in one piece as well: which keys share counters in
+its sketch is up to the same hash. What its replays in shards are compared with is the
+median of as many replays in one piece, so its brackets are never empty, not even where a
+cache is too small to be split.
 
 %s`, sharedCPUs, 8*sharedCPUs, runs, produced(command))
 }

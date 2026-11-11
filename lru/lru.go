@@ -66,10 +66,11 @@ type config struct {
 // By default the cache has a single shard if its capacity is less than 512
 // and otherwise several per CPU, as long as that leaves each shard with at
 // least 256 entries. On the traces that the benchmarks replay, shards of that
-// size move the hit ratio by less than a tenth of a percentage point. A single
-// run can stray further on a trace of a few thousand requests, by up to three
-// points: see the report on shards there, which was made as on a machine with
-// eight CPUs.
+// size move the hit ratio by less than a tenth of a percentage point, but for
+// one that is a few thousand requests long, on which single runs have strayed
+// by up to one and a half points and the median of eleven by more than one at
+// one capacity: see the report on shards there, which was made as on a machine
+// with eight CPUs.
 func WithShards(n int) Option {
 	return func(c *config) { c.shards = n }
 }

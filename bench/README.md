@@ -22,7 +22,7 @@ libraries they are compared with.
 
 | Name | What it is |
 |:---|:---|
-| `evict/lru`, `evict/twoq`, `evict/sieve`, `evict/s3fifo` | The caches of this module. |
+| `evict/lru`, `evict/twoq`, `evict/sieve`, `evict/s3fifo`, `evict/tinylfu` | The caches of this module. |
 | `otter` | [otter](https://github.com/maypok86/otter) v2, the state of the art among Go caches. It evicts with adaptive W-TinyLFU, reads without locks, and writes through buffers that a background task drains. |
 | `golang-lru`, `golang-lru/2q` | [hashicorp/golang-lru](https://github.com/hashicorp/golang-lru) v2: an LRU and a 2Q cache behind a single lock, the way most caches used to be built. They are here for perspective, and `golang-lru` also as a check: the tests require `evict/lru` to agree with it on every single request of a trace. Its 2Q is not the same algorithm as `evict/twoq`: it promotes an entry that is read again while it is still recent, where the 2Q of the paper waits for it to come back after it has been evicted. |
 | `optimal` | Not a cache but the bound on hit ratios: what a cache would score that knew the requests to come ([Belady's algorithm](https://en.wikipedia.org/wiki/Cache_replacement_policies#Belady's_algorithm), with the option of not storing a key at all). |
@@ -43,14 +43,16 @@ background, as it is in its own simulator.
 The traces are downloaded on first use, into the user's cache directory unless `-dir` says
 otherwise, and each file is checked against the SHA-256 that
 [dataset/dataset.go](dataset/dataset.go) has on record for it. A run on another machine
-therefore replays the very same requests, and the numbers for the caches of this module
-and for golang-lru come out the same to the last digit.
+therefore replays the very same requests, and the numbers for golang-lru and for the caches
+of this module but `evict/tinylfu` come out the same to the last digit.
 
 Otter's do not. It admits some entries at random, and its hit ratio moves from one replay
 to the next because of it: by several percentage points at some capacities, and hardly at
-all at others. A cache like that is replayed eleven times (`-runs`), and the report has the
-median and the range. A cache is only called the winner of a row if it beat the others on
-every replay.
+all at others. Nor do those of `evict/tinylfu`, whose sketch has keys share counters by a
+hash that is seeded at random, so that which keys it confuses differs from one replay to the
+next. A cache like that is replayed eleven times (`-runs`), and the report has the median and
+the range. A cache is only called the winner of a row if it beat the others on every
+replay.
 
 | Dataset | Workload | Requests | Keys | Download |
 |:---|:---|---:|---:|---:|
@@ -149,7 +151,7 @@ measures comes after that. With a million entries it is not: the share of reads 
 `ReadThrough` reports for those caches is that of a cache which is still learning, and a
 few tenths of a percentage point higher where a cache got through more requests in its
 second, as it does with more CPUs. Otter's share moves with the number of CPUs in the small
-cache as well, from 87.0% to 87.6%. That is not the warm-up, and why it does was not looked
+cache as well, between 86.9% with two CPUs and 87.6% with eight. That is not the warm-up, and why it does was not looked
 into.
 
 | Benchmark | What every goroutine does |
