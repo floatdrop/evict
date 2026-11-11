@@ -381,9 +381,7 @@ func TestHeldUpReader(t *testing.T) {
 		case <-time.After(10 * time.Second):
 			t.Fatalf("%d shards: Clear is still waiting although the reader has left", shards)
 		}
-		runtime.GC()
-		runtime.GC()
-		if ref.Value() != nil {
+		if cachetest.Alive([]weak.Pointer[cachetest.Blob]{ref}, 0) != 0 {
 			t.Errorf("%d shards: the value is alive after Clear", shards)
 		}
 
@@ -548,23 +546,13 @@ func testReadersHelp(t *testing.T, read func(c *sieve.Cache[int, *cachetest.Blob
 	}
 	looking.Wait()
 
-	alive := func() int {
-		runtime.GC()
-		runtime.GC()
-		n := 0
-		for _, ref := range refs {
-			if ref.Value() != nil {
-				n++
-			}
-		}
-		return n
-	}
+	alive := func(limit int) int { return cachetest.Alive(refs, limit) }
 
 	// Everything is deleted. The shard lets go of what it can.
 	for key := range capacity {
 		c.Delete(key)
 	}
-	if got := alive(); got < held || got > held+2 {
+	if got := alive(held + 2); got < held || got > held+2 {
 		t.Fatalf("%d values are alive after all were deleted, want the %d that readers look at and up to 2 more", got, held)
 	}
 
@@ -585,7 +573,7 @@ func testReadersHelp(t *testing.T, read func(c *sieve.Cache[int, *cachetest.Blob
 		})
 	}
 	wg.Wait()
-	if got := alive(); got < held {
+	if got := alive(len(refs)); got < held {
 		t.Fatalf("%d values are alive, fewer than the %d that readers are looking at", got, held)
 	}
 
@@ -595,7 +583,7 @@ func testReadersHelp(t *testing.T, read func(c *sieve.Cache[int, *cachetest.Blob
 	for i := range 400_000 {
 		read(c, i%capacity)
 	}
-	if got := alive(); got != 0 {
+	if got := alive(0); got != 0 {
 		t.Errorf("%d values are alive after plenty of reads, want none: the readers did not help", got)
 	}
 	runtime.KeepAlive(c)
