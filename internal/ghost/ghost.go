@@ -6,7 +6,10 @@
 // not to matter for what a cache does with the answer.
 package ghost
 
-import "math/bits"
+import (
+	"math"
+	"math/bits"
+)
 
 // Set remembers the hashes that were added to it until as many more have been
 // added as it has room for. It does not allocate once it has been
@@ -128,14 +131,14 @@ func (s *Set) Remove(hash uint64) bool {
 // asked for the given number of times, this one included. Until then the hash
 // stays where it is, and is forgotten when its turn comes like any other. A
 // set that does not count, or a number below two, makes Recall the same as
-// Remove.
+// Remove. A set counts in a byte: a number above 256 is taken for 256.
 func (s *Set) Recall(hash uint64, times int) bool {
 	slot, ok := s.find(hash | present)
 	if !ok {
 		return false
 	}
 	place := s.index[slot] - 1
-	if int(place) < len(s.asked) && int(s.asked[place])+1 < times {
+	if int(place) < len(s.asked) && int(s.asked[place])+1 < min(times, math.MaxUint8+1) {
 		s.asked[place]++
 		return false
 	}

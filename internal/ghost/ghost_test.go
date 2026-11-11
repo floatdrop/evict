@@ -275,6 +275,20 @@ func TestRecall(t *testing.T) {
 		t.Fatal("Recall with no count to reach did not take the hash out")
 	}
 
+	// The count is kept in a byte. Whoever asks for more than that holds
+	// gets the hash at the 256th time, whatever the number.
+	for _, times := range []int{256, 257, 1 << 20} {
+		s.Add(8)
+		for asked := 1; asked < 256; asked++ {
+			if s.Recall(8, times) {
+				t.Fatalf("Recall took a hash out when it was asked for the %d. time of %d", asked, times)
+			}
+		}
+		if !s.Recall(8, times) || s.Len() != 0 {
+			t.Fatalf("Recall did not take a hash out when it was asked for the 256th time of %d", times)
+		}
+	}
+
 	// Reset forgets the counts with the hashes.
 	s.Add(4)
 	s.Recall(4, 3)

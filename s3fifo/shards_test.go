@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/floatdrop/evict/internal/cachetest"
+	"github.com/floatdrop/evict/internal/ghost"
 )
 
 func TestShards(t *testing.T) {
@@ -132,6 +133,11 @@ func TestShare(t *testing.T) {
 		{0.9999, 1000, 999},
 		{1.0 / 3, 3, 1},
 		{2.0 / 3, 3, 2},
+		// The hair is no more than that: a thousandth of an entry short of
+		// one is none, and so is a hundred-thousandth.
+		{0.09995, 10, 0},
+		{0.099999, 10, 0},
+		{0.999995, 2, 1},
 	} {
 		if got := share(tt.ratio, tt.n); got != tt.want {
 			t.Errorf("share(%v, %d) = %d, want %d", tt.ratio, tt.n, got, tt.want)
@@ -178,16 +184,36 @@ func TestOptions(t *testing.T) {
 			t.Errorf("%s: the main queue has room for %d, there are %d ghosts, promotion takes %d reads and a ghost %d returns; want %d, %d, %d and %d",
 				tt.name, s.mainCap, s.ghosts.Cap(), s.promote, s.returns, tt.mainCap, tt.ghosts, tt.promote, tt.returns)
 		}
+		// The ghosts count how often they are asked for if they have to
+		// come back more than once, and only then.
+		if counts := counting(&s.ghosts); tt.ghosts > 0 && counts != (tt.returns > 1) {
+			t.Errorf("%s: that the ghosts count is %t, with %d returns", tt.name, counts, tt.returns)
+		}
 	}
 
-	// The shares are those of each shard.
-	c := New[int, int](1000, WithShards(8), WithSmallRatio(0.2), WithGhostRatio(2))
+	// The shares are those of each shard, and what goes for one shard goes
+	// for all.
+	c := New[int, int](1000, WithShards(8), WithSmallRatio(0.2), WithGhostRatio(2), WithPromotionReads(1), WithGhostReturns(3))
 	for i := range c.shards {
-		if s := &c.shards[i]; s.capacity != 125 || s.mainCap != 100 || s.ghosts.Cap() != 250 {
+		s := &c.shards[i]
+		if s.capacity != 125 || s.mainCap != 100 || s.ghosts.Cap() != 250 {
 			t.Errorf("shard %d holds %d entries, %d of them in the main queue, and %d ghosts; want 125, 100 and 250",
 				i, s.capacity, s.mainCap, s.ghosts.Cap())
 		}
+		if counts := counting(&s.ghosts); s.promote != 1 || s.returns != 3 || !counts {
+			t.Errorf("shard %d: promotion takes %d reads and a ghost %d returns, and that the ghosts count is %t; want 1, 3 and true",
+				i, s.promote, s.returns, counts)
+		}
 	}
+}
+
+// counting reports whether a set of ghosts counts how often each one is asked
+// for: one that does keeps a ghost that is to come back twice the first time.
+// The set is used up by asking.
+func counting(ghosts *ghost.Set) bool {
+	const hash = 12345
+	ghosts.Add(hash)
+	return !ghosts.Recall(hash, 2)
 }
 
 // TestBookkeeping checks through a long run of operations that the counters

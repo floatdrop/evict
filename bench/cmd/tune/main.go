@@ -151,6 +151,14 @@ func run(ctx context.Context, args []string) error {
 		}
 		return err
 	}
+	if flags.NArg() > 0 {
+		return fmt.Errorf("there is nothing to do with %q; a recording is given with -trace", flags.Arg(0))
+	}
+	given := map[string]bool{}
+	flags.Visit(func(f *flag.Flag) { given[f.Name] = true })
+	if given["trace"] && given["datasets"] {
+		return errors.New("-datasets and -trace do not go together: it is the datasets or a recording")
+	}
 
 	var workloads []workload
 	if *file != "" {
@@ -379,6 +387,10 @@ Produced by `+"`%s`"+` with %s.
 ## At a glance
 
 The hit ratio in percent, averaged over the capacities at which a trace was replayed.
+
+A best setting is picked by the very requests that it is then measured with. What it gains
+is therefore the most that tuning has to offer for a trace, and more than the same setting
+will gain on requests that are yet to come.
 
 `, len(settings), command, runtime.Version())
 
