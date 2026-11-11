@@ -10,6 +10,11 @@
 //   - [github.com/floatdrop/evict/s3fifo] implements S3-FIFO, which lets new
 //     entries prove themselves in a small queue before they get into the
 //     main one, and reads without taking a lock as well.
+//   - [github.com/floatdrop/evict/tinylfu] admits with TinyLFU: an entry gets
+//     past the small queue only if its key has been asked for more often of
+//     late than the entry it would replace, by a record that the cache keeps
+//     of keys whether it holds them or not. It finds the size of the small
+//     queue by itself, and reads without taking a lock as well.
 //
 // Every cache is safe for concurrent use and keeps its entries in arrays that
 // it allocates when it is created and addresses by 32-bit indices. Getting,
@@ -42,7 +47,8 @@ package evict
 import "iter"
 
 // Cache is the behaviour common to every cache in this module. It is
-// implemented by *lru.Cache, *twoq.Cache, *sieve.Cache and *s3fifo.Cache.
+// implemented by *lru.Cache, *twoq.Cache, *sieve.Cache, *s3fifo.Cache and
+// *tinylfu.Cache.
 //
 // All methods are safe for concurrent use.
 type Cache[K comparable, V any] interface {

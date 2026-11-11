@@ -25,14 +25,15 @@ import (
 )
 
 // hot matches the functions that every operation on a cache goes through.
-var hot = regexp.MustCompile(`/(lru|twoq|sieve|s3fifo)\.\(\*(Cache|shard)\[.*\]\)\.(Get|Peek|Set|set|evict|Delete)$|` +
+var hot = regexp.MustCompile(`/(lru|twoq|sieve|s3fifo|tinylfu)\.\(\*(Cache|shard)\[.*\]\)\.(Get|Peek|Set|set|evict|Delete|look|victim|promote|asked)$|` +
 	`/c?slab\.\(\*Slab\[.*\]\)\.(Find|Lookup|Insert|Replace|Remove)$`)
 
 // slow matches the calls that must not show up in them: functions that are
 // small enough to be inlined, and are, as long as the compiler knows them.
 var slow = regexp.MustCompile(`^sync\.\(\*(RW)?Mutex\)\.|^sync/atomic\.|` +
 	`slab\.\(\*Slab\[.*\]\)\.(MoveToFront|PushFront|Unlink|Len|Cap|Overdue|Hash)$|` +
-	`cslab\.\(\*(Readers|Slot)\)\.(Pin|Unpin)$|/s3fifo\.(tagOf|ghostOf)$`)
+	`cslab\.\(\*(Readers|Slot)\)\.(Pin|Unpin)$|/s3fifo\.(tagOf|ghostOf)$|` +
+	`/tinylfu\.(tagOf|kept|keep|printOf|printIn)$|/tinylfu\.\(\*climber\)\.(hit|miss)$`)
 
 func TestHotPathsAreInlined(t *testing.T) {
 	t.Parallel()
@@ -100,7 +101,7 @@ func TestHotPathsAreInlined(t *testing.T) {
 	}
 
 	// The test is only worth something if it has looked at the right code.
-	for _, pkg := range []string{"lru", "twoq", "sieve", "s3fifo"} {
+	for _, pkg := range []string{"lru", "twoq", "sieve", "s3fifo", "tinylfu"} {
 		for _, method := range []string{"Get", "Set", "Peek", "Delete"} {
 			found := false
 			for name := range seen {
