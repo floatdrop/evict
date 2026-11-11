@@ -1,0 +1,52 @@
+name: Benchmarks
+
+# The results in bench/results were measured on one machine. This runs the
+# same benchmarks on a runner of GitHub's, for a second opinion from another
+# operating system and another kind of CPU. A shared runner is a noisy place
+# to measure time: mind the ranges in the tables more than the medians.
+on:
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: The runner to measure on
+        type: choice
+        default: ubuntu-latest
+        # Runners with four CPUs and room for a cache of a million entries.
+        options: [ubuntu-latest, ubuntu-24.04-arm]
+      count:
+        description: How many times to run the throughput benchmarks
+        default: "5"
+
+permissions:
+  contents: read
+
+jobs:
+  bench:
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: stable
+          cache-dependency-path: bench/go.sum
+      - name: Throughput
+        env:
+          COUNT: ${{ inputs.count }}
+        run: make bench-throughput CPUS=1,2,4 COUNT="$COUNT"
+      - name: Memory
+        # Without the cache of ten million entries, which a runner has no
+        # room for.
+        run: make bench-memory CAPACITIES=10000,100000,1000000
+      - name: Summary
+        # The charts are in the artifact; a summary cannot show them.
+        run: grep -hv '^!\[' bench/results/throughput.md bench/results/memory.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: results-${{ inputs.runner }}
+          path: |
+            bench/results/throughput.*
+            bench/results/throughput-*.svg
+            bench/results/memory.md

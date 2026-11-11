@@ -1,0 +1,123 @@
+version: "2"
+
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+formatters:
+  enable:
+    - gci
+    - gofumpt
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(github.com/floatdrop/evict)
+    gofumpt:
+      extra:
+        group-params: true
+
+linters:
+  default: standard
+  enable:
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - copyloopvar
+    - dupword
+    - durationcheck
+    - errname
+    - errorlint
+    - exptostd
+    - fatcontext
+    - gocheckcompilerdirectives
+    - gocritic
+    - godot
+    - gosec
+    - intrange
+    - makezero
+    - mirror
+    - misspell
+    - modernize
+    - nakedret
+    - nilerr
+    - nilnesserr
+    - noctx
+    - nolintlint
+    - perfsprint
+    - prealloc
+    - predeclared
+    - reassign
+    - recvcheck
+    - revive
+    - testableexamples
+    - thelper
+    - tparallel
+    - unconvert
+    - unparam
+    - usestdlibvars
+    - usetesting
+    - wastedassign
+    - whitespace
+  settings:
+    govet:
+      enable-all: true
+      disable:
+        # Struct layouts here are chosen for cache locality, not minimal size.
+        - fieldalignment
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - performance
+        - style
+      disabled-checks:
+        # Unlocking by hand is deliberate on the hot paths.
+        - deferUnlambda
+        # Shards and trace records are big on purpose; they are never copied
+        # where it matters.
+        - hugeParam
+        - rangeValCopy
+    gosec:
+      excludes:
+        # Indices and hashes are narrowed to 32 bits by design; the ranges are
+        # established when a cache is constructed.
+        - G115
+        # The benchmarks read and write the files they are pointed at; the
+        # caches open none.
+        - G304
+        # math/rand drives workloads and tests, never secrets.
+        - G404
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+    revive:
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: dot-imports
+        - name: empty-block
+        - name: error-naming
+        - name: error-return
+        - name: error-strings
+        - name: errorf
+        - name: exported
+        - name: increment-decrement
+        - name: indent-error-flow
+        - name: package-comments
+        - name: range
+        - name: receiver-naming
+        - name: redefines-builtin-id
+        - name: superfluous-else
+        - name: time-naming
+        - name: unexported-return
+        - name: unreachable-code
+        - name: unused-parameter
+        - name: var-declaration
+        - name: var-naming
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

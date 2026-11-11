@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 380" width="640" height="380" role="img" aria-labelledby="title desc">
+<title id="title">Evict</title>
+<desc id="desc">Line chart of Million operations per second by CPUs for evict/lru, evict/twoq, evict/sieve, evict/s3fifo, otter, golang-lru, golang-lru/2q. The numbers are in the table that goes with it.</desc>
+<style>
+text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.title { font-size: 15px; font-weight: 600; }
+.unit, .legend { font-size: 12px; }
+.tick { font-size: 11px; font-variant-numeric: tabular-nums; }
+.grid, .axis { stroke-width: 1; }
+.line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.ref { fill: none; stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
+.mark { stroke-width: 2; paint-order: stroke; }
+.surface { fill: #fcfcfb; stroke: rgba(11,11,11,0.10); }
+.title { fill: #0b0b0b; }
+.unit, .legend { fill: #52514e; }
+.tick { fill: #898781; }
+.grid { stroke: #e1e0d9; }
+.axis { stroke: #c3c2b7; }
+.ref { stroke: #898781; }
+.mark { stroke: #fcfcfb; }
+.s0 { stroke: #2a78d6; } .m0 { fill: #2a78d6; }
+.s1 { stroke: #eb6834; } .m1 { fill: #eb6834; }
+.s2 { stroke: #1baf7a; } .m2 { fill: #1baf7a; }
+.s3 { stroke: #eda100; } .m3 { fill: #eda100; }
+.s4 { stroke: #e87ba4; } .m4 { fill: #e87ba4; }
+.s5 { stroke: #008300; } .m5 { fill: #008300; }
+.s6 { stroke: #6250d6; } .m6 { fill: #6250d6; }
+@media (prefers-color-scheme: dark) {
+  .surface { fill: #1a1a19; stroke: rgba(255,255,255,0.10); }
+  .title { fill: #f0efec; }
+  .unit, .legend { fill: #c3c2b7; }
+  .tick { fill: #898781; }
+  .grid { stroke: #2c2c2a; }
+  .axis { stroke: #383835; }
+  .ref { stroke: #898781; }
+  .mark { stroke: #1a1a19; }
+  .s0 { stroke: #3987e5; } .m0 { fill: #3987e5; }
+  .s1 { stroke: #d95926; } .m1 { fill: #d95926; }
+  .s2 { stroke: #199e70; } .m2 { fill: #199e70; }
+  .s3 { stroke: #c98500; } .m3 { fill: #c98500; }
+  .s4 { stroke: #d55181; } .m4 { fill: #d55181; }
+  .s5 { stroke: #008300; } .m5 { fill: #008300; }
+  .s6 { stroke: #9085e9; } .m6 { fill: #9085e9; }
+}
+</style>
+<rect class="surface" x="0.5" y="0.5" width="639" height="379" rx="8"/>
+<text class="title" x="20" y="28">Evict</text>
+<text class="unit" x="20" y="46">Million operations per second</text>
+<path class="line s0" d="M20,66 h24"/><circle class="mark m0" cx="32" cy="66" r="4"/><text class="legend" x="50" y="70">evict/lru</text>
+<path class="line s1" d="M131,66 h24"/><path class="mark m1" d="M139.4,62.4L146.6,62.4L146.6,69.6L139.4,69.6Z"/><text class="legend" x="161" y="70">evict/twoq</text>
+<path class="line s2" d="M249,66 h24"/><path class="mark m2" d="M261,61.2L265.6,69.4L256.4,69.4Z"/><text class="legend" x="279" y="70">evict/sieve</text>
+<path class="line s3" d="M374,66 h24"/><path class="mark m3" d="M386,61L391,66L386,71L381,66Z"/><text class="legend" x="404" y="70">evict/s3fifo</text>
+<path class="line s4" d="M506,66 h24"/><path class="mark m4" d="M518,70.8L522.6,62.6L513.4,62.6Z"/><text class="legend" x="536" y="70">otter</text>
+<path class="line s5" d="M20,86 h24"/><path class="mark m5" d="M32,81.4L36.4,84.6L34.7,89.7L29.3,89.7L27.6,84.6Z"/><text class="legend" x="50" y="90">golang-lru</text>
+<path class="line s6" d="M138,86 h24"/><path class="mark m6" d="M147.7,82L152.3,82L154.6,86L152.3,90L147.7,90L145.4,86Z"/><text class="legend" x="168" y="90">golang-lru/2q</text>
+<path class="axis" d="M52,328 h568"/><text class="tick" x="44" y="332" text-anchor="end">0</text>
+<path class="grid" d="M52,272 h568"/><text class="tick" x="44" y="276" text-anchor="end">10</text>
+<path class="grid" d="M52,216 h568"/><text class="tick" x="44" y="220" text-anchor="end">20</text>
+<path class="grid" d="M52,160 h568"/><text class="tick" x="44" y="164" text-anchor="end">30</text>
+<path class="grid" d="M52,104 h568"/><text class="tick" x="44" y="108" text-anchor="end">40</text>
+<text class="tick" x="52" y="346" text-anchor="middle">1</text>
+<text class="tick" x="241.3" y="346" text-anchor="middle">2</text>
+<text class="tick" x="430.7" y="346" text-anchor="middle">4</text>
+<text class="tick" x="620" y="346" text-anchor="middle">8</text>
+<text class="tick" x="336" y="368" text-anchor="middle">CPUs</text>
+<path class="line s0" d="M52,235.7L241.3,202.3L430.7,123.4L620,152.2"/>
+<path class="line s1" d="M52,234.1L241.3,197.5L430.7,113.6L620,152.1"/>
+<path class="line s2" d="M52,253.5L241.3,249.5L430.7,223.3L620,260.7"/>
+<path class="line s3" d="M52,280.2L241.3,265.7L430.7,239.7L620,269"/>
+<path class="line s4" d="M52,308.2L241.3,293.2L430.7,292.5L620,295.3"/>
+<path class="line s5" d="M52,286.6L241.3,293.2L430.7,304.7L620,310.1"/>
+<path class="line s6" d="M52,307.4L241.3,308.6L430.7,311.6L620,314.2"/>
+<g><title>evict/lru at 1: 16.49</title><circle class="mark m0" cx="52" cy="235.7" r="4"/></g>
+<g><title>evict/lru at 2: 22.44</title><circle class="mark m0" cx="241.3" cy="202.3" r="4"/></g>
+<g><title>evict/lru at 4: 36.54</title><circle class="mark m0" cx="430.7" cy="123.4" r="4"/></g>
+<g><title>evict/lru at 8: 31.40</title><circle class="mark m0" cx="620" cy="152.2" r="4"/></g>
+<g><title>evict/twoq at 1: 16.76</title><path class="mark m1" d="M48.4,230.5L55.6,230.5L55.6,237.7L48.4,237.7Z"/></g>
+<g><title>evict/twoq at 2: 23.30</title><path class="mark m1" d="M237.7,193.9L244.9,193.9L244.9,201.1L237.7,201.1Z"/></g>
+<g><title>evict/twoq at 4: 38.29</title><path class="mark m1" d="M427.1,110L434.3,110L434.3,117.2L427.1,117.2Z"/></g>
+<g><title>evict/twoq at 8: 31.41</title><path class="mark m1" d="M616.4,148.5L623.6,148.5L623.6,155.7L616.4,155.7Z"/></g>
+<g><title>evict/sieve at 1: 13.30</title><path class="mark m2" d="M52,248.7L56.6,256.9L47.4,256.9Z"/></g>
+<g><title>evict/sieve at 2: 14.01</title><path class="mark m2" d="M241.3,244.7L245.9,252.9L236.7,252.9Z"/></g>
+<g><title>evict/sieve at 4: 18.70</title><path class="mark m2" d="M430.7,218.5L435.3,226.7L426.1,226.7Z"/></g>
+<g><title>evict/sieve at 8: 12.02</title><path class="mark m2" d="M620,255.9L624.6,264.1L615.4,264.1Z"/></g>
+<g><title>evict/s3fifo at 1: 8.54</title><path class="mark m3" d="M52,275.2L57,280.2L52,285.2L47,280.2Z"/></g>
+<g><title>evict/s3fifo at 2: 11.13</title><path class="mark m3" d="M241.3,260.7L246.3,265.7L241.3,270.7L236.3,265.7Z"/></g>
+<g><title>evict/s3fifo at 4: 15.76</title><path class="mark m3" d="M430.7,234.7L435.7,239.7L430.7,244.7L425.7,239.7Z"/></g>
+<g><title>evict/s3fifo at 8: 10.53</title><path class="mark m3" d="M620,264L625,269L620,274L615,269Z"/></g>
+<g><title>otter at 1: 3.53</title><path class="mark m4" d="M52,313L56.6,304.8L47.4,304.8Z"/></g>
+<g><title>otter at 2: 6.21</title><path class="mark m4" d="M241.3,298L245.9,289.8L236.7,289.8Z"/></g>
+<g><title>otter at 4: 6.34</title><path class="mark m4" d="M430.7,297.3L435.3,289.1L426.1,289.1Z"/></g>
+<g><title>otter at 8: 5.85</title><path class="mark m4" d="M620,300.1L624.6,291.9L615.4,291.9Z"/></g>
+<g><title>golang-lru at 1: 7.39</title><path class="mark m5" d="M52,282L56.4,285.2L54.7,290.3L49.3,290.3L47.6,285.2Z"/></g>
+<g><title>golang-lru at 2: 6.21</title><path class="mark m5" d="M241.3,288.6L245.7,291.8L244,296.9L238.6,296.9L236.9,291.8Z"/></g>
+<g><title>golang-lru at 4: 4.16</title><path class="mark m5" d="M430.7,300.1L435.1,303.3L433.4,308.4L428,308.4L426.3,303.3Z"/></g>
+<g><title>golang-lru at 8: 3.20</title><path class="mark m5" d="M620,305.5L624.4,308.7L622.7,313.8L617.3,313.8L615.6,308.7Z"/></g>
+<g><title>golang-lru/2q at 1: 3.68</title><path class="mark m6" d="M49.7,303.4L54.3,303.4L56.6,307.4L54.3,311.4L49.7,311.4L47.4,307.4Z"/></g>
+<g><title>golang-lru/2q at 2: 3.46</title><path class="mark m6" d="M239,304.6L243.6,304.6L245.9,308.6L243.6,312.6L239,312.6L236.7,308.6Z"/></g>
+<g><title>golang-lru/2q at 4: 2.93</title><path class="mark m6" d="M428.4,307.6L433,307.6L435.3,311.6L433,315.6L428.4,315.6L426.1,311.6Z"/></g>
+<g><title>golang-lru/2q at 8: 2.46</title><path class="mark m6" d="M617.7,310.2L622.3,310.2L624.6,314.2L622.3,318.2L617.7,318.2L615.4,314.2Z"/></g>
+</svg>

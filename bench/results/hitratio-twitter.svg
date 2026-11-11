@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 380" width="640" height="380" role="img" aria-labelledby="title desc">
+<title id="title">Twitter</title>
+<desc id="desc">Line chart of Hit ratio, % by Cache capacity, entries for evict/lru, evict/twoq, evict/sieve, evict/s3fifo, otter, golang-lru/2q, optimal. The numbers are in the table that goes with it.</desc>
+<style>
+text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.title { font-size: 15px; font-weight: 600; }
+.unit, .legend { font-size: 12px; }
+.tick { font-size: 11px; font-variant-numeric: tabular-nums; }
+.grid, .axis { stroke-width: 1; }
+.line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.ref { fill: none; stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
+.mark { stroke-width: 2; paint-order: stroke; }
+.surface { fill: #fcfcfb; stroke: rgba(11,11,11,0.10); }
+.title { fill: #0b0b0b; }
+.unit, .legend { fill: #52514e; }
+.tick { fill: #898781; }
+.grid { stroke: #e1e0d9; }
+.axis { stroke: #c3c2b7; }
+.ref { stroke: #898781; }
+.mark { stroke: #fcfcfb; }
+.s0 { stroke: #2a78d6; } .m0 { fill: #2a78d6; }
+.s1 { stroke: #eb6834; } .m1 { fill: #eb6834; }
+.s2 { stroke: #1baf7a; } .m2 { fill: #1baf7a; }
+.s3 { stroke: #eda100; } .m3 { fill: #eda100; }
+.s4 { stroke: #e87ba4; } .m4 { fill: #e87ba4; }
+.s6 { stroke: #6250d6; } .m6 { fill: #6250d6; }
+@media (prefers-color-scheme: dark) {
+  .surface { fill: #1a1a19; stroke: rgba(255,255,255,0.10); }
+  .title { fill: #f0efec; }
+  .unit, .legend { fill: #c3c2b7; }
+  .tick { fill: #898781; }
+  .grid { stroke: #2c2c2a; }
+  .axis { stroke: #383835; }
+  .ref { stroke: #898781; }
+  .mark { stroke: #1a1a19; }
+  .s0 { stroke: #3987e5; } .m0 { fill: #3987e5; }
+  .s1 { stroke: #d95926; } .m1 { fill: #d95926; }
+  .s2 { stroke: #199e70; } .m2 { fill: #199e70; }
+  .s3 { stroke: #c98500; } .m3 { fill: #c98500; }
+  .s4 { stroke: #d55181; } .m4 { fill: #d55181; }
+  .s6 { stroke: #9085e9; } .m6 { fill: #9085e9; }
+}
+</style>
+<rect class="surface" x="0.5" y="0.5" width="639" height="379" rx="8"/>
+<text class="title" x="20" y="28">Twitter</text>
+<text class="unit" x="20" y="46">Hit ratio, %</text>
+<path class="line s0" d="M20,66 h24"/><circle class="mark m0" cx="32" cy="66" r="4"/><text class="legend" x="50" y="70">evict/lru</text>
+<path class="line s1" d="M131,66 h24"/><path class="mark m1" d="M139.4,62.4L146.6,62.4L146.6,69.6L139.4,69.6Z"/><text class="legend" x="161" y="70">evict/twoq</text>
+<path class="line s2" d="M249,66 h24"/><path class="mark m2" d="M261,61.2L265.6,69.4L256.4,69.4Z"/><text class="legend" x="279" y="70">evict/sieve</text>
+<path class="line s3" d="M374,66 h24"/><path class="mark m3" d="M386,61L391,66L386,71L381,66Z"/><text class="legend" x="404" y="70">evict/s3fifo</text>
+<path class="line s4" d="M506,66 h24"/><path class="mark m4" d="M518,70.8L522.6,62.6L513.4,62.6Z"/><text class="legend" x="536" y="70">otter</text>
+<path class="line s6" d="M20,86 h24"/><path class="mark m6" d="M29.7,82L34.3,82L36.6,86L34.3,90L29.7,90L27.4,86Z"/><text class="legend" x="50" y="90">golang-lru/2q</text>
+<path class="ref" d="M159,86 h24"/><text class="legend" x="189" y="90">optimal</text>
+<path class="axis" d="M52,328 h568"/><text class="tick" x="44" y="332" text-anchor="end">50</text>
+<path class="grid" d="M52,283.2 h568"/><text class="tick" x="44" y="287.2" text-anchor="end">55</text>
+<path class="grid" d="M52,238.4 h568"/><text class="tick" x="44" y="242.4" text-anchor="end">60</text>
+<path class="grid" d="M52,193.6 h568"/><text class="tick" x="44" y="197.6" text-anchor="end">65</text>
+<path class="grid" d="M52,148.8 h568"/><text class="tick" x="44" y="152.8" text-anchor="end">70</text>
+<path class="grid" d="M52,104 h568"/><text class="tick" x="44" y="108" text-anchor="end">75</text>
+<text class="tick" x="52" y="346" text-anchor="middle">1K</text>
+<text class="tick" x="133.1" y="346" text-anchor="middle">2.5K</text>
+<text class="tick" x="214.3" y="346" text-anchor="middle">5K</text>
+<text class="tick" x="295.4" y="346" text-anchor="middle">10K</text>
+<text class="tick" x="376.6" y="346" text-anchor="middle">25K</text>
+<text class="tick" x="457.7" y="346" text-anchor="middle">50K</text>
+<text class="tick" x="538.9" y="346" text-anchor="middle">100K</text>
+<text class="tick" x="620" y="346" text-anchor="middle">200K</text>
+<text class="tick" x="336" y="368" text-anchor="middle">Cache capacity, entries</text>
+<path class="line s0" d="M52,325.5L133.1,300.1L214.3,278.8L295.4,260.9L376.6,241.2L457.7,226.1L538.9,208L620,183.3"/>
+<path class="line s1" d="M52,299.3L133.1,278.8L214.3,262L295.4,246.8L376.6,229.7L457.7,219.4L538.9,205.1L620,186.3"/>
+<path class="line s2" d="M52,315.8L133.1,290.7L214.3,274L295.4,256.9L376.6,236.9L457.7,221.6L538.9,203.5L620,180.3"/>
+<path class="line s3" d="M52,296.4L133.1,276.2L214.3,260.4L295.4,246.2L376.6,226.8L457.7,210.3L538.9,193.6L620,174.1"/>
+<path class="line s4" d="M52,301.2L133.1,279.3L214.3,265L295.4,258L376.6,242.8L457.7,220.5L538.9,210.6L620,181.4"/>
+<path class="line s6" d="M52,318.8L133.1,293.4L214.3,275.5L295.4,258.4L376.6,238.2L457.7,223.2L538.9,204.4L620,181.4"/>
+<path class="ref" d="M52,250.5L133.1,230.2L214.3,215.7L295.4,200.8L376.6,177.2L457.7,159.3L538.9,141.2L620,141.2"/>
+<g><title>evict/lru at 1K: 50.28</title><circle class="mark m0" cx="52" cy="325.5" r="4"/></g>
+<g><title>evict/lru at 2.5K: 53.12</title><circle class="mark m0" cx="133.1" cy="300.1" r="4"/></g>
+<g><title>evict/lru at 5K: 55.49</title><circle class="mark m0" cx="214.3" cy="278.8" r="4"/></g>
+<g><title>evict/lru at 10K: 57.49</title><circle class="mark m0" cx="295.4" cy="260.9" r="4"/></g>
+<g><title>evict/lru at 25K: 59.69</title><circle class="mark m0" cx="376.6" cy="241.2" r="4"/></g>
+<g><title>evict/lru at 50K: 61.37</title><circle class="mark m0" cx="457.7" cy="226.1" r="4"/></g>
+<g><title>evict/lru at 100K: 63.39</title><circle class="mark m0" cx="538.9" cy="208" r="4"/></g>
+<g><title>evict/lru at 200K: 66.15</title><circle class="mark m0" cx="620" cy="183.3" r="4"/></g>
+<g><title>evict/twoq at 1K: 53.20</title><path class="mark m1" d="M48.4,295.7L55.6,295.7L55.6,302.9L48.4,302.9Z"/></g>
+<g><title>evict/twoq at 2.5K: 55.49</title><path class="mark m1" d="M129.5,275.2L136.7,275.2L136.7,282.4L129.5,282.4Z"/></g>
+<g><title>evict/twoq at 5K: 57.37</title><path class="mark m1" d="M210.7,258.4L217.9,258.4L217.9,265.6L210.7,265.6Z"/></g>
+<g><title>evict/twoq at 10K: 59.07</title><path class="mark m1" d="M291.8,243.2L299,243.2L299,250.4L291.8,250.4Z"/></g>
+<g><title>evict/twoq at 25K: 60.98</title><path class="mark m1" d="M373,226.1L380.2,226.1L380.2,233.3L373,233.3Z"/></g>
+<g><title>evict/twoq at 50K: 62.12</title><path class="mark m1" d="M454.1,215.8L461.3,215.8L461.3,223L454.1,223Z"/></g>
+<g><title>evict/twoq at 100K: 63.72</title><path class="mark m1" d="M535.3,201.5L542.5,201.5L542.5,208.7L535.3,208.7Z"/></g>
+<g><title>evict/twoq at 200K: 65.82</title><path class="mark m1" d="M616.4,182.7L623.6,182.7L623.6,189.9L616.4,189.9Z"/></g>
+<g><title>evict/sieve at 1K: 51.36</title><path class="mark m2" d="M52,311L56.6,319.2L47.4,319.2Z"/></g>
+<g><title>evict/sieve at 2.5K: 54.16</title><path class="mark m2" d="M133.1,285.9L137.7,294.1L128.5,294.1Z"/></g>
+<g><title>evict/sieve at 5K: 56.03</title><path class="mark m2" d="M214.3,269.2L218.9,277.4L209.7,277.4Z"/></g>
+<g><title>evict/sieve at 10K: 57.94</title><path class="mark m2" d="M295.4,252.1L300,260.3L290.8,260.3Z"/></g>
+<g><title>evict/sieve at 25K: 60.16</title><path class="mark m2" d="M376.6,232.1L381.2,240.3L372,240.3Z"/></g>
+<g><title>evict/sieve at 50K: 61.88</title><path class="mark m2" d="M457.7,216.8L462.3,225L453.1,225Z"/></g>
+<g><title>evict/sieve at 100K: 63.89</title><path class="mark m2" d="M538.9,198.7L543.5,206.9L534.3,206.9Z"/></g>
+<g><title>evict/sieve at 200K: 66.48</title><path class="mark m2" d="M620,175.5L624.6,183.7L615.4,183.7Z"/></g>
+<g><title>evict/s3fifo at 1K: 53.52</title><path class="mark m3" d="M52,291.4L57,296.4L52,301.4L47,296.4Z"/></g>
+<g><title>evict/s3fifo at 2.5K: 55.78</title><path class="mark m3" d="M133.1,271.2L138.1,276.2L133.1,281.2L128.1,276.2Z"/></g>
+<g><title>evict/s3fifo at 5K: 57.55</title><path class="mark m3" d="M214.3,255.4L219.3,260.4L214.3,265.4L209.3,260.4Z"/></g>
+<g><title>evict/s3fifo at 10K: 59.13</title><path class="mark m3" d="M295.4,241.2L300.4,246.2L295.4,251.2L290.4,246.2Z"/></g>
+<g><title>evict/s3fifo at 25K: 61.29</title><path class="mark m3" d="M376.6,221.8L381.6,226.8L376.6,231.8L371.6,226.8Z"/></g>
+<g><title>evict/s3fifo at 50K: 63.13</title><path class="mark m3" d="M457.7,205.3L462.7,210.3L457.7,215.3L452.7,210.3Z"/></g>
+<g><title>evict/s3fifo at 100K: 65.00</title><path class="mark m3" d="M538.9,188.6L543.9,193.6L538.9,198.6L533.9,193.6Z"/></g>
+<g><title>evict/s3fifo at 200K: 67.17</title><path class="mark m3" d="M620,169.1L625,174.1L620,179.1L615,174.1Z"/></g>
+<g><title>otter at 1K: 52.99</title><path class="mark m4" d="M52,306L56.6,297.8L47.4,297.8Z"/></g>
+<g><title>otter at 2.5K: 55.43</title><path class="mark m4" d="M133.1,284.1L137.7,275.9L128.5,275.9Z"/></g>
+<g><title>otter at 5K: 57.03</title><path class="mark m4" d="M214.3,269.8L218.9,261.6L209.7,261.6Z"/></g>
+<g><title>otter at 10K: 57.81</title><path class="mark m4" d="M295.4,262.8L300,254.6L290.8,254.6Z"/></g>
+<g><title>otter at 25K: 59.51</title><path class="mark m4" d="M376.6,247.6L381.2,239.4L372,239.4Z"/></g>
+<g><title>otter at 50K: 62.00</title><path class="mark m4" d="M457.7,225.3L462.3,217.1L453.1,217.1Z"/></g>
+<g><title>otter at 100K: 63.10</title><path class="mark m4" d="M538.9,215.4L543.5,207.2L534.3,207.2Z"/></g>
+<g><title>otter at 200K: 66.37</title><path class="mark m4" d="M620,186.2L624.6,178L615.4,178Z"/></g>
+<g><title>golang-lru/2q at 1K: 51.02</title><path class="mark m6" d="M49.7,314.8L54.3,314.8L56.6,318.8L54.3,322.8L49.7,322.8L47.4,318.8Z"/></g>
+<g><title>golang-lru/2q at 2.5K: 53.86</title><path class="mark m6" d="M130.8,289.4L135.4,289.4L137.7,293.4L135.4,297.4L130.8,297.4L128.5,293.4Z"/></g>
+<g><title>golang-lru/2q at 5K: 55.86</title><path class="mark m6" d="M212,271.5L216.6,271.5L218.9,275.5L216.6,279.5L212,279.5L209.7,275.5Z"/></g>
+<g><title>golang-lru/2q at 10K: 57.77</title><path class="mark m6" d="M293.1,254.4L297.7,254.4L300,258.4L297.7,262.4L293.1,262.4L290.8,258.4Z"/></g>
+<g><title>golang-lru/2q at 25K: 60.02</title><path class="mark m6" d="M374.3,234.2L378.9,234.2L381.2,238.2L378.9,242.2L374.3,242.2L372,238.2Z"/></g>
+<g><title>golang-lru/2q at 50K: 61.69</title><path class="mark m6" d="M455.4,219.2L460,219.2L462.3,223.2L460,227.2L455.4,227.2L453.1,223.2Z"/></g>
+<g><title>golang-lru/2q at 100K: 63.79</title><path class="mark m6" d="M536.6,200.4L541.2,200.4L543.5,204.4L541.2,208.4L536.6,208.4L534.3,204.4Z"/></g>
+<g><title>golang-lru/2q at 200K: 66.36</title><path class="mark m6" d="M617.7,177.4L622.3,177.4L624.6,181.4L622.3,185.4L617.7,185.4L615.4,181.4Z"/></g>
+</svg>

@@ -1,0 +1,1165 @@
+go: go1.27.3
+golang-lru: v2.0.7
+otter: v2.4.0
+goos: darwin
+goarch: arm64
+pkg: github.com/floatdrop/evict/bench
+cpu: Apple M3 Max
+BenchmarkGet/cache=evict/lru           	43019618	        25.98 ns/op	        38.49 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/lru-2         	44885052	        26.22 ns/op	        38.14 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/lru-4         	68634835	        18.41 ns/op	        54.32 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/lru-8         	39581752	        30.83 ns/op	        32.43 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/twoq          	53672264	        22.11 ns/op	        45.23 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/twoq-2        	66166284	        17.45 ns/op	        57.30 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/twoq-4        	99708832	        11.54 ns/op	        86.66 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/twoq-8        	55757331	        21.67 ns/op	        46.15 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/sieve         	44344394	        27.17 ns/op	        36.80 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/sieve-2       	84282691	        14.17 ns/op	        70.57 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/sieve-4       	98313312	        10.66 ns/op	        93.78 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/sieve-8       	336457912	         3.562 ns/op	       280.7 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/s3fifo        	39932335	        30.25 ns/op	        33.05 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/s3fifo-2      	81870510	        14.57 ns/op	        68.61 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/s3fifo-4      	173618331	         6.928 ns/op	       144.3 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/s3fifo-8      	331115130	         3.616 ns/op	       276.6 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=otter               	27529170	        41.09 ns/op	        24.34 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=otter-2             	59185336	        19.80 ns/op	        50.51 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=otter-4             	124729778	         9.632 ns/op	       103.8 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=otter-8             	246370989	         4.877 ns/op	       205.1 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru          	41259975	        29.86 ns/op	        33.49 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru-2        	13088041	        87.91 ns/op	        11.38 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru-4        	 6948948	       179.3 ns/op	         5.577 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru-8        	 5026849	       244.8 ns/op	         4.085 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru/2q       	38706658	        31.05 ns/op	        32.21 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru/2q-2     	12818035	        88.56 ns/op	        11.29 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru/2q-4     	 6561272	       180.6 ns/op	         5.537 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru/2q-8     	 5088115	       236.3 ns/op	         4.232 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/lru           	41768731	        29.04 ns/op	        34.44 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/lru-2         	41077191	        27.58 ns/op	        36.26 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/lru-4         	61831501	        20.01 ns/op	        49.98 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/lru-8         	31991646	        37.10 ns/op	        26.96 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/twoq          	44852755	        25.28 ns/op	        39.56 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/twoq-2        	52702657	        22.90 ns/op	        43.66 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/twoq-4        	50687983	        21.39 ns/op	        46.74 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/twoq-8        	35014388	        35.71 ns/op	        28.01 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/sieve         	26019409	        45.99 ns/op	        21.75 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/sieve-2       	21325008	        56.65 ns/op	        17.65 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/sieve-4       	21248840	        55.67 ns/op	        17.96 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/sieve-8       	15735787	        77.58 ns/op	        12.89 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/s3fifo        	26031780	        46.68 ns/op	        21.42 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/s3fifo-2      	21285763	        56.60 ns/op	        17.67 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/s3fifo-4      	19695849	        61.11 ns/op	        16.36 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/s3fifo-8      	15110479	        78.25 ns/op	        12.78 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=otter               	 9572701	       118.1 ns/op	         8.466 Mops/s	      16 B/op	       1 allocs/op
+BenchmarkSet/cache=otter-2             	15356698	        73.81 ns/op	        13.55 Mops/s	      16 B/op	       1 allocs/op
+BenchmarkSet/cache=otter-4             	22004082	        55.87 ns/op	        17.90 Mops/s	      16 B/op	       1 allocs/op
+BenchmarkSet/cache=otter-8             	18841915	        64.08 ns/op	        15.60 Mops/s	      16 B/op	       1 allocs/op
+BenchmarkSet/cache=golang-lru          	39116031	        31.53 ns/op	        31.72 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru-2        	13576932	        89.64 ns/op	        11.16 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru-4        	 6507416	       180.1 ns/op	         5.553 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru-8        	 4923290	       246.8 ns/op	         4.052 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru/2q       	30958054	        38.85 ns/op	        25.74 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru/2q-2     	12218196	        92.00 ns/op	        10.87 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru/2q-4     	 6366375	       187.6 ns/op	         5.330 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru/2q-8     	 4829704	       255.8 ns/op	         3.909 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/lru           	46748008	        26.34 ns/op	        37.96 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/lru-2         	44535163	        27.00 ns/op	        37.04 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/lru-4         	63243049	        18.44 ns/op	        54.22 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/lru-8         	41113489	        27.52 ns/op	        36.33 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/twoq          	50343402	        23.78 ns/op	        42.05 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/twoq-2        	72825290	        16.72 ns/op	        59.79 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/twoq-4        	100000000	        18.51 ns/op	        54.02 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/twoq-8        	53085501	        21.96 ns/op	        45.54 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/sieve         	36018909	        29.06 ns/op	        34.41 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/sieve-2       	73962600	        15.19 ns/op	        65.85 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/sieve-4       	137488956	         8.860 ns/op	       112.9 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/sieve-8       	224729341	         5.278 ns/op	       189.5 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/s3fifo        	41842888	        29.18 ns/op	        34.27 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/s3fifo-2      	79983560	        15.10 ns/op	        66.23 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/s3fifo-4      	100000000	        11.88 ns/op	        84.17 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/s3fifo-8      	254597270	         4.699 ns/op	       212.8 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=otter               	31295877	        39.96 ns/op	        25.03 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=otter-2             	53876385	        21.61 ns/op	        46.27 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=otter-4             	100000000	        11.02 ns/op	        90.76 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=otter-8             	212585425	         5.665 ns/op	       176.5 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru          	40701133	        29.77 ns/op	        33.59 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru-2        	12494115	        88.42 ns/op	        11.31 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru-4        	 7111434	       172.6 ns/op	         5.792 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru-8        	 5121514	       229.6 ns/op	         4.355 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru/2q       	38697870	        30.81 ns/op	        32.46 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru/2q-2     	14118518	        85.22 ns/op	        11.73 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru/2q-4     	 7025431	       169.9 ns/op	         5.887 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru/2q-8     	 5396653	       225.7 ns/op	         4.431 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/lru          	42167156	        28.21 ns/op	        35.44 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/lru-2        	43918171	        27.07 ns/op	        36.94 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/lru-4        	67042071	        17.86 ns/op	        55.99 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/lru-8        	39195192	        30.20 ns/op	        33.12 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/twoq         	58115016	        20.89 ns/op	        47.87 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/twoq-2       	69427870	        17.29 ns/op	        57.85 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/twoq-4       	90808760	        13.64 ns/op	        73.32 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/twoq-8       	51967831	        22.90 ns/op	        43.68 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/sieve        	37121055	        29.68 ns/op	        33.69 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/sieve-2      	64082024	        19.01 ns/op	        52.60 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/sieve-4      	100000000	        11.42 ns/op	        87.60 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/sieve-8      	78892008	        15.24 ns/op	        65.61 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/s3fifo       	39236415	        30.35 ns/op	        32.95 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/s3fifo-2     	65243835	        18.60 ns/op	        53.77 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/s3fifo-4     	100000000	        10.97 ns/op	        91.13 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/s3fifo-8     	82398482	        14.42 ns/op	        69.37 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=otter              	26321970	        46.67 ns/op	        21.43 Mops/s	       1 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=otter-2            	46745886	        26.45 ns/op	        37.80 Mops/s	       1 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=otter-4            	70632034	        16.26 ns/op	        61.50 Mops/s	       1 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=otter-8            	95526820	        12.13 ns/op	        82.43 Mops/s	       1 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru         	41458952	        29.63 ns/op	        33.75 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru-2       	14284339	        84.40 ns/op	        11.85 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru-4       	 7111993	       160.3 ns/op	         6.239 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru-8       	 5323426	       229.6 ns/op	         4.356 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru/2q      	38036271	        32.18 ns/op	        31.08 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru/2q-2    	14216718	        86.43 ns/op	        11.57 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru/2q-4    	 7082779	       170.2 ns/op	         5.876 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru/2q-8    	 5452764	       224.7 ns/op	         4.450 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/lru          	42672104	        27.92 ns/op	        35.82 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/lru-2        	46087300	        26.21 ns/op	        38.15 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/lru-4        	70617312	        17.48 ns/op	        57.22 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/lru-8        	39470870	        29.04 ns/op	        34.43 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/twoq         	51297669	        23.34 ns/op	        42.84 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/twoq-2       	62727602	        20.12 ns/op	        49.70 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/twoq-4       	100000000	        15.66 ns/op	        63.87 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/twoq-8       	45999702	        26.80 ns/op	        37.31 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/sieve        	32221900	        37.73 ns/op	        26.50 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/sieve-2      	46717299	        25.59 ns/op	        39.08 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/sieve-4      	63692718	        19.38 ns/op	        51.59 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/sieve-8      	44558522	        26.85 ns/op	        37.25 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/s3fifo       	34255942	        35.62 ns/op	        28.08 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/s3fifo-2     	43226302	        26.43 ns/op	        37.83 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/s3fifo-4     	65806909	        19.18 ns/op	        52.13 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/s3fifo-8     	42764359	        27.30 ns/op	        36.62 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=otter              	18695907	        59.21 ns/op	        16.89 Mops/s	       3 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=otter-2            	34000394	        36.68 ns/op	        27.26 Mops/s	       4 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=otter-4            	58841196	        21.87 ns/op	        45.73 Mops/s	       4 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=otter-8            	52785826	        21.37 ns/op	        46.79 Mops/s	       3 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru         	38930545	        30.70 ns/op	        32.57 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru-2       	13836746	        84.67 ns/op	        11.81 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru-4       	 6996528	       172.0 ns/op	         5.812 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru-8       	 5071560	       227.3 ns/op	         4.400 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru/2q      	36085477	        33.66 ns/op	        29.71 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru/2q-2    	13983160	        85.23 ns/op	        11.73 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru/2q-4    	 6923308	       173.2 ns/op	         5.773 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru/2q-8    	 5210512	       228.6 ns/op	         4.375 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/lru                     	19601690	        61.17 ns/op	        16.35 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/lru-2                   	26739754	        44.57 ns/op	        22.44 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/lru-4                   	42572439	        27.43 ns/op	        36.46 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/lru-8                   	35415554	        31.88 ns/op	        31.37 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/twoq                    	20270526	        59.83 ns/op	        16.71 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/twoq-2                  	27963174	        43.05 ns/op	        23.23 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/twoq-4                  	46648891	        26.39 ns/op	        37.90 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/twoq-8                  	36615272	        32.43 ns/op	        30.84 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/sieve                   	15802278	        75.46 ns/op	        13.25 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/sieve-2                 	16299853	        72.04 ns/op	        13.88 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/sieve-4                 	21231672	        54.29 ns/op	        18.42 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/sieve-8                 	14153383	        83.22 ns/op	        12.02 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/s3fifo                  	10290447	       117.1 ns/op	         8.538 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/s3fifo-2                	13400534	        89.84 ns/op	        11.13 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/s3fifo-4                	18643370	        64.74 ns/op	        15.45 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/s3fifo-8                	12399735	        97.89 ns/op	        10.22 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=otter                         	 4408605	       283.1 ns/op	         3.532 Mops/s	     104 B/op	       2 allocs/op
+BenchmarkEvict/cache=otter-2                       	 7523966	       170.1 ns/op	         5.878 Mops/s	     104 B/op	       2 allocs/op
+BenchmarkEvict/cache=otter-4                       	 7098421	       159.0 ns/op	         6.290 Mops/s	     103 B/op	       2 allocs/op
+BenchmarkEvict/cache=otter-8                       	 5969839	       170.9 ns/op	         5.851 Mops/s	     103 B/op	       2 allocs/op
+BenchmarkEvict/cache=golang-lru                    	 8944201	       135.3 ns/op	         7.393 Mops/s	      72 B/op	       0 allocs/op
+BenchmarkEvict/cache=golang-lru-2                  	 7275918	       161.1 ns/op	         6.208 Mops/s	      71 B/op	       0 allocs/op
+BenchmarkEvict/cache=golang-lru-4                  	 5126251	       240.7 ns/op	         4.155 Mops/s	      71 B/op	       0 allocs/op
+BenchmarkEvict/cache=golang-lru-8                  	 3760521	       312.3 ns/op	         3.202 Mops/s	      71 B/op	       0 allocs/op
+BenchmarkEvict/cache=golang-lru/2q                 	 4633470	       271.7 ns/op	         3.681 Mops/s	     122 B/op	       1 allocs/op
+BenchmarkEvict/cache=golang-lru/2q-2               	 4307296	       288.8 ns/op	         3.463 Mops/s	     123 B/op	       1 allocs/op
+BenchmarkEvict/cache=golang-lru/2q-4               	 3891834	       341.3 ns/op	         2.930 Mops/s	     122 B/op	       1 allocs/op
+BenchmarkEvict/cache=golang-lru/2q-8               	 3506848	       407.2 ns/op	         2.456 Mops/s	     122 B/op	       1 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/lru           	35928277	        33.38 ns/op	        29.96 Mops/s	        83.98 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/lru-2         	40816904	        30.13 ns/op	        33.18 Mops/s	        83.97 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/lru-4         	62047569	        18.33 ns/op	        54.54 Mops/s	        83.97 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/lru-8         	42295033	        27.71 ns/op	        36.08 Mops/s	        83.96 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/twoq          	36995026	        32.17 ns/op	        31.09 Mops/s	        85.57 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/twoq-2        	41273161	        29.62 ns/op	        33.76 Mops/s	        85.56 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/twoq-4        	66522534	        20.65 ns/op	        48.44 Mops/s	        85.56 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/twoq-8        	43502755	        27.99 ns/op	        35.73 Mops/s	        85.54 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/sieve         	32494126	        35.39 ns/op	        28.26 Mops/s	        87.72 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/sieve-2       	48514741	        24.40 ns/op	        40.98 Mops/s	        87.79 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/sieve-4       	84163028	        15.09 ns/op	        66.26 Mops/s	        87.82 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/sieve-8       	60553177	        19.18 ns/op	        52.13 Mops/s	        87.72 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/s3fifo        	26258659	        46.17 ns/op	        21.66 Mops/s	        86.78 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/s3fifo-2      	43512484	        30.51 ns/op	        32.77 Mops/s	        86.78 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/s3fifo-4      	61553349	        16.86 ns/op	        59.33 Mops/s	        86.79 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/s3fifo-8      	52291758	        23.75 ns/op	        42.10 Mops/s	        86.78 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter               	13415970	        87.94 ns/op	        11.37 Mops/s	        86.05 hit%	      15 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter-2             	22912587	        56.95 ns/op	        17.56 Mops/s	        86.01 hit%	      15 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter-4             	48608988	        27.00 ns/op	        37.04 Mops/s	        87.52 hit%	      14 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter-8             	30091024	        38.37 ns/op	        26.06 Mops/s	        87.60 hit%	      14 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru          	20226621	        57.13 ns/op	        17.50 Mops/s	        83.96 hit%	      15 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru-2        	10865000	       115.2 ns/op	         8.683 Mops/s	        83.98 hit%	      15 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru-4        	 5719918	       208.6 ns/op	         4.794 Mops/s	        83.97 hit%	      15 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru-8        	 4073178	       294.3 ns/op	         3.398 Mops/s	        83.99 hit%	      15 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru/2q       	11671372	       102.5 ns/op	         9.758 Mops/s	        85.26 hit%	      23 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru/2q-2     	 8072272	       152.9 ns/op	         6.541 Mops/s	        85.26 hit%	      23 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru/2q-4     	 5704927	       214.5 ns/op	         4.661 Mops/s	        85.27 hit%	      23 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru/2q-8     	 4025596	       297.3 ns/op	         3.364 Mops/s	        85.27 hit%	      23 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/lru            	10738306	       112.0 ns/op	         8.925 Mops/s	        88.43 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/lru-2          	14063598	        79.57 ns/op	        12.57 Mops/s	        88.43 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/lru-4          	24723960	        58.26 ns/op	        17.16 Mops/s	        88.43 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/lru-8          	34916242	        34.03 ns/op	        29.39 Mops/s	        88.44 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/twoq           	 9947533	       134.0 ns/op	         7.464 Mops/s	        88.92 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/twoq-2         	14038172	        84.82 ns/op	        11.79 Mops/s	        89.10 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/twoq-4         	24259189	        67.61 ns/op	        14.79 Mops/s	        89.30 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/twoq-8         	33297375	        35.29 ns/op	        28.34 Mops/s	        89.37 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/sieve          	 9118569	       128.2 ns/op	         7.803 Mops/s	        89.71 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/sieve-2        	16956866	        64.80 ns/op	        15.43 Mops/s	        89.84 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/sieve-4        	22859047	        49.26 ns/op	        20.30 Mops/s	        89.92 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/sieve-8        	45305244	        25.92 ns/op	        38.57 Mops/s	        90.09 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/s3fifo         	 7366633	       166.2 ns/op	         6.016 Mops/s	        89.85 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/s3fifo-2       	14480925	        77.85 ns/op	        12.85 Mops/s	        89.95 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/s3fifo-4       	20928604	        57.99 ns/op	        17.24 Mops/s	        90.03 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/s3fifo-8       	43450972	        28.86 ns/op	        34.65 Mops/s	        90.17 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter                	 4838925	       261.5 ns/op	         3.824 Mops/s	        89.57 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter-2              	10706168	       107.1 ns/op	         9.335 Mops/s	        89.64 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter-4              	16678402	        71.32 ns/op	        14.02 Mops/s	        89.75 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter-8              	22309635	        52.91 ns/op	        18.90 Mops/s	        89.83 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru           	 7120672	       163.1 ns/op	         6.133 Mops/s	        88.43 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru-2         	 3771495	       332.2 ns/op	         3.010 Mops/s	        88.43 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru-4         	 3322038	       337.8 ns/op	         2.961 Mops/s	        88.46 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru-8         	 3179588	       385.6 ns/op	         2.593 Mops/s	        88.45 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru/2q        	 4948915	       237.6 ns/op	         4.209 Mops/s	        89.41 hit%	      17 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru/2q-2      	 2735720	       394.2 ns/op	         2.537 Mops/s	        89.47 hit%	      17 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru/2q-4      	 3055238	       393.7 ns/op	         2.540 Mops/s	        89.44 hit%	      17 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru/2q-8      	 2682967	       440.5 ns/op	         2.270 Mops/s	        89.44 hit%	      17 B/op	       0 allocs/op
+PASS
+ok  	github.com/floatdrop/evict/bench	398.051s
+go: go1.27.3
+golang-lru: v2.0.7
+otter: v2.4.0
+goos: darwin
+goarch: arm64
+pkg: github.com/floatdrop/evict/bench
+cpu: Apple M3 Max
+BenchmarkGet/cache=evict/lru           	44017221	        26.99 ns/op	        37.05 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/lru-2         	43927950	        26.21 ns/op	        38.15 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/lru-4         	70262065	        16.73 ns/op	        59.78 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/lru-8         	46008300	        25.91 ns/op	        38.60 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/twoq          	58298414	        20.72 ns/op	        48.27 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/twoq-2        	72467964	        16.07 ns/op	        62.24 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/twoq-4        	100000000	        11.27 ns/op	        88.71 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/twoq-8        	56723060	        20.85 ns/op	        47.95 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/sieve         	41241422	        28.58 ns/op	        34.99 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/sieve-2       	82052218	        14.42 ns/op	        69.33 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/sieve-4       	158056874	         7.586 ns/op	       131.8 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/sieve-8       	329820402	         3.629 ns/op	       275.6 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/s3fifo        	44003124	        26.87 ns/op	        37.22 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/s3fifo-2      	76265937	        15.41 ns/op	        64.88 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/s3fifo-4      	174712045	         6.852 ns/op	       145.9 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/s3fifo-8      	331549450	         4.299 ns/op	       232.6 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=otter               	32635743	        37.38 ns/op	        26.75 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=otter-2             	60980514	        19.51 ns/op	        51.24 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=otter-4             	123482499	         9.644 ns/op	       103.7 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=otter-8             	245884318	         4.882 ns/op	       204.8 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru          	39983227	        29.95 ns/op	        33.39 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru-2        	12528514	        85.06 ns/op	        11.76 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru-4        	 7124143	       166.7 ns/op	         5.997 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru-8        	 5037410	       241.3 ns/op	         4.144 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru/2q       	39611476	        30.11 ns/op	        33.21 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru/2q-2     	13675824	        87.36 ns/op	        11.45 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru/2q-4     	 7149321	       168.1 ns/op	         5.948 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru/2q-8     	 4997268	       237.0 ns/op	         4.220 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/lru           	43537809	        27.52 ns/op	        36.34 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/lru-2         	42806373	        28.08 ns/op	        35.61 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/lru-4         	58526355	        21.05 ns/op	        47.50 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/lru-8         	28672122	        42.34 ns/op	        23.62 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/twoq          	48726016	        24.54 ns/op	        40.76 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/twoq-2        	55347361	        21.95 ns/op	        45.55 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/twoq-4        	74342914	        17.01 ns/op	        58.79 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/twoq-8        	35045875	        34.09 ns/op	        29.33 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/sieve         	27139342	        44.83 ns/op	        22.31 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/sieve-2       	22198892	        55.32 ns/op	        18.08 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/sieve-4       	19351171	        58.48 ns/op	        17.10 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/sieve-8       	15272089	        90.14 ns/op	        11.09 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/s3fifo        	25720256	        45.62 ns/op	        21.92 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/s3fifo-2      	21424425	        57.87 ns/op	        17.28 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/s3fifo-4      	18835027	        63.47 ns/op	        15.75 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/s3fifo-8      	14540238	        76.54 ns/op	        13.07 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=otter               	10707441	       117.9 ns/op	         8.485 Mops/s	      16 B/op	       1 allocs/op
+BenchmarkSet/cache=otter-2             	16010290	        79.91 ns/op	        12.51 Mops/s	      16 B/op	       1 allocs/op
+BenchmarkSet/cache=otter-4             	26048685	        56.16 ns/op	        17.81 Mops/s	      16 B/op	       1 allocs/op
+BenchmarkSet/cache=otter-8             	18462969	        65.03 ns/op	        15.38 Mops/s	      16 B/op	       1 allocs/op
+BenchmarkSet/cache=golang-lru          	37437262	        33.22 ns/op	        30.11 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru-2        	13137073	        91.87 ns/op	        10.88 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru-4        	 6837604	       177.4 ns/op	         5.637 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru-8        	 5029246	       258.8 ns/op	         3.864 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru/2q       	28266830	        39.52 ns/op	        25.30 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru/2q-2     	11431677	        99.31 ns/op	        10.07 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru/2q-4     	 6302479	       187.6 ns/op	         5.331 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru/2q-8     	 4763290	       243.2 ns/op	         4.112 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/lru           	42857462	        27.95 ns/op	        35.77 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/lru-2         	45647263	        27.13 ns/op	        36.86 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/lru-4         	70780975	        19.03 ns/op	        52.55 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/lru-8         	43042248	        28.50 ns/op	        35.09 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/twoq          	56653770	        21.04 ns/op	        47.54 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/twoq-2        	70768798	        17.57 ns/op	        56.93 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/twoq-4        	83017692	        14.17 ns/op	        70.57 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/twoq-8        	56973631	        22.09 ns/op	        45.27 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/sieve         	42927282	        28.45 ns/op	        35.15 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/sieve-2       	79966014	        15.04 ns/op	        66.51 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/sieve-4       	136427108	         8.783 ns/op	       113.9 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/sieve-8       	168678054	         6.372 ns/op	       156.9 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/s3fifo        	42011413	        27.71 ns/op	        36.08 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/s3fifo-2      	82291120	        14.96 ns/op	        66.86 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/s3fifo-4      	152403320	         8.141 ns/op	       122.8 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/s3fifo-8      	253926715	         4.812 ns/op	       207.8 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=otter               	28790642	        41.05 ns/op	        24.36 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=otter-2             	56912385	        21.18 ns/op	        47.21 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=otter-4             	100000000	        11.06 ns/op	        90.38 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=otter-8             	206146412	         5.790 ns/op	       172.7 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru          	39552942	        29.90 ns/op	        33.44 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru-2        	13461289	        87.55 ns/op	        11.42 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru-4        	 6714873	       181.0 ns/op	         5.525 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru-8        	 5088231	       246.9 ns/op	         4.051 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru/2q       	37814331	        31.81 ns/op	        31.44 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru/2q-2     	13296907	        87.96 ns/op	        11.37 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru/2q-4     	 6986658	       174.2 ns/op	         5.741 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru/2q-8     	 5017381	       239.9 ns/op	         4.168 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/lru          	43408600	        26.79 ns/op	        37.33 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/lru-2        	45418489	        26.20 ns/op	        38.17 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/lru-4        	68638926	        17.95 ns/op	        55.71 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/lru-8        	36069026	        35.04 ns/op	        28.54 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/twoq         	49439428	        25.20 ns/op	        39.68 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/twoq-2       	64038422	        18.48 ns/op	        54.11 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/twoq-4       	52841805	        23.57 ns/op	        42.43 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/twoq-8       	47447004	        25.52 ns/op	        39.19 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/sieve        	37672962	        32.18 ns/op	        31.07 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/sieve-2      	51472874	        21.28 ns/op	        46.98 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/sieve-4      	80223733	        13.99 ns/op	        71.48 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/sieve-8      	77309415	        14.89 ns/op	        67.16 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/s3fifo       	36556572	        33.11 ns/op	        30.20 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/s3fifo-2     	63725696	        18.88 ns/op	        52.97 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/s3fifo-4     	88510534	        12.25 ns/op	        81.66 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/s3fifo-8     	76728795	        14.75 ns/op	        67.78 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=otter              	22868304	        50.55 ns/op	        19.78 Mops/s	       1 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=otter-2            	47166951	        27.11 ns/op	        36.88 Mops/s	       1 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=otter-4            	84603859	        16.21 ns/op	        61.69 Mops/s	       1 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=otter-8            	92463578	        12.33 ns/op	        81.12 Mops/s	       1 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru         	38632206	        30.79 ns/op	        32.48 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru-2       	12614377	        90.39 ns/op	        11.06 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru-4       	 6477915	       185.5 ns/op	         5.392 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru-8       	 4738080	       253.2 ns/op	         3.950 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru/2q      	36771277	        33.06 ns/op	        30.25 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru/2q-2    	13476886	        88.27 ns/op	        11.33 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru/2q-4    	 7021190	       171.0 ns/op	         5.849 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru/2q-8    	 5083902	       229.2 ns/op	         4.363 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/lru          	42975774	        28.28 ns/op	        35.36 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/lru-2        	44150448	        27.53 ns/op	        36.32 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/lru-4        	67556470	        18.38 ns/op	        54.39 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/lru-8        	35713354	        33.51 ns/op	        29.84 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/twoq         	48637146	        24.88 ns/op	        40.19 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/twoq-2       	66308416	        19.91 ns/op	        50.22 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/twoq-4       	89735835	        14.65 ns/op	        68.27 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/twoq-8       	45875504	        26.18 ns/op	        38.20 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/sieve        	33309354	        35.51 ns/op	        28.16 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/sieve-2      	46609257	        26.11 ns/op	        38.30 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/sieve-4      	70272010	        17.92 ns/op	        55.80 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/sieve-8      	42088033	        29.03 ns/op	        34.45 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/s3fifo       	33446563	        34.22 ns/op	        29.23 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/s3fifo-2     	42022077	        27.41 ns/op	        36.48 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/s3fifo-4     	58709995	        22.73 ns/op	        43.99 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/s3fifo-8     	41654853	        29.22 ns/op	        34.22 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=otter              	19476342	        59.71 ns/op	        16.75 Mops/s	       4 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=otter-2            	32632452	        35.41 ns/op	        28.24 Mops/s	       4 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=otter-4            	50447546	        21.00 ns/op	        47.62 Mops/s	       3 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=otter-8            	53596251	        21.25 ns/op	        47.05 Mops/s	       3 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru         	36466590	        30.95 ns/op	        32.31 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru-2       	12737770	        87.65 ns/op	        11.41 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru-4       	 7158752	       170.4 ns/op	         5.867 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru-8       	 5272003	       242.1 ns/op	         4.131 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru/2q      	36367630	        33.35 ns/op	        29.99 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru/2q-2    	13809690	        88.61 ns/op	        11.29 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru/2q-4    	 6682033	       174.6 ns/op	         5.726 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru/2q-8    	 5123516	       252.3 ns/op	         3.963 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/lru                     	19409401	        62.81 ns/op	        15.92 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/lru-2                   	26108121	        46.53 ns/op	        21.49 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/lru-4                   	38401996	        30.87 ns/op	        32.39 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/lru-8                   	36002790	        31.85 ns/op	        31.40 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/twoq                    	19881771	        60.14 ns/op	        16.63 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/twoq-2                  	27923426	        42.92 ns/op	        23.30 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/twoq-4                  	46306046	        26.12 ns/op	        38.28 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/twoq-8                  	37244140	        31.84 ns/op	        31.41 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/sieve                   	16124416	        76.23 ns/op	        13.12 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/sieve-2                 	16667668	        72.28 ns/op	        13.83 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/sieve-4                 	20521897	        54.20 ns/op	        18.45 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/sieve-8                 	14012259	        84.38 ns/op	        11.85 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/s3fifo                  	10301707	       117.9 ns/op	         8.481 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/s3fifo-2                	13528347	        91.63 ns/op	        10.91 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/s3fifo-4                	18418576	        69.08 ns/op	        14.48 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/s3fifo-8                	12763728	        94.97 ns/op	        10.53 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=otter                         	 3783340	       288.7 ns/op	         3.464 Mops/s	     103 B/op	       2 allocs/op
+BenchmarkEvict/cache=otter-2                       	 6301797	       173.2 ns/op	         5.774 Mops/s	     104 B/op	       2 allocs/op
+BenchmarkEvict/cache=otter-4                       	 7826048	       157.8 ns/op	         6.338 Mops/s	     104 B/op	       2 allocs/op
+BenchmarkEvict/cache=otter-8                       	 7033802	       200.9 ns/op	         4.977 Mops/s	     103 B/op	       2 allocs/op
+BenchmarkEvict/cache=golang-lru                    	 8417918	       136.5 ns/op	         7.327 Mops/s	      71 B/op	       0 allocs/op
+BenchmarkEvict/cache=golang-lru-2                  	 6518035	       162.7 ns/op	         6.147 Mops/s	      72 B/op	       0 allocs/op
+BenchmarkEvict/cache=golang-lru-4                  	 4804413	       247.4 ns/op	         4.043 Mops/s	      71 B/op	       0 allocs/op
+BenchmarkEvict/cache=golang-lru-8                  	 3902474	       316.4 ns/op	         3.161 Mops/s	      71 B/op	       0 allocs/op
+BenchmarkEvict/cache=golang-lru/2q                 	 4380584	       313.3 ns/op	         3.192 Mops/s	     123 B/op	       1 allocs/op
+BenchmarkEvict/cache=golang-lru/2q-2               	 4223900	       344.5 ns/op	         2.902 Mops/s	     122 B/op	       1 allocs/op
+BenchmarkEvict/cache=golang-lru/2q-4               	 3638316	       362.4 ns/op	         2.759 Mops/s	     122 B/op	       1 allocs/op
+BenchmarkEvict/cache=golang-lru/2q-8               	 3469839	       394.3 ns/op	         2.536 Mops/s	     123 B/op	       1 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/lru           	35084469	        35.08 ns/op	        28.51 Mops/s	        83.97 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/lru-2         	39432067	        29.96 ns/op	        33.37 Mops/s	        83.98 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/lru-4         	55814353	        21.16 ns/op	        47.26 Mops/s	        83.96 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/lru-8         	38724927	        30.33 ns/op	        32.97 Mops/s	        83.94 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/twoq          	37665916	        31.66 ns/op	        31.59 Mops/s	        85.56 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/twoq-2        	41836627	        29.13 ns/op	        34.33 Mops/s	        85.56 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/twoq-4        	65726564	        22.81 ns/op	        43.83 Mops/s	        85.54 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/twoq-8        	35699941	        32.19 ns/op	        31.07 Mops/s	        85.53 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/sieve         	32838775	        35.14 ns/op	        28.46 Mops/s	        87.74 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/sieve-2       	49908759	        23.40 ns/op	        42.74 Mops/s	        87.84 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/sieve-4       	76445497	        15.63 ns/op	        64.00 Mops/s	        87.81 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/sieve-8       	57784216	        19.46 ns/op	        51.39 Mops/s	        87.72 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/s3fifo        	25408566	        45.71 ns/op	        21.88 Mops/s	        86.79 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/s3fifo-2      	42648658	        27.74 ns/op	        36.05 Mops/s	        86.78 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/s3fifo-4      	70647283	        16.42 ns/op	        60.90 Mops/s	        86.78 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/s3fifo-8      	50988702	        23.12 ns/op	        43.24 Mops/s	        86.78 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter               	14458694	        80.73 ns/op	        12.39 Mops/s	        87.02 hit%	      14 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter-2             	20841262	        53.58 ns/op	        18.66 Mops/s	        87.45 hit%	      14 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter-4             	35035941	        41.23 ns/op	        24.25 Mops/s	        87.68 hit%	      14 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter-8             	25217456	        46.25 ns/op	        21.62 Mops/s	        87.52 hit%	      14 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru          	17389696	        66.86 ns/op	        14.96 Mops/s	        83.96 hit%	      15 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru-2        	10695687	       119.2 ns/op	         8.392 Mops/s	        83.97 hit%	      15 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru-4        	 5951218	       208.5 ns/op	         4.796 Mops/s	        83.94 hit%	      15 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru-8        	 4036082	       298.4 ns/op	         3.352 Mops/s	        83.97 hit%	      15 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru/2q       	11846737	       106.8 ns/op	         9.365 Mops/s	        85.28 hit%	      23 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru/2q-2     	 7722514	       152.8 ns/op	         6.545 Mops/s	        85.26 hit%	      23 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru/2q-4     	 5730297	       211.8 ns/op	         4.721 Mops/s	        85.27 hit%	      23 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru/2q-8     	 3973232	       307.5 ns/op	         3.252 Mops/s	        85.29 hit%	      23 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/lru            	 9493876	       132.6 ns/op	         7.543 Mops/s	        88.44 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/lru-2          	16165344	        78.64 ns/op	        12.72 Mops/s	        88.45 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/lru-4          	17536882	        61.18 ns/op	        16.35 Mops/s	        88.45 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/lru-8          	35407586	        34.53 ns/op	        28.96 Mops/s	        88.43 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/twoq           	 7164342	       156.4 ns/op	         6.392 Mops/s	        88.83 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/twoq-2         	10372969	       106.2 ns/op	         9.413 Mops/s	        88.95 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/twoq-4         	15128664	        74.07 ns/op	        13.50 Mops/s	        89.13 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/twoq-8         	31495580	        35.09 ns/op	        28.50 Mops/s	        89.37 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/sieve          	 9805944	       113.3 ns/op	         8.823 Mops/s	        89.73 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/sieve-2        	14735881	        70.40 ns/op	        14.20 Mops/s	        89.82 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/sieve-4        	21186300	        52.93 ns/op	        18.89 Mops/s	        89.90 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/sieve-8        	47561718	        24.21 ns/op	        41.31 Mops/s	        90.11 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/s3fifo         	 8405472	       136.5 ns/op	         7.324 Mops/s	        89.85 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/s3fifo-2       	16211250	        80.95 ns/op	        12.35 Mops/s	        89.97 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/s3fifo-4       	29591452	        49.67 ns/op	        20.13 Mops/s	        90.10 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/s3fifo-8       	43966376	        27.71 ns/op	        36.08 Mops/s	        90.18 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter                	 4447845	       272.5 ns/op	         3.670 Mops/s	        89.58 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter-2              	10825320	       107.3 ns/op	         9.322 Mops/s	        90.00 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter-4              	16032546	        72.82 ns/op	        13.73 Mops/s	        89.76 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter-8              	20699439	        56.27 ns/op	        17.77 Mops/s	        89.78 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru           	 7255910	       177.0 ns/op	         5.651 Mops/s	        88.43 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru-2         	 4057784	       286.9 ns/op	         3.485 Mops/s	        88.42 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru-4         	 3120430	       376.1 ns/op	         2.659 Mops/s	        88.40 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru-8         	 3188062	       357.9 ns/op	         2.794 Mops/s	        88.44 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru/2q        	 4443678	       260.8 ns/op	         3.835 Mops/s	        89.39 hit%	      17 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru/2q-2      	 3227526	       378.8 ns/op	         2.640 Mops/s	        89.44 hit%	      17 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru/2q-4      	 2548746	       433.6 ns/op	         2.306 Mops/s	        89.41 hit%	      17 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru/2q-8      	 2673774	       451.4 ns/op	         2.215 Mops/s	        89.49 hit%	      17 B/op	       0 allocs/op
+PASS
+ok  	github.com/floatdrop/evict/bench	406.292s
+go: go1.27.3
+golang-lru: v2.0.7
+otter: v2.4.0
+goos: darwin
+goarch: arm64
+pkg: github.com/floatdrop/evict/bench
+cpu: Apple M3 Max
+BenchmarkGet/cache=evict/lru           	38350706	        29.46 ns/op	        33.95 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/lru-2         	46886827	        26.53 ns/op	        37.69 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/lru-4         	62940226	        18.00 ns/op	        55.55 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/lru-8         	43534386	        28.14 ns/op	        35.54 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/twoq          	58094851	        20.13 ns/op	        49.67 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/twoq-2        	72935026	        16.50 ns/op	        60.61 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/twoq-4        	100744522	        11.72 ns/op	        85.31 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/twoq-8        	55197897	        21.48 ns/op	        46.56 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/sieve         	40707346	        28.69 ns/op	        34.86 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/sieve-2       	82684255	        14.58 ns/op	        68.60 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/sieve-4       	158388014	         7.559 ns/op	       132.3 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/sieve-8       	316148329	         3.800 ns/op	       263.2 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/s3fifo        	42689875	        28.25 ns/op	        35.40 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/s3fifo-2      	80918194	        14.66 ns/op	        68.21 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/s3fifo-4      	172629259	         6.955 ns/op	       143.8 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/s3fifo-8      	315203064	         3.801 ns/op	       263.1 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=otter               	31445682	        37.59 ns/op	        26.61 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=otter-2             	59231959	        19.71 ns/op	        50.73 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=otter-4             	124167356	         9.692 ns/op	       103.2 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=otter-8             	245552724	         4.872 ns/op	       205.3 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru          	39857949	        29.80 ns/op	        33.56 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru-2        	13056055	        90.80 ns/op	        11.01 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru-4        	 6703752	       179.9 ns/op	         5.558 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru-8        	 4765401	       251.8 ns/op	         3.972 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru/2q       	39031160	        30.56 ns/op	        32.73 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru/2q-2     	13316440	        88.67 ns/op	        11.28 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru/2q-4     	 6596599	       177.3 ns/op	         5.640 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru/2q-8     	 4997794	       237.9 ns/op	         4.204 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/lru           	43782436	        26.98 ns/op	        37.06 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/lru-2         	42346278	        28.25 ns/op	        35.40 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/lru-4         	55359063	        23.00 ns/op	        43.48 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/lru-8         	28422968	        42.32 ns/op	        23.63 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/twoq          	54009756	        22.33 ns/op	        44.79 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/twoq-2        	54246584	        21.99 ns/op	        45.48 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/twoq-4        	68603605	        18.87 ns/op	        53.01 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/twoq-8        	31960581	        38.01 ns/op	        26.31 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/sieve         	25772295	        47.06 ns/op	        21.25 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/sieve-2       	20848399	        55.26 ns/op	        18.10 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/sieve-4       	23523338	        51.92 ns/op	        19.26 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/sieve-8       	15569048	        77.84 ns/op	        12.85 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/s3fifo        	25326451	        47.29 ns/op	        21.14 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/s3fifo-2      	21376528	        55.11 ns/op	        18.15 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/s3fifo-4      	24432868	        52.12 ns/op	        19.19 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/s3fifo-8      	14519948	        79.64 ns/op	        12.56 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=otter               	 9775624	       116.5 ns/op	         8.582 Mops/s	      16 B/op	       1 allocs/op
+BenchmarkSet/cache=otter-2             	16237316	        71.16 ns/op	        14.05 Mops/s	      16 B/op	       1 allocs/op
+BenchmarkSet/cache=otter-4             	26889876	        47.89 ns/op	        20.88 Mops/s	      16 B/op	       1 allocs/op
+BenchmarkSet/cache=otter-8             	18448352	        63.53 ns/op	        15.74 Mops/s	      16 B/op	       1 allocs/op
+BenchmarkSet/cache=golang-lru          	38234012	        31.71 ns/op	        31.53 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru-2        	13729178	        89.57 ns/op	        11.16 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru-4        	 6853604	       174.4 ns/op	         5.735 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru-8        	 5308351	       239.0 ns/op	         4.184 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru/2q       	32290434	        37.09 ns/op	        26.96 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru/2q-2     	12182570	        94.56 ns/op	        10.58 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru/2q-4     	 6867705	       181.7 ns/op	         5.505 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru/2q-8     	 4898247	       238.7 ns/op	         4.189 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/lru           	48311770	        25.22 ns/op	        39.65 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/lru-2         	45965269	        25.77 ns/op	        38.81 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/lru-4         	75902326	        16.70 ns/op	        59.89 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/lru-8         	35157408	        34.06 ns/op	        29.36 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/twoq          	58841313	        20.16 ns/op	        49.61 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/twoq-2        	74058073	        16.18 ns/op	        61.79 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/twoq-4        	100000000	        12.62 ns/op	        79.23 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/twoq-8        	51739470	        23.10 ns/op	        43.29 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/sieve         	43693562	        27.85 ns/op	        35.91 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/sieve-2       	80523174	        15.02 ns/op	        66.59 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/sieve-4       	145033099	         8.455 ns/op	       118.3 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/sieve-8       	237045133	         5.032 ns/op	       198.7 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/s3fifo        	43842422	        27.98 ns/op	        35.74 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/s3fifo-2      	79817308	        15.39 ns/op	        64.96 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/s3fifo-4      	98797282	        11.50 ns/op	        86.95 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/s3fifo-8      	254628130	         4.695 ns/op	       213.0 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=otter               	31539937	        38.42 ns/op	        26.03 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=otter-2             	57434013	        20.90 ns/op	        47.86 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=otter-4             	100000000	        10.89 ns/op	        91.80 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=otter-8             	210713940	         5.666 ns/op	       176.5 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru          	41061613	        28.75 ns/op	        34.78 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru-2        	13456956	        89.63 ns/op	        11.16 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru-4        	 6570015	       169.5 ns/op	         5.899 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru-8        	 4940098	       236.4 ns/op	         4.231 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru/2q       	38956137	        30.39 ns/op	        32.91 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru/2q-2     	13719962	        85.02 ns/op	        11.76 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru/2q-4     	 7111826	       170.9 ns/op	         5.851 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru/2q-8     	 5088300	       235.7 ns/op	         4.243 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/lru          	45514311	        27.01 ns/op	        37.03 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/lru-2        	45479882	        26.07 ns/op	        38.35 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/lru-4        	68243588	        19.45 ns/op	        51.42 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/lru-8        	38274560	        31.04 ns/op	        32.22 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/twoq         	53312007	        22.47 ns/op	        44.50 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/twoq-2       	71552437	        17.06 ns/op	        58.63 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/twoq-4       	100000000	        14.10 ns/op	        70.91 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/twoq-8       	49304346	        24.10 ns/op	        41.49 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/sieve        	40340202	        29.73 ns/op	        33.64 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/sieve-2      	62458929	        19.23 ns/op	        52.01 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/sieve-4      	95535376	        11.88 ns/op	        84.17 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/sieve-8      	81600040	        14.76 ns/op	        67.73 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/s3fifo       	40876111	        30.10 ns/op	        33.22 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/s3fifo-2     	62794075	        19.20 ns/op	        52.08 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/s3fifo-4     	100000000	        12.26 ns/op	        81.55 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/s3fifo-8     	77128876	        14.95 ns/op	        66.88 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=otter              	26016518	        47.52 ns/op	        21.04 Mops/s	       1 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=otter-2            	44285822	        27.93 ns/op	        35.80 Mops/s	       1 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=otter-4            	83585348	        14.97 ns/op	        66.80 Mops/s	       1 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=otter-8            	93883857	        12.40 ns/op	        80.65 Mops/s	       1 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru         	39696103	        30.30 ns/op	        33.01 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru-2       	13432735	        87.11 ns/op	        11.48 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru-4       	 6768283	       169.7 ns/op	         5.892 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru-8       	 4911992	       243.1 ns/op	         4.113 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru/2q      	37744057	        31.34 ns/op	        31.91 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru/2q-2    	13115804	        88.71 ns/op	        11.27 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru/2q-4    	 7162996	       167.4 ns/op	         5.973 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru/2q-8    	 5023549	       240.2 ns/op	         4.164 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/lru          	44116971	        27.02 ns/op	        37.01 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/lru-2        	45113133	        26.46 ns/op	        37.79 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/lru-4        	68440413	        18.21 ns/op	        54.92 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/lru-8        	36101354	        32.11 ns/op	        31.14 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/twoq         	45690207	        24.37 ns/op	        41.03 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/twoq-2       	64773247	        18.34 ns/op	        54.54 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/twoq-4       	97896585	        14.17 ns/op	        70.57 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/twoq-8       	46203232	        26.17 ns/op	        38.21 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/sieve        	34772403	        33.16 ns/op	        30.15 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/sieve-2      	46214206	        25.95 ns/op	        38.54 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/sieve-4      	68432931	        18.26 ns/op	        54.75 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/sieve-8      	41163379	        28.79 ns/op	        34.74 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/s3fifo       	32389100	        35.32 ns/op	        28.31 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/s3fifo-2     	45428876	        26.72 ns/op	        37.42 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/s3fifo-4     	67336605	        17.97 ns/op	        55.66 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/s3fifo-8     	43049262	        28.45 ns/op	        35.15 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=otter              	20252181	        57.87 ns/op	        17.28 Mops/s	       3 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=otter-2            	33810396	        34.99 ns/op	        28.58 Mops/s	       4 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=otter-4            	59932327	        20.84 ns/op	        47.98 Mops/s	       3 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=otter-8            	53982016	        21.66 ns/op	        46.17 Mops/s	       3 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru         	39590403	        30.52 ns/op	        32.76 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru-2       	12945320	        87.26 ns/op	        11.46 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru-4       	 6893232	       174.5 ns/op	         5.732 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru-8       	 4751809	       247.3 ns/op	         4.043 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru/2q      	36015486	        33.87 ns/op	        29.52 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru/2q-2    	13801940	        88.45 ns/op	        11.31 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru/2q-4    	 6776595	       173.6 ns/op	         5.760 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru/2q-8    	 5331817	       228.5 ns/op	         4.377 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/lru                     	19549797	        60.65 ns/op	        16.49 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/lru-2                   	27271383	        45.14 ns/op	        22.15 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/lru-4                   	43678718	        27.37 ns/op	        36.54 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/lru-8                   	37854640	        32.40 ns/op	        30.86 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/twoq                    	19514244	        59.65 ns/op	        16.76 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/twoq-2                  	28300357	        42.93 ns/op	        23.29 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/twoq-4                  	46036540	        25.88 ns/op	        38.64 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/twoq-8                  	38576422	        31.41 ns/op	        31.84 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/sieve                   	15128004	        75.20 ns/op	        13.30 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/sieve-2                 	16963197	        71.11 ns/op	        14.06 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/sieve-4                 	22595004	        52.96 ns/op	        18.88 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/sieve-8                 	14077628	        86.00 ns/op	        11.63 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/s3fifo                  	10098271	       119.3 ns/op	         8.380 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/s3fifo-2                	13596558	        90.08 ns/op	        11.10 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/s3fifo-4                	18037099	        63.44 ns/op	        15.76 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/s3fifo-8                	12482359	        96.30 ns/op	        10.38 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=otter                         	 4450624	       285.7 ns/op	         3.500 Mops/s	     103 B/op	       2 allocs/op
+BenchmarkEvict/cache=otter-2                       	 7708046	       160.7 ns/op	         6.222 Mops/s	     104 B/op	       2 allocs/op
+BenchmarkEvict/cache=otter-4                       	 8099152	       158.4 ns/op	         6.312 Mops/s	     104 B/op	       2 allocs/op
+BenchmarkEvict/cache=otter-8                       	 7539897	       171.1 ns/op	         5.846 Mops/s	     104 B/op	       2 allocs/op
+BenchmarkEvict/cache=golang-lru                    	 8823574	       135.3 ns/op	         7.392 Mops/s	      72 B/op	       0 allocs/op
+BenchmarkEvict/cache=golang-lru-2                  	 7346408	       165.4 ns/op	         6.047 Mops/s	      71 B/op	       0 allocs/op
+BenchmarkEvict/cache=golang-lru-4                  	 4554241	       248.9 ns/op	         4.018 Mops/s	      72 B/op	       0 allocs/op
+BenchmarkEvict/cache=golang-lru-8                  	 3811484	       315.7 ns/op	         3.167 Mops/s	      72 B/op	       0 allocs/op
+BenchmarkEvict/cache=golang-lru/2q                 	 4743964	       273.0 ns/op	         3.662 Mops/s	     122 B/op	       1 allocs/op
+BenchmarkEvict/cache=golang-lru/2q-2               	 4323576	       288.8 ns/op	         3.462 Mops/s	     122 B/op	       1 allocs/op
+BenchmarkEvict/cache=golang-lru/2q-4               	 3802712	       342.6 ns/op	         2.918 Mops/s	     122 B/op	       1 allocs/op
+BenchmarkEvict/cache=golang-lru/2q-8               	 2867059	       439.8 ns/op	         2.274 Mops/s	     122 B/op	       1 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/lru           	36419460	        33.01 ns/op	        30.30 Mops/s	        83.97 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/lru-2         	40183728	        30.11 ns/op	        33.21 Mops/s	        83.98 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/lru-4         	58086884	        20.57 ns/op	        48.60 Mops/s	        83.97 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/lru-8         	41289136	        28.53 ns/op	        35.05 Mops/s	        83.97 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/twoq          	37879286	        31.81 ns/op	        31.43 Mops/s	        85.57 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/twoq-2        	41050141	        29.40 ns/op	        34.01 Mops/s	        85.57 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/twoq-4        	64914283	        22.09 ns/op	        45.27 Mops/s	        85.55 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/twoq-8        	40916006	        28.59 ns/op	        34.98 Mops/s	        85.53 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/sieve         	33048595	        35.06 ns/op	        28.52 Mops/s	        87.75 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/sieve-2       	50422993	        23.49 ns/op	        42.58 Mops/s	        87.83 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/sieve-4       	78196694	        14.41 ns/op	        69.41 Mops/s	        87.82 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/sieve-8       	59864803	        18.92 ns/op	        52.86 Mops/s	        87.73 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/s3fifo        	25080662	        46.18 ns/op	        21.66 Mops/s	        86.77 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/s3fifo-2      	43231947	        28.12 ns/op	        35.56 Mops/s	        86.77 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/s3fifo-4      	70944694	        16.51 ns/op	        60.58 Mops/s	        86.79 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/s3fifo-8      	50585865	        23.29 ns/op	        42.95 Mops/s	        86.79 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter               	12781264	        81.96 ns/op	        12.20 Mops/s	        87.04 hit%	      14 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter-2             	23913075	        52.83 ns/op	        18.93 Mops/s	        87.44 hit%	      14 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter-4             	42278852	        24.05 ns/op	        41.57 Mops/s	        87.94 hit%	      13 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter-8             	30313076	        42.60 ns/op	        23.47 Mops/s	        87.64 hit%	      14 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru          	18123339	        60.58 ns/op	        16.51 Mops/s	        83.99 hit%	      15 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru-2        	 9255890	       118.7 ns/op	         8.421 Mops/s	        83.98 hit%	      15 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru-4        	 5695404	       210.6 ns/op	         4.748 Mops/s	        83.98 hit%	      15 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru-8        	 4082778	       286.8 ns/op	         3.487 Mops/s	        83.98 hit%	      15 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru/2q       	12591478	       100.4 ns/op	         9.955 Mops/s	        85.27 hit%	      23 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru/2q-2     	 8083048	       147.8 ns/op	         6.764 Mops/s	        85.27 hit%	      23 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru/2q-4     	 5283246	       216.8 ns/op	         4.613 Mops/s	        85.24 hit%	      23 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru/2q-8     	 3859636	       298.7 ns/op	         3.348 Mops/s	        85.26 hit%	      23 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/lru            	10637361	       118.7 ns/op	         8.426 Mops/s	        88.41 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/lru-2          	16911590	        80.54 ns/op	        12.42 Mops/s	        88.45 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/lru-4          	20784259	        61.79 ns/op	        16.18 Mops/s	        88.44 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/lru-8          	35199949	        33.45 ns/op	        29.89 Mops/s	        88.43 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/twoq           	10029541	       128.4 ns/op	         7.791 Mops/s	        88.93 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/twoq-2         	12656830	        88.13 ns/op	        11.35 Mops/s	        89.03 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/twoq-4         	19188818	        63.82 ns/op	        15.67 Mops/s	        89.22 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/twoq-8         	35408499	        34.96 ns/op	        28.60 Mops/s	        89.39 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/sieve          	 9410958	       128.0 ns/op	         7.812 Mops/s	        89.96 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/sieve-2        	18546874	        64.89 ns/op	        15.41 Mops/s	        90.17 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/sieve-4        	30895718	        37.37 ns/op	        26.76 Mops/s	        90.00 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/sieve-8        	47992242	        23.54 ns/op	        42.48 Mops/s	        90.12 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/s3fifo         	 7681122	       145.5 ns/op	         6.875 Mops/s	        89.84 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/s3fifo-2       	16348068	        77.93 ns/op	        12.83 Mops/s	        89.96 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/s3fifo-4       	26935477	        43.05 ns/op	        23.23 Mops/s	        90.33 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/s3fifo-8       	43256233	        27.06 ns/op	        36.95 Mops/s	        90.18 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter                	 4920441	       231.8 ns/op	         4.315 Mops/s	        89.58 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter-2              	10399446	       119.9 ns/op	         8.344 Mops/s	        89.59 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter-4              	17005114	        65.29 ns/op	        15.32 Mops/s	        89.75 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter-8              	19840599	        57.17 ns/op	        17.49 Mops/s	        89.84 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru           	 6741512	       162.4 ns/op	         6.157 Mops/s	        88.44 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru-2         	 3579289	       304.4 ns/op	         3.286 Mops/s	        88.45 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru-4         	 3568652	       313.4 ns/op	         3.191 Mops/s	        88.42 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru-8         	 3224575	       371.0 ns/op	         2.695 Mops/s	        88.44 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru/2q        	 5185087	       230.4 ns/op	         4.340 Mops/s	        89.44 hit%	      17 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru/2q-2      	 3064725	       355.0 ns/op	         2.817 Mops/s	        89.40 hit%	      17 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru/2q-4      	 2983556	       390.9 ns/op	         2.558 Mops/s	        89.43 hit%	      17 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru/2q-8      	 2743466	       419.2 ns/op	         2.385 Mops/s	        89.43 hit%	      17 B/op	       0 allocs/op
+PASS
+ok  	github.com/floatdrop/evict/bench	392.605s
+go: go1.27.3
+golang-lru: v2.0.7
+otter: v2.4.0
+goos: darwin
+goarch: arm64
+pkg: github.com/floatdrop/evict/bench
+cpu: Apple M3 Max
+BenchmarkGet/cache=evict/lru           	39751608	        27.62 ns/op	        36.21 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/lru-2         	46033230	        26.57 ns/op	        37.64 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/lru-4         	69780963	        17.18 ns/op	        58.19 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/lru-8         	43312112	        27.05 ns/op	        36.96 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/twoq          	52696774	        23.04 ns/op	        43.40 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/twoq-2        	71771943	        16.86 ns/op	        59.33 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/twoq-4        	100000000	        10.74 ns/op	        93.08 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/twoq-8        	56191176	        21.16 ns/op	        47.26 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/sieve         	42888607	        27.78 ns/op	        35.99 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/sieve-2       	80547496	        15.16 ns/op	        65.96 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/sieve-4       	169122812	         7.055 ns/op	       141.7 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/sieve-8       	333231627	         3.598 ns/op	       278.0 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/s3fifo        	42544956	        27.55 ns/op	        36.30 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/s3fifo-2      	84409459	        14.21 ns/op	        70.35 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/s3fifo-4      	168347688	         7.073 ns/op	       141.4 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/s3fifo-8      	338682199	         3.550 ns/op	       281.7 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=otter               	32578374	        37.53 ns/op	        26.64 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=otter-2             	60320830	        19.30 ns/op	        51.81 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=otter-4             	124484868	         9.622 ns/op	       103.9 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=otter-8             	248782627	         4.819 ns/op	       207.5 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru          	41943682	        28.61 ns/op	        34.95 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru-2        	14060624	        85.78 ns/op	        11.66 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru-4        	 6972698	       169.5 ns/op	         5.900 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru-8        	 5157886	       228.4 ns/op	         4.378 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru/2q       	38847889	        30.85 ns/op	        32.42 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru/2q-2     	14203136	        83.51 ns/op	        11.97 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru/2q-4     	 7109086	       167.6 ns/op	         5.965 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru/2q-8     	 5112798	       230.8 ns/op	         4.334 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/lru           	41425556	        28.90 ns/op	        34.60 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/lru-2         	43009147	        27.85 ns/op	        35.91 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/lru-4         	59128105	        20.40 ns/op	        49.01 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/lru-8         	30594618	        39.53 ns/op	        25.30 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/twoq          	53144080	        22.91 ns/op	        43.65 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/twoq-2        	54545662	        22.24 ns/op	        44.97 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/twoq-4        	71957544	        16.99 ns/op	        58.87 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/twoq-8        	35071396	        33.09 ns/op	        30.22 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/sieve         	26523146	        45.66 ns/op	        21.90 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/sieve-2       	20743884	        56.57 ns/op	        17.68 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/sieve-4       	23663952	        49.99 ns/op	        20.00 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/sieve-8       	16315884	        73.70 ns/op	        13.57 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/s3fifo        	26320022	        45.57 ns/op	        21.94 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/s3fifo-2      	21511768	        54.80 ns/op	        18.25 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/s3fifo-4      	23890540	        51.14 ns/op	        19.55 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/s3fifo-8      	16613250	        74.18 ns/op	        13.48 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=otter               	10459725	       113.0 ns/op	         8.848 Mops/s	      16 B/op	       1 allocs/op
+BenchmarkSet/cache=otter-2             	16075860	        73.81 ns/op	        13.55 Mops/s	      16 B/op	       1 allocs/op
+BenchmarkSet/cache=otter-4             	26432517	        47.62 ns/op	        21.00 Mops/s	      16 B/op	       1 allocs/op
+BenchmarkSet/cache=otter-8             	19001246	        63.33 ns/op	        15.79 Mops/s	      16 B/op	       1 allocs/op
+BenchmarkSet/cache=golang-lru          	36763860	        30.62 ns/op	        32.66 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru-2        	13724546	        86.45 ns/op	        11.57 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru-4        	 7095217	       171.6 ns/op	         5.827 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru-8        	 5360126	       235.2 ns/op	         4.251 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru/2q       	32334844	        37.78 ns/op	        26.47 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru/2q-2     	13386992	        88.54 ns/op	        11.29 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru/2q-4     	 6918294	       175.4 ns/op	         5.701 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru/2q-8     	 5372198	       227.5 ns/op	         4.396 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/lru           	41137096	        27.89 ns/op	        35.86 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/lru-2         	45325850	        26.32 ns/op	        37.99 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/lru-4         	61089428	        17.04 ns/op	        58.69 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/lru-8         	42746205	        28.59 ns/op	        34.98 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/twoq          	55820012	        21.27 ns/op	        47.01 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/twoq-2        	70932637	        18.11 ns/op	        55.22 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/twoq-4        	100000000	        14.06 ns/op	        71.10 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/twoq-8        	57664584	        20.97 ns/op	        47.68 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/sieve         	44356824	        26.67 ns/op	        37.49 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/sieve-2       	75754983	        16.07 ns/op	        62.23 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/sieve-4       	146705192	         7.943 ns/op	       125.9 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/sieve-8       	231527463	         5.164 ns/op	       193.6 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/s3fifo        	43205941	        28.34 ns/op	        35.29 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/s3fifo-2      	80293520	        14.77 ns/op	        67.69 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/s3fifo-4      	140738758	        11.72 ns/op	        85.36 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/s3fifo-8      	233880572	         5.858 ns/op	       170.7 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=otter               	31356903	        38.25 ns/op	        26.14 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=otter-2             	58181817	        20.66 ns/op	        48.41 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=otter-4             	100000000	        11.51 ns/op	        86.89 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=otter-8             	211498202	         5.653 ns/op	       176.9 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru          	41442784	        29.24 ns/op	        34.20 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru-2        	12475255	        85.60 ns/op	        11.68 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru-4        	 7097434	       171.1 ns/op	         5.844 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru-8        	 5030608	       230.5 ns/op	         4.339 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru/2q       	39143730	        30.58 ns/op	        32.70 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru/2q-2     	14391278	        85.63 ns/op	        11.68 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru/2q-4     	 7119283	       168.2 ns/op	         5.946 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru/2q-8     	 5218120	       231.7 ns/op	         4.317 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/lru          	46524100	        25.81 ns/op	        38.75 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/lru-2        	45001826	        26.32 ns/op	        37.99 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/lru-4        	70885965	        17.05 ns/op	        58.63 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/lru-8        	36263454	        32.95 ns/op	        30.35 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/twoq         	55622613	        22.12 ns/op	        45.21 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/twoq-2       	66094762	        17.93 ns/op	        55.77 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/twoq-4       	95183643	        13.45 ns/op	        74.32 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/twoq-8       	49585581	        24.47 ns/op	        40.86 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/sieve        	38498607	        30.29 ns/op	        33.02 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/sieve-2      	64327496	        19.47 ns/op	        51.35 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/sieve-4      	100000000	        11.36 ns/op	        88.01 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/sieve-8      	84636183	        13.94 ns/op	        71.71 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/s3fifo       	39953331	        30.86 ns/op	        32.41 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/s3fifo-2     	62366583	        18.97 ns/op	        52.72 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/s3fifo-4     	100000000	        11.98 ns/op	        83.49 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/s3fifo-8     	82451320	        14.29 ns/op	        69.99 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=otter              	26934817	        45.82 ns/op	        21.82 Mops/s	       1 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=otter-2            	46618310	        26.27 ns/op	        38.07 Mops/s	       1 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=otter-4            	72648204	        15.86 ns/op	        63.04 Mops/s	       1 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=otter-8            	95425219	        12.18 ns/op	        82.07 Mops/s	       1 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru         	40825640	        29.76 ns/op	        33.60 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru-2       	14114954	        86.50 ns/op	        11.56 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru-4       	 7027618	       171.9 ns/op	         5.817 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru-8       	 4911994	       238.1 ns/op	         4.201 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru/2q      	37271709	        32.07 ns/op	        31.18 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru/2q-2    	14353129	        84.77 ns/op	        11.80 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru/2q-4    	 6908720	       170.5 ns/op	         5.865 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru/2q-8    	 5212148	       245.1 ns/op	         4.079 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/lru          	38431975	        29.90 ns/op	        33.45 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/lru-2        	44541499	        26.46 ns/op	        37.80 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/lru-4        	58794229	        19.26 ns/op	        51.92 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/lru-8        	31827458	        37.61 ns/op	        26.59 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/twoq         	53424550	        23.35 ns/op	        42.83 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/twoq-2       	64224212	        18.90 ns/op	        52.92 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/twoq-4       	97696662	        13.89 ns/op	        72.00 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/twoq-8       	45848994	        26.42 ns/op	        37.85 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/sieve        	36621651	        33.25 ns/op	        30.08 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/sieve-2      	47238204	        25.80 ns/op	        38.76 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/sieve-4      	66148353	        18.72 ns/op	        53.42 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/sieve-8      	44351019	        26.95 ns/op	        37.10 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/s3fifo       	35223841	        34.53 ns/op	        28.96 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/s3fifo-2     	46293987	        26.13 ns/op	        38.27 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/s3fifo-4     	63897198	        19.40 ns/op	        51.54 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/s3fifo-8     	41416680	        28.78 ns/op	        34.74 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=otter              	20598484	        58.45 ns/op	        17.11 Mops/s	       4 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=otter-2            	34883086	        34.82 ns/op	        28.72 Mops/s	       4 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=otter-4            	59124222	        21.68 ns/op	        46.12 Mops/s	       3 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=otter-8            	55115607	        21.35 ns/op	        46.85 Mops/s	       3 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru         	39990280	        30.18 ns/op	        33.13 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru-2       	13721472	        87.37 ns/op	        11.45 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru-4       	 6877830	       171.2 ns/op	         5.841 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru-8       	 5005813	       235.2 ns/op	         4.252 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru/2q      	35891875	        33.68 ns/op	        29.69 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru/2q-2    	14001373	        84.51 ns/op	        11.83 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru/2q-4    	 7044187	       172.8 ns/op	         5.787 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru/2q-8    	 5500383	       226.2 ns/op	         4.421 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/lru                     	19989672	        60.48 ns/op	        16.53 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/lru-2                   	27158665	        44.21 ns/op	        22.62 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/lru-4                   	44349859	        27.14 ns/op	        36.84 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/lru-8                   	36979874	        31.64 ns/op	        31.61 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/twoq                    	20292722	        59.01 ns/op	        16.95 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/twoq-2                  	28577892	        41.94 ns/op	        23.84 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/twoq-4                  	45920050	        26.11 ns/op	        38.29 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/twoq-8                  	37490773	        33.02 ns/op	        30.28 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/sieve                   	15876638	        74.27 ns/op	        13.46 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/sieve-2                 	16940558	        71.05 ns/op	        14.08 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/sieve-4                 	22586019	        53.49 ns/op	        18.70 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/sieve-8                 	14611263	        82.12 ns/op	        12.18 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/s3fifo                  	10293952	       116.5 ns/op	         8.582 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/s3fifo-2                	13557445	        88.93 ns/op	        11.24 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/s3fifo-4                	19372622	        61.99 ns/op	        16.13 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/s3fifo-8                	12850705	        94.30 ns/op	        10.60 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=otter                         	 4536667	       278.0 ns/op	         3.597 Mops/s	     104 B/op	       2 allocs/op
+BenchmarkEvict/cache=otter-2                       	 7722404	       161.0 ns/op	         6.211 Mops/s	     104 B/op	       2 allocs/op
+BenchmarkEvict/cache=otter-4                       	 8303968	       152.3 ns/op	         6.565 Mops/s	     104 B/op	       2 allocs/op
+BenchmarkEvict/cache=otter-8                       	 8094812	       161.0 ns/op	         6.209 Mops/s	     103 B/op	       2 allocs/op
+BenchmarkEvict/cache=golang-lru                    	 9014170	       133.9 ns/op	         7.469 Mops/s	      72 B/op	       0 allocs/op
+BenchmarkEvict/cache=golang-lru-2                  	 7449754	       157.8 ns/op	         6.338 Mops/s	      72 B/op	       0 allocs/op
+BenchmarkEvict/cache=golang-lru-4                  	 5313332	       227.1 ns/op	         4.403 Mops/s	      71 B/op	       0 allocs/op
+BenchmarkEvict/cache=golang-lru-8                  	 3878576	       306.3 ns/op	         3.264 Mops/s	      71 B/op	       0 allocs/op
+BenchmarkEvict/cache=golang-lru/2q                 	 4730780	       266.8 ns/op	         3.748 Mops/s	     123 B/op	       1 allocs/op
+BenchmarkEvict/cache=golang-lru/2q-2               	 4463022	       280.9 ns/op	         3.560 Mops/s	     122 B/op	       1 allocs/op
+BenchmarkEvict/cache=golang-lru/2q-4               	 3894376	       332.9 ns/op	         3.004 Mops/s	     123 B/op	       1 allocs/op
+BenchmarkEvict/cache=golang-lru/2q-8               	 2879320	       435.1 ns/op	         2.298 Mops/s	     122 B/op	       1 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/lru           	36196182	        33.24 ns/op	        30.08 Mops/s	        83.98 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/lru-2         	41453043	        28.89 ns/op	        34.61 Mops/s	        83.97 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/lru-4         	59248410	        20.27 ns/op	        49.32 Mops/s	        83.96 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/lru-8         	40168315	        28.95 ns/op	        34.55 Mops/s	        83.96 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/twoq          	38194005	        31.30 ns/op	        31.94 Mops/s	        85.56 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/twoq-2        	41701537	        28.89 ns/op	        34.61 Mops/s	        85.56 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/twoq-4        	60099666	        20.22 ns/op	        49.47 Mops/s	        85.56 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/twoq-8        	39735098	        28.70 ns/op	        34.84 Mops/s	        85.54 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/sieve         	33452857	        34.73 ns/op	        28.80 Mops/s	        87.71 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/sieve-2       	50310246	        23.16 ns/op	        43.19 Mops/s	        87.82 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/sieve-4       	83481408	        13.70 ns/op	        72.97 Mops/s	        87.82 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/sieve-8       	59600059	        18.80 ns/op	        53.20 Mops/s	        87.71 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/s3fifo        	26567334	        45.46 ns/op	        22.00 Mops/s	        86.78 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/s3fifo-2      	43278072	        27.42 ns/op	        36.47 Mops/s	        86.78 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/s3fifo-4      	74726779	        15.89 ns/op	        62.93 Mops/s	        86.78 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/s3fifo-8      	51993067	        23.05 ns/op	        43.38 Mops/s	        86.80 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter               	13480930	        78.49 ns/op	        12.74 Mops/s	        87.01 hit%	      14 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter-2             	23119957	        52.60 ns/op	        19.01 Mops/s	        87.16 hit%	      14 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter-4             	47960510	        25.81 ns/op	        38.75 Mops/s	        87.54 hit%	      14 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter-8             	25685664	        42.39 ns/op	        23.59 Mops/s	        87.52 hit%	      14 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru          	18880168	        61.09 ns/op	        16.37 Mops/s	        83.97 hit%	      15 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru-2        	10896736	       113.2 ns/op	         8.837 Mops/s	        83.95 hit%	      15 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru-4        	 5752146	       206.4 ns/op	         4.844 Mops/s	        83.99 hit%	      15 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru-8        	 4390755	       280.8 ns/op	         3.561 Mops/s	        83.95 hit%	      15 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru/2q       	12582550	        90.41 ns/op	        11.06 Mops/s	        85.28 hit%	      23 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru/2q-2     	 7425078	       146.3 ns/op	         6.833 Mops/s	        85.27 hit%	      23 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru/2q-4     	 5863668	       206.3 ns/op	         4.848 Mops/s	        85.26 hit%	      23 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru/2q-8     	 4098794	       286.5 ns/op	         3.490 Mops/s	        85.26 hit%	      23 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/lru            	10857854	       111.0 ns/op	         9.009 Mops/s	        88.43 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/lru-2          	15056949	        77.31 ns/op	        12.94 Mops/s	        88.44 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/lru-4          	27214020	        46.69 ns/op	        21.42 Mops/s	        88.43 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/lru-8          	33995778	        34.51 ns/op	        28.98 Mops/s	        88.44 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/twoq           	10109941	       118.3 ns/op	         8.451 Mops/s	        88.93 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/twoq-2         	13888131	        86.44 ns/op	        11.57 Mops/s	        89.08 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/twoq-4         	23795476	        53.11 ns/op	        18.83 Mops/s	        89.29 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/twoq-8         	33785408	        34.71 ns/op	        28.81 Mops/s	        89.39 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/sieve          	10105695	       119.2 ns/op	         8.386 Mops/s	        89.75 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/sieve-2        	18698178	        64.21 ns/op	        15.57 Mops/s	        89.86 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/sieve-4        	32620180	        35.51 ns/op	        28.16 Mops/s	        90.01 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/sieve-8        	45407889	        23.97 ns/op	        41.71 Mops/s	        90.09 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/s3fifo         	 8924293	       130.7 ns/op	         7.654 Mops/s	        89.87 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/s3fifo-2       	13197811	        79.31 ns/op	        12.61 Mops/s	        89.93 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/s3fifo-4       	28562133	        43.26 ns/op	        23.11 Mops/s	        90.09 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/s3fifo-8       	42700952	        26.98 ns/op	        37.07 Mops/s	        90.17 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter                	 5099266	       221.0 ns/op	         4.525 Mops/s	        89.53 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter-2              	10182744	       112.6 ns/op	         8.882 Mops/s	        89.60 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter-4              	18344311	        63.45 ns/op	        15.76 Mops/s	        89.76 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter-8              	20651866	        56.57 ns/op	        17.68 Mops/s	        89.82 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru           	 6518098	       158.6 ns/op	         6.304 Mops/s	        88.44 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru-2         	 4470723	       271.9 ns/op	         3.678 Mops/s	        88.43 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru-4         	 3825108	       315.9 ns/op	         3.165 Mops/s	        88.46 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru-8         	 3233433	       352.1 ns/op	         2.840 Mops/s	        88.43 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru/2q        	 5234156	       229.1 ns/op	         4.365 Mops/s	        89.40 hit%	      17 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru/2q-2      	 3177644	       342.1 ns/op	         2.923 Mops/s	        89.41 hit%	      17 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru/2q-4      	 3156385	       381.1 ns/op	         2.624 Mops/s	        89.42 hit%	      17 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru/2q-8      	 2765162	       414.0 ns/op	         2.415 Mops/s	        89.42 hit%	      17 B/op	       0 allocs/op
+PASS
+ok  	github.com/floatdrop/evict/bench	386.317s
+go: go1.27.3
+golang-lru: v2.0.7
+otter: v2.4.0
+goos: darwin
+goarch: arm64
+pkg: github.com/floatdrop/evict/bench
+cpu: Apple M3 Max
+BenchmarkGet/cache=evict/lru           	45787346	        26.19 ns/op	        38.18 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/lru-2         	47763014	        25.24 ns/op	        39.62 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/lru-4         	69016914	        17.28 ns/op	        57.86 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/lru-8         	43274431	        27.46 ns/op	        36.41 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/twoq          	58024974	        20.60 ns/op	        48.54 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/twoq-2        	74219149	        16.26 ns/op	        61.50 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/twoq-4        	100000000	        10.06 ns/op	        99.36 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/twoq-8        	57652462	        20.79 ns/op	        48.11 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/sieve         	41062783	        29.05 ns/op	        34.42 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/sieve-2       	78831325	        15.21 ns/op	        65.73 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/sieve-4       	164079732	         7.245 ns/op	       138.0 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/sieve-8       	334347286	         3.576 ns/op	       279.6 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/s3fifo        	44107444	        27.59 ns/op	        36.24 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/s3fifo-2      	83625639	        14.38 ns/op	        69.55 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/s3fifo-4      	167819082	         7.019 ns/op	       142.5 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=evict/s3fifo-8      	340810010	         3.506 ns/op	       285.2 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=otter               	33011734	        36.50 ns/op	        27.40 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=otter-2             	62201545	        19.50 ns/op	        51.28 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=otter-4             	122204492	         9.726 ns/op	       102.8 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=otter-8             	251210344	         4.779 ns/op	       209.2 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru          	42295096	        28.40 ns/op	        35.21 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru-2        	14150053	        85.39 ns/op	        11.71 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru-4        	 7135855	       170.0 ns/op	         5.882 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru-8        	 5388836	       221.6 ns/op	         4.512 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru/2q       	40063099	        29.57 ns/op	        33.82 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru/2q-2     	14104987	        85.21 ns/op	        11.74 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru/2q-4     	 7039686	       168.9 ns/op	         5.921 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkGet/cache=golang-lru/2q-8     	 5336845	       225.4 ns/op	         4.436 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/lru           	43213200	        27.86 ns/op	        35.90 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/lru-2         	43194211	        27.69 ns/op	        36.11 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/lru-4         	59057055	        20.32 ns/op	        49.20 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/lru-8         	32014690	        37.14 ns/op	        26.92 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/twoq          	52344886	        23.02 ns/op	        43.44 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/twoq-2        	56302672	        21.30 ns/op	        46.94 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/twoq-4        	80917059	        15.01 ns/op	        66.62 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/twoq-8        	35352475	        33.85 ns/op	        29.54 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/sieve         	26940939	        44.41 ns/op	        22.52 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/sieve-2       	22761471	        53.16 ns/op	        18.81 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/sieve-4       	23870007	        48.57 ns/op	        20.59 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/sieve-8       	16641732	        73.46 ns/op	        13.61 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/s3fifo        	26157039	        46.03 ns/op	        21.73 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/s3fifo-2      	22095004	        54.59 ns/op	        18.32 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/s3fifo-4      	25451611	        47.56 ns/op	        21.03 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=evict/s3fifo-8      	16308141	        72.21 ns/op	        13.85 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=otter               	10533964	       112.2 ns/op	         8.915 Mops/s	      16 B/op	       1 allocs/op
+BenchmarkSet/cache=otter-2             	16839376	        70.46 ns/op	        14.19 Mops/s	      16 B/op	       1 allocs/op
+BenchmarkSet/cache=otter-4             	26489700	        45.53 ns/op	        21.96 Mops/s	      16 B/op	       1 allocs/op
+BenchmarkSet/cache=otter-8             	19119874	        62.90 ns/op	        15.90 Mops/s	      16 B/op	       1 allocs/op
+BenchmarkSet/cache=golang-lru          	39977568	        29.84 ns/op	        33.52 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru-2        	13963561	        85.56 ns/op	        11.69 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru-4        	 7092784	       170.8 ns/op	         5.855 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru-8        	 5067820	       232.5 ns/op	         4.301 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru/2q       	33192418	        35.94 ns/op	        27.82 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru/2q-2     	13828854	        85.60 ns/op	        11.68 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru/2q-4     	 6865441	       175.6 ns/op	         5.694 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkSet/cache=golang-lru/2q-8     	 5097992	       235.2 ns/op	         4.252 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/lru           	46577145	        25.80 ns/op	        38.76 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/lru-2         	47651034	        25.13 ns/op	        39.79 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/lru-4         	63632485	        16.66 ns/op	        60.02 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/lru-8         	45365690	        26.62 ns/op	        37.57 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/twoq          	58770951	        20.44 ns/op	        48.92 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/twoq-2        	69787898	        17.12 ns/op	        58.40 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/twoq-4        	100000000	        11.41 ns/op	        87.65 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/twoq-8        	55953402	        21.35 ns/op	        46.85 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/sieve         	35948008	        31.25 ns/op	        32.00 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/sieve-2       	83279352	        14.48 ns/op	        69.08 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/sieve-4       	154264232	         7.896 ns/op	       126.6 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/sieve-8       	180920738	         5.899 ns/op	       169.5 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/s3fifo        	44237184	        27.31 ns/op	        36.62 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/s3fifo-2      	81754110	        14.57 ns/op	        68.64 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/s3fifo-4      	149328015	         8.004 ns/op	       124.9 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=evict/s3fifo-8      	207225058	         6.233 ns/op	       160.4 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=otter               	31859110	        37.72 ns/op	        26.51 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=otter-2             	57793490	        20.83 ns/op	        48.00 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=otter-4             	100000000	        10.67 ns/op	        93.74 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=otter-8             	212531694	         5.663 ns/op	       176.6 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru          	41411142	        29.09 ns/op	        34.37 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru-2        	14025115	        85.62 ns/op	        11.68 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru-4        	 6926560	       169.9 ns/op	         5.884 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru-8        	 5439973	       226.0 ns/op	         4.425 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru/2q       	39773292	        30.06 ns/op	        33.27 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru/2q-2     	13922438	        84.83 ns/op	        11.79 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru/2q-4     	 7186700	       168.1 ns/op	         5.947 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=1%/cache=golang-lru/2q-8     	 5251215	       226.0 ns/op	         4.425 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/lru          	45176754	        26.66 ns/op	        37.50 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/lru-2        	46711389	        25.85 ns/op	        38.68 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/lru-4        	70307175	        16.95 ns/op	        59.01 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/lru-8        	40524111	        29.63 ns/op	        33.75 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/twoq         	51656227	        23.13 ns/op	        43.24 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/twoq-2       	70834944	        16.92 ns/op	        59.10 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/twoq-4       	100000000	        11.38 ns/op	        87.86 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/twoq-8       	52092658	        22.91 ns/op	        43.65 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/sieve        	36569942	        32.66 ns/op	        30.62 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/sieve-2      	62667003	        19.08 ns/op	        52.40 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/sieve-4      	94618568	        10.91 ns/op	        91.69 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/sieve-8      	80225073	        14.75 ns/op	        67.78 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/s3fifo       	41026225	        29.24 ns/op	        34.19 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/s3fifo-2     	62988818	        19.16 ns/op	        52.18 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/s3fifo-4     	100000000	        10.90 ns/op	        91.77 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=evict/s3fifo-8     	77483920	        15.54 ns/op	        64.36 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=otter              	27192975	        45.78 ns/op	        21.84 Mops/s	       1 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=otter-2            	46670587	        26.27 ns/op	        38.07 Mops/s	       1 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=otter-4            	84979816	        14.74 ns/op	        67.85 Mops/s	       1 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=otter-8            	92431230	        12.22 ns/op	        81.86 Mops/s	       1 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru         	41146911	        29.15 ns/op	        34.31 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru-2       	13664857	        86.06 ns/op	        11.62 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru-4       	 7167945	       170.0 ns/op	         5.883 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru-8       	 5048348	       237.2 ns/op	         4.215 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru/2q      	38180689	        31.32 ns/op	        31.93 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru/2q-2    	13797319	        88.21 ns/op	        11.34 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru/2q-4    	 6982998	       171.7 ns/op	         5.826 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=10%/cache=golang-lru/2q-8    	 5433884	       229.1 ns/op	         4.364 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/lru          	42187108	        28.46 ns/op	        35.13 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/lru-2        	45558591	        26.35 ns/op	        37.94 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/lru-4        	69829690	        17.07 ns/op	        58.58 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/lru-8        	36016251	        32.82 ns/op	        30.47 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/twoq         	51634927	        23.26 ns/op	        42.99 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/twoq-2       	65506206	        18.27 ns/op	        54.73 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/twoq-4       	100000000	        13.96 ns/op	        71.61 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/twoq-8       	43719164	        26.99 ns/op	        37.04 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/sieve        	35018688	        34.19 ns/op	        29.25 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/sieve-2      	37113258	        32.61 ns/op	        30.67 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/sieve-4      	69839851	        16.87 ns/op	        59.27 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/sieve-8      	42655039	        29.62 ns/op	        33.76 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/s3fifo       	36715071	        32.63 ns/op	        30.65 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/s3fifo-2     	44279421	        27.02 ns/op	        37.01 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/s3fifo-4     	61280636	        19.26 ns/op	        51.92 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=evict/s3fifo-8     	42894675	        27.83 ns/op	        35.94 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=otter              	20825364	        57.54 ns/op	        17.38 Mops/s	       3 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=otter-2            	34574826	        34.77 ns/op	        28.76 Mops/s	       4 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=otter-4            	59755129	        20.43 ns/op	        48.94 Mops/s	       3 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=otter-8            	54074556	        21.36 ns/op	        46.82 Mops/s	       4 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru         	39741404	        30.22 ns/op	        33.10 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru-2       	13534520	        86.38 ns/op	        11.58 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru-4       	 7032615	       168.8 ns/op	         5.924 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru-8       	 5151501	       236.1 ns/op	         4.235 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru/2q      	36398702	        32.99 ns/op	        30.32 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru/2q-2    	13975717	        85.47 ns/op	        11.70 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru/2q-4    	 7078480	       171.7 ns/op	         5.826 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkMixed/writes=25%/cache=golang-lru/2q-8    	 5270594	       233.4 ns/op	         4.285 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/lru                     	19909810	        60.04 ns/op	        16.66 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/lru-2                   	27081006	        43.98 ns/op	        22.74 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/lru-4                   	44042286	        27.13 ns/op	        36.86 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/lru-8                   	38441516	        31.18 ns/op	        32.08 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/twoq                    	20354061	        59.45 ns/op	        16.82 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/twoq-2                  	28388899	        42.20 ns/op	        23.69 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/twoq-4                  	46477250	        25.69 ns/op	        38.93 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/twoq-8                  	37180479	        31.20 ns/op	        32.05 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/sieve                   	16220052	        74.31 ns/op	        13.46 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/sieve-2                 	16777642	        71.38 ns/op	        14.01 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/sieve-4                 	22578140	        53.47 ns/op	        18.70 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/sieve-8                 	14253381	        82.45 ns/op	        12.13 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/s3fifo                  	10321954	       116.6 ns/op	         8.579 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/s3fifo-2                	13517686	        89.08 ns/op	        11.23 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/s3fifo-4                	19350572	        62.11 ns/op	        16.10 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=evict/s3fifo-8                	12840495	        94.68 ns/op	        10.56 Mops/s	       0 B/op	       0 allocs/op
+BenchmarkEvict/cache=otter                         	 4418858	       276.8 ns/op	         3.612 Mops/s	     103 B/op	       2 allocs/op
+BenchmarkEvict/cache=otter-2                       	 7759527	       160.0 ns/op	         6.251 Mops/s	     104 B/op	       2 allocs/op
+BenchmarkEvict/cache=otter-4                       	 8256465	       153.0 ns/op	         6.534 Mops/s	     104 B/op	       2 allocs/op
+BenchmarkEvict/cache=otter-8                       	 7621641	       177.8 ns/op	         5.623 Mops/s	     103 B/op	       2 allocs/op
+BenchmarkEvict/cache=golang-lru                    	 9009148	       133.4 ns/op	         7.494 Mops/s	      72 B/op	       0 allocs/op
+BenchmarkEvict/cache=golang-lru-2                  	 7378634	       159.5 ns/op	         6.270 Mops/s	      71 B/op	       0 allocs/op
+BenchmarkEvict/cache=golang-lru-4                  	 5279496	       227.1 ns/op	         4.402 Mops/s	      72 B/op	       0 allocs/op
+BenchmarkEvict/cache=golang-lru-8                  	 3975255	       305.4 ns/op	         3.274 Mops/s	      72 B/op	       0 allocs/op
+BenchmarkEvict/cache=golang-lru/2q                 	 4751468	       266.0 ns/op	         3.760 Mops/s	     122 B/op	       1 allocs/op
+BenchmarkEvict/cache=golang-lru/2q-2               	 4580570	       284.2 ns/op	         3.519 Mops/s	     123 B/op	       1 allocs/op
+BenchmarkEvict/cache=golang-lru/2q-4               	 3921602	       327.2 ns/op	         3.056 Mops/s	     123 B/op	       1 allocs/op
+BenchmarkEvict/cache=golang-lru/2q-8               	 3487970	       358.5 ns/op	         2.789 Mops/s	     122 B/op	       1 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/lru           	36239770	        32.96 ns/op	        30.34 Mops/s	        83.97 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/lru-2         	41520754	        28.88 ns/op	        34.63 Mops/s	        83.97 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/lru-4         	56341222	        19.43 ns/op	        51.48 Mops/s	        83.96 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/lru-8         	41720024	        28.94 ns/op	        34.55 Mops/s	        83.97 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/twoq          	38444544	        31.43 ns/op	        31.82 Mops/s	        85.57 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/twoq-2        	41092665	        29.21 ns/op	        34.24 Mops/s	        85.57 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/twoq-4        	66653242	        18.05 ns/op	        55.39 Mops/s	        85.56 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/twoq-8        	40095170	        29.00 ns/op	        34.48 Mops/s	        85.55 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/sieve         	33824452	        34.54 ns/op	        28.95 Mops/s	        87.72 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/sieve-2       	50352642	        23.15 ns/op	        43.19 Mops/s	        87.82 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/sieve-4       	84850129	        13.63 ns/op	        73.35 Mops/s	        87.82 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/sieve-8       	60266425	        19.38 ns/op	        51.60 Mops/s	        87.72 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/s3fifo        	26673087	        45.40 ns/op	        22.02 Mops/s	        86.78 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/s3fifo-2      	43031702	        27.54 ns/op	        36.32 Mops/s	        86.78 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/s3fifo-4      	75197194	        17.21 ns/op	        58.09 Mops/s	        86.78 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=evict/s3fifo-8      	52024906	        22.94 ns/op	        43.60 Mops/s	        86.79 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter               	15056098	        78.49 ns/op	        12.74 Mops/s	        87.04 hit%	      14 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter-2             	23354992	        55.26 ns/op	        18.10 Mops/s	        86.14 hit%	      15 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter-4             	47203674	        25.34 ns/op	        39.46 Mops/s	        87.52 hit%	      14 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter-8             	27956198	        42.30 ns/op	        23.64 Mops/s	        87.61 hit%	      14 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru          	19938246	        60.02 ns/op	        16.66 Mops/s	        83.98 hit%	      15 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru-2        	10813160	       116.5 ns/op	         8.587 Mops/s	        83.96 hit%	      15 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru-4        	 5759337	       207.5 ns/op	         4.818 Mops/s	        83.96 hit%	      15 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru-8        	 4340172	       278.0 ns/op	         3.597 Mops/s	        83.98 hit%	      15 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru/2q       	12762460	        89.65 ns/op	        11.15 Mops/s	        85.27 hit%	      23 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru/2q-2     	 8208072	       149.5 ns/op	         6.687 Mops/s	        85.26 hit%	      23 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru/2q-4     	 5891758	       205.1 ns/op	         4.875 Mops/s	        85.27 hit%	      23 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=golang-lru/2q-8     	 4059194	       289.8 ns/op	         3.451 Mops/s	        85.25 hit%	      23 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/lru            	10656628	       110.3 ns/op	         9.067 Mops/s	        88.44 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/lru-2          	16783148	        75.09 ns/op	        13.32 Mops/s	        88.45 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/lru-4          	28136374	        46.19 ns/op	        21.65 Mops/s	        88.44 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/lru-8          	34765436	        32.68 ns/op	        30.60 Mops/s	        88.44 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/twoq           	10146836	       118.4 ns/op	         8.447 Mops/s	        88.93 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/twoq-2         	14694004	        83.33 ns/op	        12.00 Mops/s	        89.12 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/twoq-4         	22715334	        54.97 ns/op	        18.19 Mops/s	        89.28 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/twoq-8         	35247207	        34.75 ns/op	        28.77 Mops/s	        89.39 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/sieve          	10518045	       108.4 ns/op	         9.229 Mops/s	        89.75 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/sieve-2        	18648368	        61.31 ns/op	        16.31 Mops/s	        89.88 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/sieve-4        	33170857	        35.22 ns/op	        28.39 Mops/s	        90.01 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/sieve-8        	47464364	        24.02 ns/op	        41.63 Mops/s	        90.09 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/s3fifo         	 7722900	       135.9 ns/op	         7.358 Mops/s	        89.84 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/s3fifo-2       	16346119	        77.37 ns/op	        12.93 Mops/s	        89.98 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/s3fifo-4       	28724854	        44.47 ns/op	        22.49 Mops/s	        90.09 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=evict/s3fifo-8       	43795352	        26.90 ns/op	        37.17 Mops/s	        90.17 hit%	       0 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter                	 4572261	       243.6 ns/op	         4.105 Mops/s	        89.53 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter-2              	10030729	       114.7 ns/op	         8.719 Mops/s	        89.64 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter-4              	19333905	        62.97 ns/op	        15.88 Mops/s	        89.84 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter-8              	20920213	        56.48 ns/op	        17.71 Mops/s	        89.82 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru           	 7244781	       155.4 ns/op	         6.433 Mops/s	        88.43 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru-2         	 4407902	       269.8 ns/op	         3.706 Mops/s	        88.47 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru-4         	 3757447	       335.2 ns/op	         2.983 Mops/s	        88.43 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru-8         	 3334788	       335.6 ns/op	         2.979 Mops/s	        88.43 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru/2q        	 4975270	       237.6 ns/op	         4.209 Mops/s	        89.43 hit%	      17 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru/2q-2      	 3582860	       343.7 ns/op	         2.910 Mops/s	        89.44 hit%	      17 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru/2q-4      	 3108158	       409.9 ns/op	         2.439 Mops/s	        89.41 hit%	      17 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=golang-lru/2q-8      	 2873031	       397.9 ns/op	         2.513 Mops/s	        89.40 hit%	      17 B/op	       0 allocs/op
+PASS
+ok  	github.com/floatdrop/evict/bench	384.150s
