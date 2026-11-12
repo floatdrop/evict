@@ -75,6 +75,22 @@ Every package takes `WithShards`. `twoq` and `s3fifo` also have options for tuni
 queues ([what that is worth for `s3fifo`](bench/results/tuning.md)); `tinylfu` tunes its
 own.
 
+### Statistics
+
+[`stats.Wrap`](https://pkg.go.dev/github.com/floatdrop/evict/stats) counts the hits, misses
+and evictions of any of them:
+
+```go
+cache := stats.Wrap(tinylfu.New[string, int](10_000))
+
+s := cache.Stats()
+fmt.Println(s.HitRatio(), s.Evictions, s.Len, s.Cap)
+```
+
+The counts only go up; `s.Sub(prev)` gives those of an interval. A `Get` that hits took
+10–14% longer through the wrapper (`tinylfu`, one and eight CPUs, Apple M3 Max), and the
+counters take 2–4 KiB per CPU.
+
 ## Choosing a policy
 
 | | Use it when | Watch out for |
@@ -92,8 +108,8 @@ repository, it was level with S3-FIFO and W-TinyLFU. It trails `lru` by up to 4 
 Mixed at large sizes; [its docs](https://pkg.go.dev/github.com/floatdrop/evict/tinylfu) say
 where else it does badly.
 
-Use [otter](https://github.com/maypok86/otter) instead if you need expiry, weights, loading or
-statistics, or if many CPUs overwrite a tenth to a quarter of what they read.
+Use [otter](https://github.com/maypok86/otter) instead if you need expiry, weights or loading,
+or if many CPUs overwrite a tenth to a quarter of what they read.
 
 ## Benchmarks
 
@@ -210,8 +226,8 @@ measured.
 
 ## What it does not do
 
-No expiry, no weights or sizes in bytes, no loading functions, no statistics. If you need
-those, use [otter](https://github.com/maypok86/otter).
+No expiry, no weights or sizes in bytes, no loading functions. If you need those, use
+[otter](https://github.com/maypok86/otter).
 
 ## License
 
