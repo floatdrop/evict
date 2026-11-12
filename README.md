@@ -175,6 +175,10 @@ Millions of operations per second on one CPU and on eight (`1 → 8`), against a
   replaced entry to a fresh node so that readers need no lock, and their writes cost 1.2 to
   3.3 times as much.
 - Otter wins on 8 CPUs when 10–25% of the operations overwrite entries.
+- Writes do not scale with CPUs: each takes its shard's lock and pulls the lines it changes
+  from the CPU that wrote them last, and in `Set` a tenth of the writes go to one key. These
+  caches are made for workloads that mostly read, so they leave out what otter does about it,
+  queueing the work of its policy and applying it in batches.
 - These are numbers from one machine. Otter's own, from Linux on x86, show its writes
   scaling five-fold from one CPU to eight, against less than two-fold here.
 
