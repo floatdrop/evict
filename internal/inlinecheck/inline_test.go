@@ -31,10 +31,24 @@ var hot = regexp.MustCompile(`/(lru|twoq|sieve|s3fifo|tinylfu|stats)\.\(\*(Cache
 // slow matches the calls that must not show up in them: functions that are
 // small enough to be inlined, and are, as long as the compiler knows them.
 var slow = regexp.MustCompile(`^sync\.\(\*(RW)?Mutex\)\.|^sync/atomic\.|` +
-	`slab\.\(\*Slab\[.*\]\)\.(MoveToFront|PushFront|Unlink|Len|Cap|Overdue|Hash)$|` +
-	`cslab\.\(\*(Readers|Slot)\)\.(Pin|Unpin)$|/s3fifo\.(tagOf|ghostOf)$|` +
+	`slab\.\(\*Slab\[.*\]\)\.(MoveToFront|PushFront|Unlink|Len|Cap|Overdue|Hash|pin|preferred)$|` +
+	`cslab\.\(\*Node\[.*\]\)\.(Meta|SetMeta)$|cslab\.\(\*Slot\)\.Unpin$|/s3fifo\.(tagOf|ghostOf)$|` +
 	`/tinylfu\.(tagOf|kept|keep|printOf|printIn)$|/tinylfu\.\(\*climber\)\.(hit|miss)$|` +
 	`/stats\.\(\*Cache\[.*\]\)\.stripe$`)
+
+// read matches the functions that a read without a lock goes through, and
+// readSlow the calls that must not show up in them even where the compiler
+// knows next to nothing: in a program that gets to the caches through a
+// generic type of another package that instantiates nothing. The compiler
+// inlines no function there that is not generic, so the reads have to do
+// without any, this module's own included, but the atomic functions, which
+// it builds in. A lock is taken only when a read cannot be sure, and calls
+// to it are fine.
+var (
+	read     = regexp.MustCompile(`/(sieve|s3fifo|tinylfu)\.\(\*Cache\[.*\]\)\.(Get|Peek)$|/cslab\.\(\*Slab\[.*\]\)\.Lookup$`)
+	readSlow = regexp.MustCompile(`^sync/atomic\.|^github\.com/floatdrop/evict/[^\[]*$|` +
+		`cslab\.\(\*Slab\[.*\]\)\.(Overdue|pin|preferred)$|cslab\.\(\*Node\[.*\]\)\.(Meta|SetMeta)$`)
+)
 
 func TestHotPathsAreInlined(t *testing.T) {
 	t.Parallel()
@@ -60,7 +74,8 @@ func TestHotPathsAreInlined(t *testing.T) {
 	// -S makes the compiler print the code it generates for the package,
 	// the instantiated methods of the caches included.
 	// There is a package for each cache, so that none of them can count
-	// on what another one has passed on to the compiler.
+	// on what another one has passed on to the compiler, and one that uses
+	// the caches through a generic type of another package.
 	//nolint:gosec // The command is the go tool, and its arguments are fixed.
 	cmd := exec.CommandContext(t.Context(), goTool, "build", "-gcflags=-S", "./probe/...")
 	// A build for another platform or with other flags would say nothing
@@ -71,29 +86,46 @@ func TestHotPathsAreInlined(t *testing.T) {
 		t.Fatalf("go build: %v\n%s", err, out)
 	}
 
-	function, seen := "", map[string]bool{}
+	var (
+		pkg, function     string
+		seen, seenWrapped = map[string]bool{}, map[string]bool{}
+	)
 	scanner := bufio.NewScanner(bytes.NewReader(out))
 	scanner.Buffer(nil, 1<<20)
 	for scanner.Scan() {
 		line := scanner.Text()
 
+		// The output for a package starts with a line like
+		//	# github.com/floatdrop/evict/internal/inlinecheck/probe/lru
+		if p, ok := strings.CutPrefix(line, "# "); ok {
+			pkg = p
+			continue
+		}
+		wrapped := strings.HasSuffix(pkg, "/probe/wrapuser")
+
 		// A function starts with a line like
 		//	pkg.(*T[go.shape.int]).Method STEXT dupok size=...
 		if name, _, ok := strings.Cut(line, " STEXT "); ok && !strings.HasPrefix(line, "\t") {
 			function = name
-			if hot.MatchString(function) {
-				seen[hot.FindStringSubmatch(function)[0]] = true
+			switch {
+			case wrapped && read.MatchString(function):
+				seenWrapped[read.FindString(function)] = true
+			case !wrapped && hot.MatchString(function):
+				seen[hot.FindString(function)] = true
 			}
 			continue
 		}
 		// A call in it looks like
 		//	0x0040 00064 (file.go:12)	CALL	sync.(*Mutex).Lock(SB)
 		_, target, ok := strings.Cut(line, "\tCALL\t")
-		if !ok || !hot.MatchString(function) {
+		if !ok {
 			continue
 		}
 		target = strings.TrimSuffix(target, "(SB)")
-		if slow.MatchString(target) {
+		switch {
+		case wrapped && read.MatchString(function) && readSlow.MatchString(target):
+			t.Errorf("%s calls %s when the cache is used through a generic type", function, target)
+		case !wrapped && hot.MatchString(function) && slow.MatchString(target):
 			t.Errorf("%s calls %s instead of inlining it", function, target)
 		}
 	}
@@ -111,6 +143,23 @@ func TestHotPathsAreInlined(t *testing.T) {
 			if !found {
 				t.Errorf("the compiler's output has no code for %s.Cache.%s; has its format changed?", pkg, method)
 			}
+		}
+	}
+	for _, want := range [][2]string{
+		{"sieve.(*Cache[", "Get"},
+		{"sieve.(*Cache[", "Peek"},
+		{"s3fifo.(*Cache[", "Get"},
+		{"s3fifo.(*Cache[", "Peek"},
+		{"tinylfu.(*Cache[", "Get"},
+		{"tinylfu.(*Cache[", "Peek"},
+		{"cslab.(*Slab[", "Lookup"},
+	} {
+		found := false
+		for name := range seenWrapped {
+			found = found || strings.Contains(name, "/"+want[0]) && strings.HasSuffix(name, ")."+want[1])
+		}
+		if !found {
+			t.Errorf("the compiler's output for the generic wrapper has no code for %s%s", want[0], want[1])
 		}
 	}
 }

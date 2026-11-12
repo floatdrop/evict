@@ -20,13 +20,13 @@ func check[K, V comparable](t *testing.T, s *Slab[K, V], want map[K]V) {
 	if s.Len() != len(want) {
 		t.Fatalf("Len() = %d, want %d", s.Len(), len(want))
 	}
-	if s.seq.Load()&1 != 0 {
-		t.Fatalf("seq = %d is odd while nothing is being removed", s.seq.Load())
+	if atomic.LoadUint32(&s.seq)&1 != 0 {
+		t.Fatalf("seq = %d is odd while nothing is being removed", atomic.LoadUint32(&s.seq))
 	}
 
 	indexed := make(map[uint32]bool, len(want))
 	for i := range s.slots {
-		slot := s.slots[i].Load()
+		slot := atomic.LoadUint64(&s.slots[i])
 		if slot == 0 {
 			continue
 		}
@@ -210,7 +210,7 @@ func TestInsertReplaceRemove(t *testing.T) {
 	if pinA == nil || pinB == nil || pinA == pinB {
 		t.Fatalf("Pin took the slots %p and %p", pinA, pinB)
 	}
-	s.Nodes[b].Meta.Store(7)
+	s.Nodes[b].SetMeta(7)
 	s.Links[b].Tag = 9
 	b2 := s.Replace(b, "b", 21)
 	want["b"] = 21
@@ -221,8 +221,8 @@ func TestInsertReplaceRemove(t *testing.T) {
 	if got := s.Find(1, "b"); got != b2 {
 		t.Errorf(`Find("b") = %d after Replace, want %d`, got, b2)
 	}
-	if n := &s.Nodes[b2]; n.Value != 21 || n.Meta.Load() != 7 || s.Links[b2].Tag != 9 {
-		t.Errorf("new node holds %d with Meta %d and Tag %d, want 21 with 7 and 9", n.Value, n.Meta.Load(), s.Links[b2].Tag)
+	if n := &s.Nodes[b2]; n.Value != 21 || n.Meta() != 7 || s.Links[b2].Tag != 9 {
+		t.Errorf("new node holds %d with Meta %d and Tag %d, want 21 with 7 and 9", n.Value, n.Meta(), s.Links[b2].Tag)
 	}
 	if got := list(t, &s, 0); !slices.Equal(got, []string{"c", "b", "a"}) {
 		t.Errorf("list = %v after Replace, want [c b a]", got)
@@ -289,8 +289,8 @@ func TestInsertReplaceRemove(t *testing.T) {
 		t.Fatalf("Insert used the nodes %v, not the node %d that was released", reused, b)
 	}
 	for _, idx := range reused {
-		if s.Nodes[idx].Meta.Load() != 0 || s.Links[idx].Tag != 0 {
-			t.Errorf("reused node %d has Meta %d and Tag %d, want 0 and 0", idx, s.Nodes[idx].Meta.Load(), s.Links[idx].Tag)
+		if s.Nodes[idx].Meta() != 0 || s.Links[idx].Tag != 0 {
+			t.Errorf("reused node %d has Meta %d and Tag %d, want 0 and 0", idx, s.Nodes[idx].Meta(), s.Links[idx].Tag)
 		}
 		s.Remove(idx)
 	}
@@ -387,7 +387,7 @@ func pin[K comparable, V any](t *testing.T, s *Slab[K, V], idx uint32) *Slot {
 	t.Helper()
 
 	for i := range s.readers.slots {
-		if slot := &s.readers.slots[i]; slot.pin.CompareAndSwap(0, s.name|uint64(idx)) {
+		if slot := &s.readers.slots[i]; atomic.CompareAndSwapUint64(&slot.pin, 0, s.name|uint64(idx)) {
 			return slot
 		}
 	}
@@ -678,7 +678,7 @@ func TestLookupWithoutSlot(t *testing.T) {
 	}
 	// No lookup leaves a node pinned.
 	for i := range readers.slots {
-		if pin := readers.slots[i].pin.Load(); pin != 0 {
+		if pin := atomic.LoadUint64(&readers.slots[i].pin); pin != 0 {
 			t.Errorf("slot %d is left with the pin %#x", i, pin)
 		}
 	}
@@ -745,29 +745,29 @@ func TestLookupCounts(t *testing.T) {
 	s.Init(8, 1, NewReaders())
 	idx := s.Insert(1, 10, 100)
 	s.PushFront(0, idx)
-	meta := &s.Nodes[idx].Meta
+	node := &s.Nodes[idx]
 
 	for range 3 {
 		s.Lookup(1, 10, 0, false)
 	}
-	if got := meta.Load(); got != 0 {
+	if got := node.Meta(); got != 0 {
 		t.Errorf("Meta = %d after lookups with a limit of 0, want it untouched", got)
 	}
 	for i := range 5 {
 		s.Lookup(1, 10, 3, false)
-		if got, want := meta.Load(), uint32(min(i+1, 3)); got != want {
+		if got, want := node.Meta(), uint32(min(i+1, 3)); got != want {
 			t.Errorf("Meta = %d after %d lookups with a limit of 3, want %d", got, i+1, want)
 		}
 	}
 	// A limit below what has been counted leaves it alone as well.
 	s.Lookup(1, 10, 1, false)
-	if got := meta.Load(); got != 3 {
+	if got := node.Meta(); got != 3 {
 		t.Errorf("Meta = %d after a lookup with a limit of 1, want 3", got)
 	}
 	// A miss counts nothing.
 	s.Lookup(1, 11, 3, false)
 	s.Lookup(2, 10, 3, false)
-	if got := meta.Load(); got != 3 {
+	if got := node.Meta(); got != 3 {
 		t.Errorf("Meta = %d after misses, want 3", got)
 	}
 
@@ -781,7 +781,7 @@ func TestLookupCounts(t *testing.T) {
 	same.PushFront(0, first)
 	same.PushFront(0, second)
 	counts := func() [2]uint32 {
-		return [2]uint32{same.Nodes[first].Meta.Load(), same.Nodes[second].Meta.Load()}
+		return [2]uint32{same.Nodes[first].Meta(), same.Nodes[second].Meta()}
 	}
 
 	if v, ok, _ := same.Lookup(7, 2, 3, false); !ok || v != 20 {
@@ -1251,7 +1251,7 @@ func TestEverySlotCounts(t *testing.T) {
 	s.PushFront(0, idx)
 
 	for i := range readers.slots {
-		readers.slots[i].pin.Store(s.name | uint64(idx))
+		atomic.StoreUint64(&readers.slots[i].pin, s.name|uint64(idx))
 		idx = s.Replace(idx, 1, i)
 		old := s.limboTail
 		for range 3 {
@@ -1260,7 +1260,7 @@ func TestEverySlotCounts(t *testing.T) {
 		if s.waiting != 1 || s.Nodes[old].Key != 1 {
 			t.Fatalf("a node that is pinned in slot %d was released", i)
 		}
-		readers.slots[i].pin.Store(0)
+		atomic.StoreUint64(&readers.slots[i].pin, 0)
 		s.Reclaim()
 		if s.waiting != 0 {
 			t.Fatalf("a node is held on to after slot %d was cleared", i)
@@ -1333,7 +1333,7 @@ func TestReaders(t *testing.T) {
 		}
 		// With the shift that goes with them, no slot is out of reach and
 		// none is out of range.
-		if got := small.preferred(); got >= uint64(want) {
+		if got := (&Slab[int, int]{readers: small}).preferred(); got >= uint64(want) {
 			t.Errorf("newReaders(%d): the preferred slot is %d of %d", n, got, want)
 		}
 	}
@@ -1358,36 +1358,40 @@ func TestReaders(t *testing.T) {
 		t.Errorf("the first two slabs are called %#x and %#x", first, second)
 	}
 
+	// A slab pins nodes in the slots of its readers, and needs nothing else
+	// of its own for that.
+	s := &Slab[int, int]{readers: r}
+
 	// A goroutine that pins a node gets a slot, and the same one every time.
-	slot := r.Pin(first | 1)
+	slot := s.pin(first | 1)
 	if slot == nil {
-		t.Fatal("Pin found no slot in an idle Readers")
+		t.Fatal("pin found no slot in an idle Readers")
 	}
-	if got := slot.pin.Load(); got != first|1 {
+	if got := atomic.LoadUint64(&slot.pin); got != first|1 {
 		t.Errorf("the slot says %#x, want %#x", got, first|1)
 	}
 	slot.Unpin()
-	if again := r.Pin(first | 2); again != slot {
-		t.Errorf("Pin took the slot %p, then %p", slot, again)
+	if again := s.pin(first | 2); again != slot {
+		t.Errorf("pin took the slot %p, then %p", slot, again)
 	}
 
 	// A goroutine that does not let go uses up the slots it may try, and is
 	// then told to read under a lock instead. The other slots stay free.
 	held := []*Slot{slot}
-	if r.Pin(first|3) != nil {
-		t.Fatal("Pin handed out a slot that is taken")
+	if s.pin(first|3) != nil {
+		t.Fatal("pin handed out a slot that is taken")
 	}
 	for {
-		slot := r.PinAny(first | 3)
+		slot := s.pinAny(first | 3)
 		if slot == nil {
 			break
 		}
 		if slices.Contains(held, slot) {
-			t.Fatal("PinAny handed out a slot that is taken")
+			t.Fatal("pinAny handed out a slot that is taken")
 		}
 		held = append(held, slot)
 		if len(held) > len(r.slots) {
-			t.Fatal("PinAny keeps handing out slots")
+			t.Fatal("pinAny keeps handing out slots")
 		}
 	}
 	if len(held) != 4 {
@@ -1398,7 +1402,7 @@ func TestReaders(t *testing.T) {
 	// gives back no more than it took.
 	count := func() (taken int) {
 		for i := range r.slots {
-			if r.slots[i].pin.Load() != 0 {
+			if atomic.LoadUint64(&r.slots[i].pin) != 0 {
 				taken++
 			}
 		}
@@ -1415,7 +1419,7 @@ func TestReaders(t *testing.T) {
 	}
 	release()
 	for i := range r.slots {
-		if got := r.slots[i].pin.Load() != 0; got != slices.Contains(held, &r.slots[i]) {
+		if got := atomic.LoadUint64(&r.slots[i].pin) != 0; got != slices.Contains(held, &r.slots[i]) {
 			t.Errorf("slot %d is taken: %t, after the occupied ones were given back", i, got)
 		}
 	}
@@ -1423,8 +1427,8 @@ func TestReaders(t *testing.T) {
 	for _, slot := range held {
 		slot.Unpin()
 	}
-	if slot := r.Pin(first | 4); slot == nil {
-		t.Error("Pin found no slot after all of them were released")
+	if slot := s.pin(first | 4); slot == nil {
+		t.Error("pin found no slot after all of them were released")
 	} else {
 		slot.Unpin()
 	}
@@ -1552,6 +1556,7 @@ func TestPreferredSlots(t *testing.T) {
 	const goroutines = 64
 
 	r := newReaders(1024)
+	s := &Slab[int, int]{readers: r}
 	var (
 		wg, started sync.WaitGroup
 		release     = make(chan struct{})
@@ -1564,8 +1569,8 @@ func TestPreferredSlots(t *testing.T) {
 	for range goroutines {
 		started.Add(1)
 		wg.Go(func() {
-			slot := r.preferred()
-			if again := r.preferred(); again != slot {
+			slot := s.preferred()
+			if again := s.preferred(); again != slot {
 				t.Errorf("a goroutine prefers slot %d, and then slot %d", slot, again)
 			}
 			mu.Lock()

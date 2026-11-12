@@ -231,7 +231,7 @@ func TestBookkeeping(t *testing.T) {
 			if got := s.slab.Links[idx].Tag & 1; got != head {
 				t.Fatalf("node %d is in queue %d but tagged for queue %d", idx, head, got)
 			}
-			if f := s.slab.Nodes[idx].Meta.Load(); f > maxFrequency {
+			if f := s.slab.Nodes[idx].Meta(); f > maxFrequency {
 				t.Fatalf("node %d has counted %d reads, want at most %d", idx, f, maxFrequency)
 			}
 			n++

@@ -92,7 +92,7 @@ func (c *Cache[K, V]) Reads(key K) (reads uint32, ok bool) {
 	if idx == 0 {
 		return 0, false
 	}
-	return s.slab.Nodes[idx].Meta.Load(), true
+	return s.slab.Nodes[idx].Meta(), true
 }
 
 // Window returns the number of entries that the small queue of the first

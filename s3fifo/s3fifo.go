@@ -372,7 +372,7 @@ func (c *Cache[K, V]) Get(key K) (value V, ok bool) {
 	s.mu.Lock()
 	if idx := s.slab.Find(hash, key); idx != 0 {
 		n := &s.slab.Nodes[idx]
-		n.Meta.Store(min(n.Meta.Load()+1, maxFrequency))
+		n.SetMeta(min(n.Meta()+1, maxFrequency))
 		value, ok = n.Value, true
 	}
 	s.mu.Unlock()
@@ -452,7 +452,7 @@ func (s *shard[K, V]) set(h uint64, key K, value V) (oldKey K, oldValue V, displ
 		// Readers may be looking at the entry, so it gets its new value
 		// in another node, which takes over its place in its queue.
 		n = &sl.Nodes[sl.Replace(idx, key, value)]
-		n.Meta.Store(min(n.Meta.Load()+1, maxFrequency))
+		n.SetMeta(min(n.Meta()+1, maxFrequency))
 		return oldKey, oldValue, true
 	}
 
@@ -508,8 +508,8 @@ func (s *shard[K, V]) evict() (key K, value V) {
 		sl.Unlink(idx)
 		s.smalls--
 
-		if n.Meta.Load() >= s.promote {
-			n.Meta.Store(0)
+		if n.Meta() >= s.promote {
+			n.SetMeta(0)
 			links[idx].Tag |= main
 			sl.PushFront(main, idx)
 			s.mains++
@@ -537,11 +537,11 @@ func (s *shard[K, V]) evict() (key K, value V) {
 	for range maxFrequency * s.mains {
 		idx := links[main].Prev
 		n := &nodes[idx]
-		f := n.Meta.Load()
+		f := n.Meta()
 		if f == 0 {
 			break
 		}
-		n.Meta.Store(f - 1)
+		n.SetMeta(f - 1)
 		sl.Unlink(idx)
 		sl.PushFront(main, idx)
 	}
