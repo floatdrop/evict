@@ -54,7 +54,10 @@ jobs:
           go-version: ${{ matrix.go }}
           cache-dependency-path: bench/go.sum
       - name: Test
-        run: go test -race -shuffle=on -timeout=5m -coverprofile=coverage.out ./...
+        # With the race detector and coverage, the slowest package takes about
+        # four minutes on a typical runner, and a slow runner takes 1.7 times
+        # as long.
+        run: go test -race -shuffle=on -timeout=10m -coverprofile=coverage.out ./...
       - name: Coverage
         run: go tool cover -func=coverage.out | tail -n 1
       - name: Test the benchmarks
