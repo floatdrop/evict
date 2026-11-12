@@ -121,22 +121,23 @@ and [bench/results](bench/results) has the full reports.
 
 Percent of requests answered when a trace is replayed, averaged over eight cache sizes per
 trace. Ten traces are public recordings of real systems; `optimal` is the upper bound. Otter
-and `tinylfu` vary between replays (by up to 4.1 and 5.6 points), so theirs are medians of 11;
-**bold** means the cache beat every other on every replay.
+and `tinylfu` vary between replays (by up to 4.1 and 5.6 points), so theirs are medians of 11.
+The best in each row is <ins>underlined</ins>, and **bold** if it beat every other cache on
+every replay.
 
 | trace | evict/lru | evict/twoq | evict/sieve | evict/s3fifo | evict/tinylfu | otter | optimal |
 |:---|---:|---:|---:|---:|---:|---:|---:|
-| Zipf | 29.97 | 36.53 | 37.55 | **38.25** | 37.66 | 37.90 | 44.07 |
-| S3 | 23.33 | 32.78 | 35.54 | 38.90 | **44.83** | 44.57 | 59.37 |
-| DS1 | 23.70 | 28.88 | 38.87 | 37.05 | **47.07** | 46.54 | 50.21 |
-| OLTP | 32.40 | 39.07 | 30.60 | 39.11 | 38.76 | 38.97 | 52.77 |
-| P8 | 24.10 | 32.11 | 27.66 | 35.31 | **37.86** | 36.20 | 53.53 |
-| Glimpse | 21.81 | 27.40 | 30.14 | 43.24 | 45.20 | 45.28 | 47.81 |
-| Mixed | 44.11 | 56.80 | 0.43 | 43.84 | 60.32 | **61.61** | 64.22 |
-| Scarab | 59.10 | 61.00 | 60.53 | **61.60** | 60.31 | 58.99 | 70.30 |
-| Twitter | 58.37 | 59.72 | 58.99 | **60.32** | 59.59 | 59.29 | 65.46 |
-| MSR | 64.40 | 66.31 | 66.16 | **67.22** | 67.06 | 66.54 | 73.60 |
-| CloudPhysics | 20.90 | 24.41 | 24.70 | 27.59 | 27.80 | 26.77 | 34.23 |
+| Zipf | 29.97 | 36.53 | 37.55 | **<ins>38.25</ins>** | 37.66 | 37.90 | 44.07 |
+| S3 | 23.33 | 32.78 | 35.54 | 38.90 | **<ins>44.83</ins>** | 44.57 | 59.37 |
+| DS1 | 23.70 | 28.88 | 38.87 | 37.05 | **<ins>47.07</ins>** | 46.54 | 50.21 |
+| OLTP | 32.40 | 39.07 | 30.60 | <ins>39.11</ins> | 38.76 | 38.97 | 52.77 |
+| P8 | 24.10 | 32.11 | 27.66 | 35.31 | **<ins>37.86</ins>** | 36.20 | 53.53 |
+| Glimpse | 21.81 | 27.40 | 30.14 | 43.24 | 45.20 | <ins>45.28</ins> | 47.81 |
+| Mixed | 44.11 | 56.80 | 0.43 | 43.84 | 60.32 | **<ins>61.61</ins>** | 64.22 |
+| Scarab | 59.10 | 61.00 | 60.53 | **<ins>61.60</ins>** | 60.31 | 58.99 | 70.30 |
+| Twitter | 58.37 | 59.72 | 58.99 | **<ins>60.32</ins>** | 59.59 | 59.29 | 65.46 |
+| MSR | 64.40 | 66.31 | 66.16 | **<ins>67.22</ins>** | 67.06 | 66.54 | 73.60 |
+| CloudPhysics | 20.90 | 24.41 | 24.70 | 27.59 | <ins>27.80</ins> | 26.77 | 34.23 |
 
 - Of the 88 trace-and-size rows, `s3fifo` wins 32 outright, `tinylfu` 25, hashicorp's 2Q 4,
   `twoq` 2 and otter 1; 24 are too close to call.
