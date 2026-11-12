@@ -17,6 +17,7 @@ import (
 	"weak"
 
 	"github.com/floatdrop/evict"
+	"github.com/floatdrop/evict/internal/shards"
 )
 
 // Factory creates a cache with the given capacity and number of shards, where
@@ -810,23 +811,21 @@ func NoAllocs(t *testing.T, f Factories) {
 	})
 }
 
-// Padded checks that a value of the type of shard, which a cache has many of
-// in an array, ends in padding of at least the size of a cache line. Without
-// it, the fields that one shard writes to would share a cache line with those
-// that the readers of the next one need, and each CPU would keep taking the
-// line away from the others.
-func Padded(t *testing.T, shard any) {
+// Padded checks that the shards of a cache, which lie side by side in an
+// array, end in at least a cache line of padding and take up whole lines.
+func Padded[S any](t *testing.T, _ []S) {
 	t.Helper()
 
-	const cacheLine = 128
-
-	typ := reflect.TypeOf(shard)
+	typ := reflect.TypeFor[S]()
 	if typ.Kind() != reflect.Struct || typ.NumField() == 0 {
 		t.Fatalf("%v is not a struct with fields", typ)
 	}
 	last := typ.Field(typ.NumField() - 1)
-	if last.Name != "_" || last.Type.Size() < cacheLine {
+	if last.Name != "_" || last.Type.Size() < shards.Line {
 		t.Errorf("%v ends with the field %q of %d bytes; want padding of %d bytes or more",
-			typ, last.Name, last.Type.Size(), cacheLine)
+			typ, last.Name, last.Type.Size(), shards.Line)
+	}
+	if typ.Size()%shards.Line != 0 {
+		t.Errorf("%v takes %d bytes; want a multiple of %d", typ, typ.Size(), shards.Line)
 	}
 }

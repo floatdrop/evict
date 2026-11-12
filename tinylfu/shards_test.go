@@ -551,10 +551,10 @@ func TestTags(t *testing.T) {
 }
 
 // TestShardPadding checks that the shards of a cache keep out of each other's
-// cache lines.
+// cache lines and take up whole lines, whatever the keys and values.
 func TestShardPadding(t *testing.T) {
 	t.Parallel()
 
-	cachetest.Padded(t, shard[int, int]{})
-	cachetest.Padded(t, shard[string, []byte]{})
+	cachetest.Padded(t, Cache[int, int]{}.shards)
+	cachetest.Padded(t, Cache[string, []byte]{}.shards)
 }

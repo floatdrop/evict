@@ -24,9 +24,12 @@ const (
 	minCapacity = 256
 )
 
-// Pad is placed at the end of a shard so that the fields of two neighbors,
-// which are locked and written independently, never share a cache line.
-type Pad [128]byte
+// Line is the size of a cache line on Apple's chips, and of the pair of lines
+// that Intel's chips fetch together.
+const Line = 128
+
+// Pad keeps fields that are written independently off each other's lines.
+type Pad [Line]byte
 
 // Count returns the number of shards for a cache of the given capacity: a
 // power of two, so that a shard can be picked with a mask.

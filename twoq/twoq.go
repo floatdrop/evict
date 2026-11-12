@@ -41,6 +41,7 @@ import (
 	"math"
 	"slices"
 	"sync"
+	"unsafe"
 
 	"github.com/floatdrop/evict/internal/shards"
 	"github.com/floatdrop/evict/internal/slab"
@@ -56,7 +57,7 @@ import (
 type Cache[K comparable, V any] struct {
 	seed     maphash.Seed
 	mask     uint32 // number of shards minus one
-	shards   []shard[K, V]
+	shards   []padded[K, V]
 	capacity int
 }
 
@@ -74,8 +75,14 @@ type shard[K comparable, V any] struct {
 	capacity  int // entries in the recent and the frequent queue together
 	recentCap int // length of the recent queue above which it is the one to evict
 	ghostCap  int // keys to remember
+}
 
-	_ shards.Pad
+// padded is a shard followed by a line or more of padding, so that writers to
+// it and readers of the next shard never share a line, and rounded up to whole
+// lines, so that every shard starts at the same place in one.
+type padded[K comparable, V any] struct {
+	shard[K, V]
+	_ [shards.Line + (shards.Line-unsafe.Sizeof(shard[K, V]{})%shards.Line)%shards.Line]byte
 }
 
 // The lists of a shard. The numbers are the list heads in the slab as well as
@@ -184,7 +191,7 @@ func New[K comparable, V any](capacity int, opts ...Option) *Cache[K, V] {
 	c := &Cache[K, V]{
 		seed:     maphash.MakeSeed(),
 		mask:     uint32(n - 1),
-		shards:   make([]shard[K, V], n),
+		shards:   make([]padded[K, V], n),
 		capacity: capacity,
 	}
 	for i := range c.shards {
