@@ -4,7 +4,6 @@ import (
 	"math/bits"
 	"runtime"
 	"sync/atomic"
-	"unsafe"
 )
 
 // cacheLine is a size that no two CPUs' cache lines straddle on the
@@ -86,12 +85,12 @@ type Slot struct {
 	// pin is zero while the slot is free, and otherwise the name of the node
 	// that its reader is looking at: the number of the slab in the upper
 	// half, which is never zero, and the index of the node in the lower.
-	pin atomic.Uint64
+	pin uint64 //nolint:modernize // See the package documentation.
 
 	// hits counts the lookups that found their key with this slot and were
 	// asked to say so; see [Slab.Lookup]. Whoever has used the slot has
 	// added to it. It is in the line that a reader writes to anyway.
-	hits atomic.Uint64
+	hits uint64 //nolint:modernize // See the package documentation.
 
 	_ [cacheLine - 16]byte
 }
@@ -123,54 +122,8 @@ func (r *Readers) name() uint64 {
 	return uint64(r.slabs) << 32
 }
 
-// Pin announces that the caller is about to look at a node, and returns the
-// slot that says so. The node is safe to look at only if it is in the index
-// after Pin has returned: a slab that took the node out earlier may not have
-// seen the pin. The caller clears the slot with [Slot.Unpin] when it is done
-// with the node.
-//
-// Pin returns nil if the slot that the caller prefers is taken, which is
-// rare. The caller should then try [Readers.PinAny].
-func (r *Readers) Pin(node uint64) *Slot {
-	slot := &r.slots[r.preferred()]
-	if slot.pin.CompareAndSwap(0, node) {
-		return slot
-	}
-	return nil
-}
-
-// preferred returns the slot that the calling goroutine goes for first.
-//
-// A goroutine picks the same slot every time, which keeps the slot in the
-// cache of the CPU it runs on. There is no way to ask which goroutine or CPU
-// this is, but the whereabouts of the stack tell one goroutine from another:
-// stacks are at least 2 KiB in size. The bits of the address below that say
-// how deep into its stack a goroutine is, and are dropped.
-func (r *Readers) preferred() uint64 {
-	var onStack byte
-	//nolint:gosec // The address is only hashed, never turned back into a pointer.
-	stack := uint64(uintptr(unsafe.Pointer(&onStack))) >> 11
-	return (stack * 0x9e3779b97f4a7c15) >> r.shift
-}
-
-// PinAny is Pin for a caller whose preferred slot is taken: it tries the
-// slots after that one. It returns nil if those are taken as well, and the
-// caller then has to do its reading under the lock of the slab instead.
-//
-// It is a function of its own so that Pin is small enough to be inlined.
-func (r *Readers) PinAny(node uint64) *Slot {
-	i, mask := r.preferred(), uint64(len(r.slots)-1)
-	for range 3 {
-		i = (i + 1) & mask
-		if slot := &r.slots[i]; slot.pin.CompareAndSwap(0, node) {
-			return slot
-		}
-	}
-	return nil
-}
-
 // Unpin clears the slot. The node it named is no longer safe to look at.
-func (s *Slot) Unpin() { s.pin.Store(0) }
+func (s *Slot) Unpin() { atomic.StoreUint64(&s.pin, 0) }
 
 // Hits returns the number of lookups, by any slab of this Readers, that have
 // found their key and were asked to tally it. It looks at every slot, which
@@ -179,7 +132,7 @@ func (s *Slot) Unpin() { s.pin.Store(0) }
 func (r *Readers) Hits() uint64 {
 	var hits uint64
 	for i := range r.slots {
-		hits += r.slots[i].hits.Load()
+		hits += atomic.LoadUint64(&r.slots[i].hits)
 	}
 	return hits
 }
@@ -196,7 +149,7 @@ func (r *Readers) Occupy(leave int) (release func()) {
 			continue
 		}
 		// No slab goes by the name of zero, so this pins nothing.
-		if slot := &r.slots[i]; slot.pin.CompareAndSwap(0, 1) {
+		if slot := &r.slots[i]; atomic.CompareAndSwapUint64(&slot.pin, 0, 1) {
 			taken = append(taken, slot)
 		}
 	}

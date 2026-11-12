@@ -298,7 +298,7 @@ func (c *Cache[K, V]) Get(key K) (value V, ok bool) {
 	s.mu.Lock()
 	if idx := s.slab.Find(hash, key); idx != 0 {
 		n := &s.slab.Nodes[idx]
-		n.Meta.Store(min(n.Meta.Load()+1, maxCount))
+		n.SetMeta(min(n.Meta()+1, maxCount))
 		value, ok = n.Value, true
 		s.hits++
 	}
@@ -378,7 +378,7 @@ func (s *shard[K, V]) set(h uint64, key K, value V) (oldKey K, oldValue V, displ
 		// Readers may be looking at the entry, so it gets its new value
 		// in another node, which takes over its place in its queue.
 		n = &sl.Nodes[sl.Replace(idx, key, value)]
-		n.Meta.Store(min(n.Meta.Load()+1, maxCount))
+		n.SetMeta(min(n.Meta()+1, maxCount))
 		s.hits++
 		return oldKey, oldValue, true
 	}
@@ -427,14 +427,14 @@ func (s *shard[K, V]) look(idx uint32) (count uint32) {
 	n := &s.slab.Nodes[idx]
 	link := &s.slab.Links[idx]
 	before := kept(link.Tag)
-	reads := n.Meta.Load()
+	reads := n.Meta()
 	if reads == 0 {
 		// Nothing to tell, and nothing to write to the entry either.
 		return before
 	}
 	// Readers do not wait for this. One that counts between the line
 	// above and the next is not counted, which is close enough.
-	n.Meta.Store(0)
+	n.SetMeta(0)
 
 	count = min(before+reads, maxCount)
 	s.seen.Add(printIn(s.slab.Hash(idx), link.Tag), int(count-before))

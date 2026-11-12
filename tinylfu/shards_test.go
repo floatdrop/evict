@@ -404,7 +404,7 @@ func TestBookkeeping(t *testing.T) {
 			if got := tag & 1; got != head {
 				t.Fatalf("node %d is in queue %d but tagged for queue %d", idx, head, got)
 			}
-			if reads := s.slab.Nodes[idx].Meta.Load(); reads > maxCount {
+			if reads := s.slab.Nodes[idx].Meta(); reads > maxCount {
 				t.Fatalf("node %d has counted %d reads, want at most %d", idx, reads, maxCount)
 			}
 			// What the main queue leaves an entry with is one less than

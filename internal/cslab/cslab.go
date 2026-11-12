@@ -30,6 +30,14 @@
 //
 // Changing a slab is not concurrent: writers serialize among themselves. The
 // methods say which side they are for.
+//
+// The words that readers touch are plain integers that everyone accesses with
+// the functions of sync/atomic, not with the methods of its types. The code of
+// a cache is generic, so it is compiled in the package that instantiates it.
+// Where that package gets to the cache through a generic type of another
+// package that instantiates nothing, the compiler does not inline those
+// methods, only the functions, which it builds in. The 64-bit words are in
+// slices, which keeps them aligned on 32-bit platforms.
 package cslab
 
 import (
@@ -37,6 +45,7 @@ import (
 	"math/bits"
 	"runtime"
 	"sync/atomic"
+	"unsafe"
 )
 
 // MaxCapacity is the largest capacity [Slab.Init] accepts. It keeps the index
@@ -50,15 +59,22 @@ const minSpare = 16
 
 // Node is what a reader gets to see of an entry of a [Slab].
 type Node[K comparable, V any] struct {
-	// Meta belongs to the owner of the slab. Insert resets it to zero and
-	// Replace carries it over. Readers may load and store it.
-	Meta atomic.Uint32
+	// meta belongs to the owner of the slab; see Meta.
+	meta uint32 //nolint:modernize // See the package documentation.
 
 	// Key and Value can be read by anyone who found the node through the
 	// index, and are never written while that is possible.
 	Key   K
 	Value V
 }
+
+// Meta returns the word of the node that belongs to the owner of the slab.
+// Insert resets it to zero and Replace carries it over. Readers may load and
+// store it.
+func (n *Node[K, V]) Meta() uint32 { return atomic.LoadUint32(&n.meta) }
+
+// SetMeta sets the word that Meta returns.
+func (n *Node[K, V]) SetMeta(meta uint32) { atomic.StoreUint32(&n.meta, meta) }
 
 // Link is the part of an entry that is of use to writers only. It is kept
 // apart from the node, in memory that readers never look at: a writer that
@@ -113,7 +129,7 @@ type Slab[K comparable, V any] struct {
 	// of two. A slot holds the hash of an entry in its high half and the
 	// index of the entry's node in its low half. Zero is an empty slot: no
 	// entry lives in node 0.
-	slots []atomic.Uint64
+	slots []uint64
 	mask  uint32
 
 	// readers is where a reader pins the node it looks at, and name is what
@@ -124,13 +140,14 @@ type Slab[K comparable, V any] struct {
 	// seq is odd while entries are being taken out of the index, which
 	// moves other entries to different slots. A reader that did not find
 	// its key compares seq before and after to know whether the key might
-	// have been moved past it.
-	seq atomic.Uint64
+	// have been moved past it. It may wrap around: a reader would have to
+	// sleep through 2³¹ removals to be fooled, and would then miss a key.
+	seq uint32 //nolint:modernize // See the package documentation.
 
-	// overdue is set while more nodes are waiting than the slab has
+	// overdue is one while more nodes are waiting than the slab has
 	// patience for, which happens when readers were looking at them the
 	// last time the slab came for them. See Overdue.
-	overdue atomic.Bool
+	overdue uint32
 
 	// The fields above are what a reader needs, and they change only when
 	// an entry is removed. The ones below are for writers, and most change
@@ -191,7 +208,7 @@ func (s *Slab[K, V]) Init(capacity, heads int, r *Readers) {
 
 	s.Nodes = make([]Node[K, V], heads+capacity+spare)
 	s.Links = make([]Link, len(s.Nodes))
-	s.slots = make([]atomic.Uint64, size)
+	s.slots = make([]uint64, size)
 	s.mask = uint32(size - 1)
 	s.readers = r
 	s.name = r.name()
@@ -232,16 +249,16 @@ func (s *Slab[K, V]) Hash(idx uint32) uint32 { return s.Links[idx].hash }
 // meantime, or if no slot was to be had for pinning a node. The caller should
 // then ask again as a writer, with [Slab.Find].
 func (s *Slab[K, V]) Lookup(hash uint32, key K, limit uint32, tally bool) (value V, found, certain bool) {
-	seq := s.seq.Load()
+	seq := atomic.LoadUint32(&s.seq)
 
 	slots, mask := s.slots, s.mask
 	i := hash & mask
 	// The index always has an empty slot, but with entries moving around a
 	// reader is not certain to see one. Give up after one round.
 	for range slots {
-		word := slots[i].Load()
+		word := atomic.LoadUint64(&slots[i])
 		if word == 0 {
-			return value, false, seq&1 == 0 && s.seq.Load() == seq
+			return value, false, seq&1 == 0 && atomic.LoadUint32(&s.seq) == seq
 		}
 		if word>>32 != uint64(hash) {
 			i = (i + 1) & mask
@@ -249,17 +266,17 @@ func (s *Slab[K, V]) Lookup(hash uint32, key K, limit uint32, tally bool) (value
 		}
 
 		node := s.name | word&math.MaxUint32
-		slot := s.readers.Pin(node)
+		slot := s.pin(node)
 		if slot == nil {
-			if slot = s.readers.PinAny(node); slot == nil {
+			if slot = s.pinAny(node); slot == nil {
 				return value, false, false
 			}
 		}
 		// The pin counts only if the node was still in the index when it
 		// was in place. If the slot of the index has changed, look at it
 		// again; this does not go on forever, see above.
-		if slots[i].Load() != word {
-			slot.Unpin()
+		if atomic.LoadUint64(&slots[i]) != word {
+			atomic.StoreUint64(&slot.pin, 0)
 			continue
 		}
 
@@ -271,19 +288,19 @@ func (s *Slab[K, V]) Lookup(hash uint32, key K, limit uint32, tally bool) (value
 		// one that was found, and so it is counted before the key is known
 		// to be the right one.
 		n := &s.Nodes[uint32(word)]
-		f := n.Meta.Load()
+		f := n.Meta()
 		if f < limit {
-			n.Meta.Store(f + 1)
+			n.SetMeta(f + 1)
 		}
 		k := n.Key
 		value = n.Value
-		slot.Unpin()
+		atomic.StoreUint64(&slot.pin, 0)
 
 		if k == key {
 			// The slot is no longer this reader's, but the count is
 			// atomic, and its line is still in this CPU's cache.
 			if tally {
-				slot.hits.Add(1)
+				atomic.AddUint64(&slot.hits, 1)
 			}
 			return value, true, true
 		}
@@ -301,7 +318,7 @@ func (s *Slab[K, V]) Lookup(hash uint32, key K, limit uint32, tally bool) (value
 		// take a shared hash and a race on top, and cost one entry one
 		// read.
 		if f < limit {
-			n.Meta.CompareAndSwap(f+1, f)
+			atomic.CompareAndSwapUint32(&n.meta, f+1, f)
 		}
 		var zero V
 		value = zero
@@ -316,10 +333,57 @@ func (s *Slab[K, V]) Lookup(hash uint32, key K, limit uint32, tally bool) (value
 // a reader is held up.
 func (s *Slab[K, V]) Pin(idx uint32) *Slot {
 	node := s.name | uint64(idx)
-	if slot := s.readers.Pin(node); slot != nil {
+	if slot := s.pin(node); slot != nil {
 		return slot
 	}
-	return s.readers.PinAny(node)
+	return s.pinAny(node)
+}
+
+// pin announces that the caller is about to look at a node, and returns the
+// slot of the readers that says so. The node is safe to look at only if it is
+// in the index after pin has returned: a slab that took the node out earlier
+// may not have seen the pin. The caller clears the slot when it is done with
+// the node, by storing zero in its pin.
+//
+// pin returns nil if the slot that the caller prefers is taken, which is
+// rare. The caller should then try pinAny.
+func (s *Slab[K, V]) pin(node uint64) *Slot {
+	slot := &s.readers.slots[s.preferred()]
+	if atomic.CompareAndSwapUint64(&slot.pin, 0, node) {
+		return slot
+	}
+	return nil
+}
+
+// preferred returns the slot that the calling goroutine goes for first.
+//
+// A goroutine picks the same slot every time, which keeps the slot in the
+// cache of the CPU it runs on. There is no way to ask which goroutine or CPU
+// this is, but the whereabouts of the stack tell one goroutine from another:
+// stacks are at least 2 KiB in size. The bits of the address below that say
+// how deep into its stack a goroutine is, and are dropped.
+func (s *Slab[K, V]) preferred() uint64 {
+	var onStack byte
+	//nolint:gosec // The address is only hashed, never turned back into a pointer.
+	stack := uint64(uintptr(unsafe.Pointer(&onStack))) >> 11
+	return (stack * 0x9e3779b97f4a7c15) >> s.readers.shift
+}
+
+// pinAny is pin for a caller whose preferred slot is taken: it tries the
+// slots after that one. It returns nil if those are taken as well, and the
+// caller then has to do its reading under the lock of the slab instead.
+//
+// It is a function of its own so that pin is small enough to be inlined.
+func (s *Slab[K, V]) pinAny(node uint64) *Slot {
+	slots := s.readers.slots
+	i, mask := s.preferred(), uint64(len(slots)-1)
+	for range 3 {
+		i = (i + 1) & mask
+		if slot := &slots[i]; atomic.CompareAndSwapUint64(&slot.pin, 0, node) {
+			return slot
+		}
+	}
+	return nil
 }
 
 // Find returns the index of the node that holds key, or 0 if there is none.
@@ -327,7 +391,7 @@ func (s *Slab[K, V]) Pin(idx uint32) *Slot {
 func (s *Slab[K, V]) Find(hash uint32, key K) uint32 {
 	slots, mask := s.slots, s.mask
 	for i := hash & mask; ; i = (i + 1) & mask {
-		slot := slots[i].Load()
+		slot := atomic.LoadUint64(&slots[i])
 		if slot == 0 {
 			return 0
 		}
@@ -353,17 +417,17 @@ func (s *Slab[K, V]) Insert(hash uint32, key K, value V) uint32 {
 	idx := s.alloc()
 	s.Links[idx].hash, s.Links[idx].Tag = hash, 0
 	n := &s.Nodes[idx]
-	n.Meta.Store(0)
+	n.SetMeta(0)
 	n.Key = key
 	n.Value = value
 
 	slots, mask := s.slots, s.mask
 	i := hash & mask
-	for slots[i].Load() != 0 {
+	for atomic.LoadUint64(&slots[i]) != 0 {
 		i = (i + 1) & mask
 	}
 	// From here on readers can find the node.
-	slots[i].Store(uint64(hash)<<32 | uint64(idx))
+	atomic.StoreUint64(&slots[i], uint64(hash)<<32|uint64(idx))
 	s.count.Add(1)
 
 	return idx
@@ -377,7 +441,7 @@ func (s *Slab[K, V]) Insert(hash uint32, key K, value V) uint32 {
 func (s *Slab[K, V]) Replace(idx uint32, key K, value V) uint32 {
 	to := s.alloc()
 	old, n := &s.Nodes[idx], &s.Nodes[to]
-	n.Meta.Store(old.Meta.Load())
+	n.SetMeta(old.Meta())
 	n.Key = key
 	n.Value = value
 
@@ -388,7 +452,7 @@ func (s *Slab[K, V]) Replace(idx uint32, key K, value V) uint32 {
 
 	// From here on readers find the new node. The ones that found the old
 	// one keep reading the old value.
-	s.slots[s.slotOf(link.hash, idx)].Store(uint64(link.hash)<<32 | uint64(to))
+	atomic.StoreUint64(&s.slots[s.slotOf(link.hash, idx)], uint64(link.hash)<<32|uint64(to))
 
 	s.retire(idx)
 	return to
@@ -402,9 +466,9 @@ func (s *Slab[K, V]) Replace(idx uint32, key K, value V) uint32 {
 // waiting than it has patience for, or when it is asked to; see
 // [Slab.Reclaim].
 func (s *Slab[K, V]) Remove(idx uint32) {
-	s.seq.Add(1)
+	atomic.AddUint32(&s.seq, 1)
 	s.unindex(s.Links[idx].hash, idx)
-	s.seq.Add(1)
+	atomic.AddUint32(&s.seq, 1)
 
 	s.count.Add(-1)
 	s.retire(idx)
@@ -415,7 +479,7 @@ func (s *Slab[K, V]) Remove(idx uint32) {
 func (s *Slab[K, V]) slotOf(hash, idx uint32) uint32 {
 	slots, mask := s.slots, s.mask
 	for i := hash & mask; ; i = (i + 1) & mask {
-		slot := slots[i].Load()
+		slot := atomic.LoadUint64(&slots[i])
 		if slot == 0 {
 			panic("cslab: node is not indexed")
 		}
@@ -435,16 +499,16 @@ func (s *Slab[K, V]) unindex(hash, idx uint32) {
 	// the hole if that keeps it at or after its home slot. Distances are
 	// taken modulo the table size.
 	for i := (hole + 1) & mask; ; i = (i + 1) & mask {
-		slot := slots[i].Load()
+		slot := atomic.LoadUint64(&slots[i])
 		if slot == 0 {
 			break
 		}
 		if home := uint32(slot>>32) & mask; (i-home)&mask >= (i-hole)&mask {
-			slots[hole].Store(slot)
+			atomic.StoreUint64(&slots[hole], slot)
 			hole = i
 		}
 	}
-	slots[hole].Store(0)
+	atomic.StoreUint64(&slots[hole], 0)
 }
 
 // retire queues up a node that has just left the index, and lets go of the
@@ -482,7 +546,7 @@ func (s *Slab[K, V]) enqueue(idx uint32) {
 // tried to let go. Anyone may call it. Whoever finds it true can help by
 // calling [Slab.Reclaim] as a writer: the slab itself tries again only when
 // it is written to, which may not be any time soon.
-func (s *Slab[K, V]) Overdue() bool { return s.overdue.Load() }
+func (s *Slab[K, V]) Overdue() bool { return atomic.LoadUint32(&s.overdue) != 0 }
 
 // Reclaim releases the keys and the values of the entries that have left and
 // that no reader is looking at. It is for writers.
@@ -566,7 +630,11 @@ func (s *Slab[K, V]) reclaim(what int) bool {
 	// is written only when it changes.
 	if late != s.late {
 		s.late = late
-		s.overdue.Store(late)
+		var overdue uint32
+		if late {
+			overdue = 1
+		}
+		atomic.StoreUint32(&s.overdue, overdue)
 	}
 	return released
 }
@@ -586,7 +654,7 @@ func (s *Slab[K, V]) look() bool {
 		found int
 	)
 	for i := range r.slots {
-		pin := r.slots[i].pin.Load()
+		pin := atomic.LoadUint64(&r.slots[i].pin)
 		if pin == 0 {
 			continue
 		}
@@ -708,7 +776,7 @@ func (s *Slab[K, V]) release(looked uint64) bool {
 func (s *Slab[K, V]) MaxDisplacement() int {
 	longest := uint32(0)
 	for i := range s.slots {
-		if slot := s.slots[i].Load(); slot != 0 {
+		if slot := atomic.LoadUint64(&s.slots[i]); slot != 0 {
 			longest = max(longest, (uint32(i)-uint32(slot>>32))&s.mask)
 		}
 	}
@@ -721,11 +789,11 @@ func (s *Slab[K, V]) MaxDisplacement() int {
 // [Slab.Released] with the mark that Reset returns, before any other writer
 // gets a turn.
 func (s *Slab[K, V]) Reset() (mark uint64) {
-	s.seq.Add(1)
+	atomic.AddUint32(&s.seq, 1)
 	for i := range s.slots {
-		s.slots[i].Store(0)
+		atomic.StoreUint64(&s.slots[i], 0)
 	}
-	s.seq.Add(1)
+	atomic.AddUint32(&s.seq, 1)
 	s.count.Store(0)
 
 	for head := range s.heads {

@@ -204,7 +204,7 @@ func (c *Cache[K, V]) Get(key K) (value V, ok bool) {
 	s.mu.Lock()
 	if idx := s.slab.Find(hash, key); idx != 0 {
 		n := &s.slab.Nodes[idx]
-		n.Meta.Store(visited)
+		n.SetMeta(visited)
 		value, ok = n.Value, true
 	}
 	s.mu.Unlock()
@@ -277,7 +277,7 @@ func (s *shard[K, V]) set(hash uint32, key K, value V) (oldKey K, oldValue V, di
 		// Readers may be looking at the entry, so it gets its new value
 		// in another node, which takes over its place in the queue.
 		to := sl.Replace(idx, key, value)
-		sl.Nodes[to].Meta.Store(visited)
+		sl.Nodes[to].SetMeta(visited)
 		if s.hand == idx {
 			s.hand = to
 		}
@@ -314,10 +314,10 @@ func (s *shard[K, V]) victim() uint32 {
 	// round. But readers keep marking entries while it moves, so it settles
 	// for wherever it is after two.
 	for range 2 * s.slab.Len() {
-		if nodes[idx].Meta.Load() != visited {
+		if nodes[idx].Meta() != visited {
 			break
 		}
-		nodes[idx].Meta.Store(0)
+		nodes[idx].SetMeta(0)
 		idx = links[idx].Prev
 		if idx == queue {
 			idx = links[queue].Prev
