@@ -380,7 +380,7 @@ The caches are in one piece. A setting is written as the options that make it:
 `+"`small`"+` is WithSmallRatio, `+"`ghosts`"+` WithGhostRatio, `+"`promotion`"+` WithPromotionReads and
 `+"`returns`"+` WithGhostReturns. Where settings do equally well, the standard one is named
 before the others, and one with fewer ghosts before one with more: a ghost takes about
-sixteen bytes.
+twenty bytes.
 
 Produced by `+"`%s`"+` with %s.
 

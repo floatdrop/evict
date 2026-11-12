@@ -10,18 +10,14 @@
 // A Slab is not safe for concurrent use. Its owner serializes all access.
 package slab
 
-import "math/bits"
-
 // A note on how this package is written. Its methods are generic, so they are
 // compiled into the packages that use the caches, and the compiler inlines a
 // function there only if it has seen its body. It has not seen the bodies of
 // small helpers that are not generic themselves, which is why the hot paths
 // below spell out their arithmetic instead of calling such helpers.
 
-// MaxCapacity is the largest capacity [Slab.Init] accepts. It keeps the index
-// addressable with 32 bits: that has between one and a half times and three
-// times as many slots as the slab has entries, and twice as many at this
-// capacity.
+// MaxCapacity is the largest capacity [Slab.Init] accepts. It keeps the index,
+// which has three slots for every entry, addressable with 32 bits.
 const MaxCapacity = 1 << 30
 
 // maxHeads is the largest number of list heads [Slab.Init] accepts.
@@ -54,12 +50,13 @@ type Slab[K comparable, V any] struct {
 	// Nodes holds the list heads followed by the entries.
 	Nodes []Node[K, V]
 
-	// slots is the hash index: a linear-probing table whose size is a power
-	// of two. A slot holds the hash of an entry in its high half and the
-	// index of the entry's node in its low half. Zero is an empty slot: no
-	// entry lives in node 0.
+	// slots is the hash index: a linear-probing table of size slots. A slot
+	// holds the hash of an entry in its high half and the index of the
+	// entry's node in its low half. Zero is an empty slot: no entry lives in
+	// node 0. An entry's probe starts at the slot that its hash scaled to
+	// size points at, which spreads the hashes over a table of any size.
 	slots []uint64
-	mask  uint32
+	size  uint32
 
 	heads uint32 // number of list heads
 	free  uint32 // most recently removed node, linked through Next; 0 if none
@@ -68,12 +65,10 @@ type Slab[K comparable, V any] struct {
 }
 
 // indexSize returns the number of slots in the index of a slab with the given
-// capacity: the smallest power of two above 1.5 times the capacity. That
-// keeps the load factor at or below 2/3 and guarantees an empty slot, which
-// is what ends an unsuccessful probe.
-func indexSize(capacity int) uint {
-	return 1 << bits.Len(uint(capacity+capacity/2))
-}
+// capacity: three for every entry, and one at least. That keeps the load
+// factor at or below a third, whatever the capacity, and guarantees an empty
+// slot, which is what ends an unsuccessful probe.
+func indexSize(capacity int) uint { return max(3*uint(capacity), 1) }
 
 // Init readies the slab for capacity entries and the given number of list
 // heads, and leaves every list empty. It panics unless capacity lies in
@@ -85,7 +80,7 @@ func (s *Slab[K, V]) Init(capacity, heads int) {
 
 	s.Nodes = make([]Node[K, V], heads+capacity)
 	s.slots = make([]uint64, indexSize(capacity))
-	s.mask = uint32(len(s.slots) - 1)
+	s.size = uint32(len(s.slots))
 	s.heads = uint32(heads)
 	s.resetLists()
 }
@@ -106,8 +101,8 @@ func (s *Slab[K, V]) Cap() int { return len(s.Nodes) - int(s.heads) }
 // Find returns the index of the node that holds key, or 0 if there is none.
 // The hash must be the one the key was inserted with.
 func (s *Slab[K, V]) Find(hash uint32, key K) uint32 {
-	slots, mask := s.slots, s.mask
-	for i := hash & mask; ; i = (i + 1) & mask {
+	slots, size := s.slots, s.size
+	for i := uint32(uint64(hash) * uint64(size) >> 32); ; {
 		slot := slots[i]
 		if slot == 0 {
 			return 0
@@ -116,6 +111,10 @@ func (s *Slab[K, V]) Find(hash uint32, key K) uint32 {
 			if idx := uint32(slot); s.Nodes[idx].Key == key {
 				return idx
 			}
+		}
+		i++
+		if i == size {
+			i = 0
 		}
 	}
 }
@@ -145,10 +144,13 @@ func (s *Slab[K, V]) Insert(hash uint32, key K, value V) uint32 {
 	n.Value = value
 	s.count++
 
-	slots, mask := s.slots, s.mask
-	i := hash & mask
+	slots, size := s.slots, s.size
+	i := uint32(uint64(hash) * uint64(size) >> 32)
 	for slots[i] != 0 {
-		i = (i + 1) & mask
+		i++
+		if i == size {
+			i = 0
+		}
 	}
 	slots[i] = uint64(hash)<<32 | uint64(idx)
 
@@ -176,9 +178,9 @@ func (s *Slab[K, V]) Remove(idx uint32) {
 // unindex empties the slot that refers to node idx, then closes the gap so
 // that probe sequences running through it stay unbroken.
 func (s *Slab[K, V]) unindex(hash, idx uint32) {
-	slots, mask := s.slots, s.mask
+	slots, size := s.slots, s.size
 
-	hole := hash & mask
+	hole := uint32(uint64(hash) * uint64(size) >> 32)
 	for {
 		slot := slots[hole]
 		if slot == 0 {
@@ -187,16 +189,34 @@ func (s *Slab[K, V]) unindex(hash, idx uint32) {
 		if slot&(1<<32-1) == uint64(idx) {
 			break
 		}
-		hole = (hole + 1) & mask
+		hole++
+		if hole == size {
+			hole = 0
+		}
 	}
 
 	// Every entry between the hole and the next empty slot moves back into
 	// the hole if that keeps it at or after its home slot. Distances are
-	// taken modulo the table size.
-	for i := (hole + 1) & mask; slots[i] != 0; i = (i + 1) & mask {
-		home := uint32(slots[i]>>32) & mask
-		if (i-home)&mask >= (i-hole)&mask {
-			slots[hole] = slots[i]
+	// taken around the end of the table.
+	for i := hole; ; {
+		i++
+		if i == size {
+			i = 0
+		}
+		slot := slots[i]
+		if slot == 0 {
+			break
+		}
+		home := uint32((slot >> 32) * uint64(size) >> 32)
+		fromHome, fromHole := i-home, i-hole
+		if i < home {
+			fromHome += size
+		}
+		if i < hole {
+			fromHole += size
+		}
+		if fromHome >= fromHole {
+			slots[hole] = slot
 			hole = i
 		}
 	}
@@ -210,9 +230,15 @@ func (s *Slab[K, V]) unindex(hash, idx uint32) {
 func (s *Slab[K, V]) MaxDisplacement() int {
 	longest := uint32(0)
 	for i, slot := range s.slots {
-		if slot != 0 {
-			longest = max(longest, (uint32(i)-uint32(slot>>32))&s.mask)
+		if slot == 0 {
+			continue
 		}
+		at, home := uint32(i), uint32((slot>>32)*uint64(s.size)>>32)
+		distance := at - home
+		if at < home {
+			distance += s.size
+		}
+		longest = max(longest, distance)
 	}
 	return int(longest)
 }

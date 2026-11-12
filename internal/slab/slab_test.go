@@ -107,6 +107,12 @@ func mustPanic(t *testing.T, what string, f func()) {
 	f()
 }
 
+// homeAt returns the lowest hash whose home is the given slot of an index
+// with size slots, for tests that want entries in particular places.
+func homeAt(size, slot uint32) uint32 {
+	return uint32((uint64(slot)<<32 + uint64(size) - 1) / uint64(size))
+}
+
 func TestIndexSize(t *testing.T) {
 	t.Parallel()
 
@@ -115,16 +121,11 @@ func TestIndexSize(t *testing.T) {
 		want     uint
 	}{
 		{0, 1},
-		{1, 2},
-		{2, 4},
-		{3, 8},
-		{5, 8},
-		{6, 16},
-		{1000, 2048},
-		{1365, 2048},
-		{1366, 4096},
+		{1, 3},
+		{2, 6},
+		{1000, 3000},
 		// The largest index still has slots that 32 bits can address.
-		{MaxCapacity, 1 << 31},
+		{MaxCapacity, 3 << 30},
 	}
 	for _, tt := range tests {
 		got := indexSize(tt.capacity)
@@ -132,9 +133,8 @@ func TestIndexSize(t *testing.T) {
 			t.Errorf("indexSize(%d) = %d, want %d", tt.capacity, got, tt.want)
 		}
 		// An empty slot is what ends a probe for a missing key, and the
-		// load factor stays at or below 2/3. Twice the largest index is
-		// more than 32 bits hold.
-		if 2*uint64(got) < 3*uint64(tt.capacity) || got <= uint(tt.capacity) {
+		// load factor stays at or below a third.
+		if got < 3*uint(tt.capacity) || got <= uint(tt.capacity) {
 			t.Errorf("indexSize(%d) = %d is too small", tt.capacity, got)
 		}
 	}
@@ -245,14 +245,15 @@ func TestInsertFindRemove(t *testing.T) {
 func TestFill(t *testing.T) {
 	t.Parallel()
 
-	const capacity = 1365 // 2048 slots, of which two thirds get used.
-
-	// Many keys share a hash, and the hashes crowd into one end of the index.
-	hashOf := func(key int) uint32 { return uint32(key % 300) }
+	const capacity = 1365 // 4095 slots, of which a third get used.
 
 	var s Slab[int, int]
 	s.Init(capacity, 2)
 	want := map[int]int{}
+
+	// Many keys share a hash, and the hashes crowd into one end of the index.
+	size := uint32(len(s.slots))
+	hashOf := func(key int) uint32 { return homeAt(size, uint32(key%300)) }
 
 	for round := range 3 {
 		for k := range capacity {
@@ -285,7 +286,8 @@ func TestMaxDisplacement(t *testing.T) {
 	t.Parallel()
 
 	var s Slab[int, int]
-	s.Init(40, 1) // 64 slots.
+	s.Init(40, 1) // 120 slots.
+	size := uint32(len(s.slots))
 
 	if got := s.MaxDisplacement(); got != 0 {
 		t.Errorf("MaxDisplacement() = %d on an empty slab", got)
@@ -293,7 +295,7 @@ func TestMaxDisplacement(t *testing.T) {
 
 	// Entries that sit in their home slots are not displaced.
 	for k := range 10 {
-		s.Insert(uint32(k), k, k)
+		s.Insert(homeAt(size, uint32(k)), k, k)
 	}
 	if got := s.MaxDisplacement(); got != 0 {
 		t.Errorf("MaxDisplacement() = %d without collisions", got)
@@ -302,7 +304,7 @@ func TestMaxDisplacement(t *testing.T) {
 	// Five entries that want the last slot. One gets it; the others wrap
 	// around and land behind the ten entries above, in slots 10 to 13.
 	for k := 100; k < 105; k++ {
-		s.Insert(63, k, k)
+		s.Insert(homeAt(size, size-1), k, k)
 	}
 	if got := s.MaxDisplacement(); got != 14 {
 		t.Errorf("MaxDisplacement() = %d, want 14", got)
@@ -364,15 +366,19 @@ func TestRemovePanics(t *testing.T) {
 func TestCollisions(t *testing.T) {
 	t.Parallel()
 
-	const capacity = 40 // 64 slots.
+	const (
+		capacity = 40
+		size     = 3 * capacity // slots
+	)
 
+	last := homeAt(size, size-1)
 	hashes := []uint32{
 		0, 0, 0, // Equal hashes: only the keys tell the entries apart.
-		63, 63, 63, 63, // Runs that start in the last slot and wrap.
-		62, 61,
-		63 + 64, 63 + 128, // The same home slot under different hashes.
-		1 << 31, 1<<31 + 63, 1<<32 - 1,
-		5, 5 + 64, 6, 7, 7,
+		last, last, last, last, // Runs that start in the last slot and wrap.
+		homeAt(size, size-2), homeAt(size, size-3),
+		last + 1, 1<<32 - 1, // The same home slot under different hashes.
+		homeAt(size, size/2), homeAt(size, size/2) + 1,
+		homeAt(size, 5), homeAt(size, 5) + 1, homeAt(size, 6), homeAt(size, 7), homeAt(size, 7),
 	}
 	hashOf := func(key int) uint32 { return hashes[key%len(hashes)] }
 

@@ -135,6 +135,17 @@ func mustPanic(t *testing.T, what string, f func()) {
 	f()
 }
 
+// homeAt returns the lowest hash whose home is the given slot of an index
+// with size slots, for tests that want entries in particular places.
+func homeAt(size, slot uint32) uint32 {
+	return uint32((uint64(slot)<<32 + uint64(size) - 1) / uint64(size))
+}
+
+// hashOf is a hash for keys in a row that gives them homes all over the
+// index. The index goes by the upper bits of a hash, which keys in a row
+// share.
+func hashOf(key int) uint32 { return uint32(key) * 0x9e3779b9 }
+
 func TestInit(t *testing.T) {
 	t.Parallel()
 
@@ -143,10 +154,10 @@ func TestInit(t *testing.T) {
 		wantNodes, wantSlots int
 	}{
 		{0, 1, 1, 1},          // No entries, so no spare nodes either.
-		{1, 1, 1 + 1 + 16, 2}, // At least sixteen spare nodes.
-		{100, 2, 2 + 100 + 16, 256},
-		{400, 1, 1 + 400 + 50, 1024},
-		{10_000, 1, 1 + 10_000 + 1024, 16384}, // At most 1024.
+		{1, 1, 1 + 1 + 16, 3}, // At least sixteen spare nodes.
+		{100, 2, 2 + 100 + 16, 300},
+		{400, 1, 1 + 400 + 50, 1200},
+		{10_000, 1, 1 + 10_000 + 1024, 30_000}, // At most 1024.
 	}
 	for _, tt := range tests {
 		var s Slab[int, int]
@@ -338,15 +349,18 @@ func TestChurn(t *testing.T) {
 
 	for _, capacity := range []int{1, 2, 7, 40, 300} {
 		rng := rand.New(rand.NewPCG(uint64(capacity), 3))
-		hashOf := func(key int) uint32 { return uint32(key%7) * 0x2000_0001 }
 
 		var s Slab[int, int]
 		s.Init(capacity, 1, NewReaders())
 		want := map[int]int{}
 
+		// Seven hashes, homed in slots in a row that run across the end.
+		size := uint32(len(s.slots))
+		colliding := func(key int) uint32 { return homeAt(size, (size-3+uint32(key%7))%size) }
+
 		for step := range 30_000 {
 			key := rng.IntN(2*capacity + 1)
-			hash := hashOf(key)
+			hash := colliding(key)
 			idx := s.Find(hash, key)
 
 			if _, present := want[key]; (idx != 0) != present {
@@ -409,12 +423,12 @@ func TestPinnedNodeIsLeftAlone(t *testing.T) {
 	other.Init(capacity, 1, readers)
 
 	for key := range capacity {
-		s.PushFront(0, s.Insert(uint32(key), key, "old"))
-		other.PushFront(0, other.Insert(uint32(key), key, "other"))
+		s.PushFront(0, s.Insert(hashOf(key), key, "old"))
+		other.PushFront(0, other.Insert(hashOf(key), key, "other"))
 	}
 
 	// A reader finds an entry and takes its time.
-	idx := s.Find(0, 0)
+	idx := s.Find(hashOf(0), 0)
 	slot := s.Pin(idx)
 	if idx == 0 || slot == nil {
 		t.Fatalf("key 0 is in node %d, pinned in slot %p", idx, slot)
@@ -426,7 +440,7 @@ func TestPinnedNodeIsLeftAlone(t *testing.T) {
 	want := map[int]string{}
 	for round := range 100 {
 		for key := range capacity {
-			s.Replace(s.Find(uint32(key), key), key, "new")
+			s.Replace(s.Find(hashOf(key), key), key, "new")
 			want[key] = "new"
 		}
 		if n.Key != 0 || n.Value != "old" {
@@ -439,7 +453,7 @@ func TestPinnedNodeIsLeftAlone(t *testing.T) {
 	check(t, &s, want)
 
 	// The node of another slab with the same index is none of its business.
-	otherIdx := other.Find(0, 0)
+	otherIdx := other.Find(hashOf(0), 0)
 	if otherIdx != idx {
 		t.Fatalf("key 0 is in node %d of one slab and in node %d of the other; the test needs them to agree", idx, otherIdx)
 	}
@@ -476,13 +490,13 @@ func TestWriterWaitsForSpareNode(t *testing.T) {
 	spare := len(s.Nodes) - capacity - 1
 
 	for key := range capacity {
-		s.PushFront(0, s.Insert(uint32(key), key, "old"))
+		s.PushFront(0, s.Insert(hashOf(key), key, "old"))
 	}
 
 	// Every replacement leaves a node behind that a reader is looking at.
 	pins, nodes := make([]*Slot, 0, spare), make([]uint32, 0, spare)
 	for i := range spare {
-		idx := s.Find(uint32(i%capacity), i%capacity)
+		idx := s.Find(hashOf(i%capacity), i%capacity)
 		pins, nodes = append(pins, pin(t, &s, idx)), append(nodes, idx)
 		s.Replace(idx, i%capacity, "pinned")
 	}
@@ -494,7 +508,7 @@ func TestWriterWaitsForSpareNode(t *testing.T) {
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		s.Replace(s.Find(1, 1), 1, "new") // Needs a node, and has to wait for one.
+		s.Replace(s.Find(hashOf(1), 1), 1, "new") // Needs a node, and has to wait for one.
 	}()
 	// The writer looks for a node again and again. By its second look it
 	// has come away with nothing at least once; until then it may not even
@@ -527,7 +541,7 @@ func TestWriterWaitsForSpareNode(t *testing.T) {
 	case <-time.After(10 * time.Second):
 		t.Fatal("Replace is still waiting although a reader has left")
 	}
-	if got := s.Nodes[s.Find(1, 1)].Value; got != "new" {
+	if got := s.Nodes[s.Find(hashOf(1), 1)].Value; got != "new" {
 		t.Errorf("key 1 has the value %q after Replace", got)
 	}
 
@@ -564,7 +578,7 @@ func TestOverdue(t *testing.T) {
 	var s Slab[int, *int]
 	s.Init(capacity, 1, NewReaders())
 	for key := range capacity {
-		s.PushFront(0, s.Insert(uint32(key), key, new(key)))
+		s.PushFront(0, s.Insert(hashOf(key), key, new(key)))
 	}
 	if s.Overdue() {
 		t.Fatal("a slab that nothing has left is overdue")
@@ -574,11 +588,11 @@ func TestOverdue(t *testing.T) {
 	// with the others.
 	pins := make([]*Slot, 0, pinned)
 	for key := range pinned {
-		pins = append(pins, pin(t, &s, s.Find(uint32(key), key)))
+		pins = append(pins, pin(t, &s, s.Find(hashOf(key), key)))
 	}
 	most, idle := 0, 0
 	for key := range capacity {
-		idx := s.Find(uint32(key), key)
+		idx := s.Find(hashOf(key), key)
 		s.Unlink(idx)
 		before := int(s.waiting)
 		s.Remove(idx)
@@ -623,10 +637,10 @@ func TestOverdue(t *testing.T) {
 
 	// It is back to normal: a few nodes may wait, more may not.
 	for key := range capacity {
-		s.PushFront(0, s.Insert(uint32(key), key, new(key)))
+		s.PushFront(0, s.Insert(hashOf(key), key, new(key)))
 	}
 	for key := range capacity {
-		idx := s.Find(uint32(key), key)
+		idx := s.Find(hashOf(key), key)
 		s.Unlink(idx)
 		s.Remove(idx)
 		if s.Overdue() || s.waiting > 8 {
@@ -876,10 +890,10 @@ func TestReleasedMark(t *testing.T) {
 	var s Slab[int, int]
 	s.Init(64, 1, readers)
 	for key := range 4 {
-		s.PushFront(0, s.Insert(uint32(key), key, key))
+		s.PushFront(0, s.Insert(hashOf(key), key, key))
 	}
 	leave := func(key int) (idx uint32, slot *Slot) {
-		idx = s.Find(uint32(key), key)
+		idx = s.Find(hashOf(key), key)
 		slot = pin(t, &s, idx)
 		s.Unlink(idx)
 		s.Remove(idx)
@@ -912,12 +926,12 @@ func TestReleasedMark(t *testing.T) {
 	}
 
 	// Reset returns the mark that covers everything it has removed.
-	rest := pin(t, &s, s.Find(2, 2))
+	rest := pin(t, &s, s.Find(hashOf(2), 2))
 	mark = s.Reset()
 	if s.Released(mark) {
 		t.Error("Released reports that nothing is held on to after Reset, while a reader looks at an entry")
 	}
-	s.PushFront(0, s.Insert(9, 9, 9))
+	s.PushFront(0, s.Insert(hashOf(9), 9, 9))
 	later, laterPin := leave(9)
 	rest.Unpin()
 	if !s.Released(mark) || s.Nodes[later].Value != 9 {
@@ -941,14 +955,14 @@ func fullWithOnePinned(t *testing.T) (readers *Readers, a, b *Slab[int, int], pi
 	a.Init(capacity, 1, readers)
 	b.Init(capacity, 1, readers)
 	for key := range capacity {
-		a.PushFront(0, a.Insert(uint32(key), key, 1000+key))
-		b.PushFront(0, b.Insert(uint32(key), key, 1000+key))
+		a.PushFront(0, a.Insert(hashOf(key), key, 1000+key))
+		b.PushFront(0, b.Insert(hashOf(key), key, 1000+key))
 	}
 
-	pinned = b.Find(0, 0)
+	pinned = b.Find(hashOf(0), 0)
 	held = pin(t, b, pinned)
 	for key := range 32 {
-		b.Replace(b.Find(uint32(key), key), key, 2000+key)
+		b.Replace(b.Find(hashOf(key), key), key, 2000+key)
 	}
 	if b.waiting != 32 || b.free != 0 || int(b.fresh) != len(b.Nodes) {
 		t.Fatalf("b has %d nodes waiting, free list at %d, fresh at %d of %d", b.waiting, b.free, b.fresh, len(b.Nodes))
@@ -975,7 +989,7 @@ func TestAllocBorrowsAroundPin(t *testing.T) {
 	}
 
 	// a looks, and sees the reader of b's node.
-	idx := a.Find(7, 7)
+	idx := a.Find(hashOf(7), 7)
 	a.Unlink(idx)
 	a.Remove(idx)
 	a.Reclaim()
@@ -985,7 +999,7 @@ func TestAllocBorrowsAroundPin(t *testing.T) {
 	}
 
 	// b needs a node: it goes by the look of a, and leaves the pinned one.
-	b.Replace(b.Find(40, 40), 40, 2040)
+	b.Replace(b.Find(hashOf(40), 40), 40, 2040)
 	intact("after a borrowed look")
 	if got := readers.time.Load(); got != looked {
 		t.Errorf("b looked for itself (time %d -> %d)", looked, got)
@@ -996,7 +1010,7 @@ func TestAllocBorrowsAroundPin(t *testing.T) {
 
 	// The same look is of no further use: b looks, and still leaves the node.
 	for key := 41; key < 41+31; key++ {
-		b.Replace(b.Find(uint32(key), key), key, 2000+key)
+		b.Replace(b.Find(hashOf(key), key), key, 2000+key)
 		intact("in the second round")
 	}
 	if got := readers.time.Load(); got != looked+1 {
@@ -1010,7 +1024,7 @@ func TestAllocBorrowsAroundPin(t *testing.T) {
 	// which gets b nothing, so it looks again and the node is released.
 	held.Unpin()
 	for key := 80; key < 80+31; key++ {
-		b.Replace(b.Find(uint32(key), key), key, 2000+key)
+		b.Replace(b.Find(hashOf(key), key), key, 2000+key)
 	}
 	if got := readers.time.Load(); got != looked+2 {
 		t.Errorf("time is %d, want two looks by b on top of %d", got, looked)
@@ -1034,7 +1048,7 @@ func TestAllocAndTooManyPins(t *testing.T) {
 	// a looks while more slots are taken than a look writes down.
 	release := readers.Occupy(0)
 	defer release()
-	idx := a.Find(7, 7)
+	idx := a.Find(hashOf(7), 7)
 	a.Unlink(idx)
 	a.Remove(idx)
 	a.Reclaim()
@@ -1043,7 +1057,7 @@ func TestAllocAndTooManyPins(t *testing.T) {
 		t.Fatalf("the look wrote down %d pins, want -1 for too many", got)
 	}
 
-	b.Replace(b.Find(40, 40), 40, 2040)
+	b.Replace(b.Find(hashOf(40), 40), 40, 2040)
 	if n := &b.Nodes[pinned]; n.Key != 0 || n.Value != 1000 {
 		t.Fatalf("the node that a reader looks at holds %d=%d", n.Key, n.Value)
 	}
@@ -1091,7 +1105,7 @@ func TestSharedLooks(t *testing.T) {
 			delete(has, s.Nodes[idx].Key)
 			s.Unlink(idx)
 			s.Remove(idx)
-			s.PushFront(0, s.Insert(uint32(fresh), fresh, 0))
+			s.PushFront(0, s.Insert(hashOf(fresh), fresh, 0))
 			has[fresh] = 0
 		},
 	}
@@ -1103,7 +1117,7 @@ func TestSharedLooks(t *testing.T) {
 			all[i].Init(capacity, 1, readers)
 			has[i] = contents{}
 			for key := range capacity {
-				all[i].PushFront(0, all[i].Insert(uint32(key), key, 0))
+				all[i].PushFront(0, all[i].Insert(hashOf(key), key, 0))
 				has[i][key] = 0
 			}
 		}
@@ -1144,11 +1158,11 @@ func TestBorrowedLook(t *testing.T) {
 	a.Init(capacity, 1, readers)
 	b.Init(capacity, 1, readers)
 	for key := range capacity {
-		a.PushFront(0, a.Insert(uint32(key), key, key))
-		b.PushFront(0, b.Insert(uint32(key), key, key))
+		a.PushFront(0, a.Insert(hashOf(key), key, key))
+		b.PushFront(0, b.Insert(hashOf(key), key, key))
 	}
 	remove := func(s *Slab[int, int], key int) {
-		idx := s.Find(uint32(key), key)
+		idx := s.Find(hashOf(key), key)
 		s.Unlink(idx)
 		s.Remove(idx)
 	}
@@ -1157,11 +1171,11 @@ func TestBorrowedLook(t *testing.T) {
 	// not yet more than b has patience for. Another reader is looking at
 	// an entry of a, in the node of the same number as one of those that
 	// leave b; that is no concern of b's.
-	held := pin(t, &b, b.Find(3, 3))
-	if a.Find(5, 5) != b.Find(5, 5) {
-		t.Fatalf("key 5 is in node %d of a and in node %d of b; the test needs them to agree", a.Find(5, 5), b.Find(5, 5))
+	held := pin(t, &b, b.Find(hashOf(3), 3))
+	if a.Find(hashOf(5), 5) != b.Find(hashOf(5), 5) {
+		t.Fatalf("key 5 is in node %d of a and in node %d of b; the test needs them to agree", a.Find(hashOf(5), 5), b.Find(hashOf(5), 5))
 	}
-	elsewhere := pin(t, &a, a.Find(5, 5))
+	elsewhere := pin(t, &a, a.Find(hashOf(5), 5))
 	defer elsewhere.Unpin()
 	for key := range 8 {
 		remove(&b, key)
@@ -1281,12 +1295,12 @@ func TestPatience(t *testing.T) {
 		limit := min(max(capacity/8, 1), 1024)
 
 		for key := range capacity {
-			s.PushFront(0, s.Insert(uint32(key), key, key))
+			s.PushFront(0, s.Insert(hashOf(key), key, key))
 		}
 		most := 0
 		for round := range 4 {
 			for key := range capacity {
-				s.Replace(s.Find(uint32(key), key), key, round)
+				s.Replace(s.Find(hashOf(key), key), key, round)
 				if int(s.waiting) > limit {
 					t.Fatalf("capacity %d: %d nodes are waiting, want at most %d", capacity, s.waiting, limit)
 				}
@@ -1451,7 +1465,6 @@ func TestConcurrentReaders(t *testing.T) {
 		steps = 30_000
 	}
 
-	hashOf := func(key int) uint32 { return uint32(key & 1) }
 	// A value vouches for itself, and one that is all zeros does not: that
 	// is what a node holds that the slab has let go of.
 	const sum = 0x5ca1ab1e
@@ -1461,6 +1474,16 @@ func TestConcurrentReaders(t *testing.T) {
 	readers := NewReaders()
 	var s Slab[int, value]
 	s.Init(capacity, 1, readers)
+
+	// Every key has one of two hashes, homed in the last slot and in the
+	// first, so entries keep moving around in the index and across its end.
+	size := uint32(len(s.slots))
+	twoHashes := func(key int) uint32 {
+		if key&1 == 0 {
+			return homeAt(size, size-1)
+		}
+		return homeAt(size, 0)
+	}
 
 	// present[key] is even while key is in the slab. The writer makes it odd
 	// before it removes the key and even again after it has put it back, so
@@ -1482,7 +1505,7 @@ func TestConcurrentReaders(t *testing.T) {
 				key := rng.IntN(keys)
 				before := present[key].Load()
 
-				v, found, certain := s.Lookup(hashOf(key), key, 1, false)
+				v, found, certain := s.Lookup(twoHashes(key), key, 1, false)
 
 				if found && (v.a != key || v.c != v.a^v.b^sum) {
 					t.Errorf("Lookup(%d) found the value %v", key, v)
@@ -1500,10 +1523,10 @@ func TestConcurrentReaders(t *testing.T) {
 	rng := rand.New(rand.NewPCG(7, 7))
 	for step := range steps {
 		key := rng.IntN(keys)
-		idx := s.Find(hashOf(key), key)
+		idx := s.Find(twoHashes(key), key)
 		switch {
 		case idx == 0 && s.Len() < capacity:
-			s.PushFront(0, s.Insert(hashOf(key), key, valueOf(key, step)))
+			s.PushFront(0, s.Insert(twoHashes(key), key, valueOf(key, step)))
 			present[key].Add(1)
 		case idx != 0 && rng.IntN(3) == 0:
 			s.Replace(idx, key, valueOf(key, step))
