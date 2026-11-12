@@ -95,7 +95,7 @@ counters take 2–4 KiB per CPU.
 
 | | Use it when | Watch out for |
 |:---|:---|:---|
-| `tinylfu` | **in doubt**: the workload is unknown, or has loops or scans, and is read far more than written | Evicting writes are 5–10% slower than in `s3fifo`, and with 1% writes on 8 CPUs it was 22% slower, for a reason not yet found. Hit ratios vary between runs by up to 5.6 points. |
+| `tinylfu` | **in doubt**: the workload is unknown, or has loops or scans, and is read far more than written | Evicting writes are 8–13% slower than in `s3fifo`. Hit ratios vary between runs by up to 5.6 points. |
 | `s3fifo` | you want the same results on every run, or the workload has no loops | Falls far behind on looping workloads: on Mixed, at some sizes, it hits as rarely as `lru`. Writes cost about twice what they do in `lru`. |
 | `sieve` | reading through has to be as fast as possible, and you have checked your workload | It can collapse: on Mixed it answers under 1% of requests where `lru` answers 44%; see [when not to use it](https://pkg.go.dev/github.com/floatdrop/evict/sieve#hdr-When_not_to_use_it). |
 | `twoq` | a quarter or more of the operations are writes, or one goroutine uses the cache | Reads take a lock; more memory than `lru`. |
@@ -158,21 +158,21 @@ Millions of operations per second on one CPU and on eight (`1 → 8`), against a
 
 | Benchmark | evict/lru | evict/twoq | evict/sieve | evict/s3fifo | evict/tinylfu | otter | golang-lru |
 |:---|---:|---:|---:|---:|---:|---:|---:|
-| `Get`: reads, all of them hits | 39.7 → 35.9 | 46.7 → 44.4 | 35.6 → 265.8 | 36.1 → 274.7 | 35.0 → 258.1 | 27.2 → 202.3 | 34.2 → 4.3 |
-| `Mixed`: the same, 10% of them writes | 37.6 → 34.0 | 42.5 → 42.8 | 32.9 → 68.6 | 33.4 → 69.9 | 33.1 → 62.6 | 21.7 → 80.8 | 33.5 → 4.4 |
-| `Set`: writes that replace | 36.5 → 24.9 | 43.3 → 28.4 | 22.4 → 13.8 | 22.5 → 13.6 | 22.2 → 12.8 | 8.9 → 15.9 | 32.1 → 4.3 |
-| `Evict`: writes that evict | 16.5 → 31.3 | 16.9 → 30.9 | 13.4 → 12.0 | 8.6 → 10.5 | 8.2 → 9.8 | 3.6 → 5.9 | 7.5 → 3.3 |
-| `ReadThrough`: read, store on a miss | 30.3 → 34.1 | 31.9 → 33.7 | 28.6 → 53.3 | 22.1 → 43.1 | 21.7 → 46.0 | 12.7 → 23.6 | 16.7 → 3.6 |
-| `ReadThrough`, a million entries | 8.8 → 30.1 | 8.4 → 28.7 | 8.9 → 41.5 | 7.2 → 36.8 | 7.5 → 37.8 | 4.3 → 17.9 | 6.3 → 2.9 |
+| `Get`: reads, all of them hits | 40.2 → 34.7 | 47.3 → 44.9 | 40.1 → 317.8 | 40.7 → 308.7 | 38.9 → 307.0 | 26.1 → 204.7 | 33.1 → 4.2 |
+| `Mixed`: the same, 10% of them writes | 40.3 → 32.4 | 46.4 → 38.9 | 35.7 → 71.6 | 36.6 → 64.2 | 35.3 → 61.4 | 19.7 → 80.3 | 33.3 → 3.8 |
+| `Set`: writes that replace | 38.1 → 24.1 | 44.0 → 26.9 | 22.0 → 11.8 | 22.4 → 12.6 | 22.5 → 11.6 | 8.7 → 15.3 | 31.8 → 3.6 |
+| `Evict`: writes that evict | 17.8 → 31.6 | 16.9 → 30.3 | 14.4 → 12.0 | 9.6 → 10.3 | 8.4 → 9.5 | 3.4 → 5.6 | 7.1 → 3.2 |
+| `ReadThrough`: read, store on a miss | 31.3 → 35.3 | 30.6 → 35.9 | 31.3 → 55.1 | 23.8 → 42.2 | 22.7 → 46.0 | 10.9 → 22.8 | 16.2 → 3.4 |
+| `ReadThrough`, a million entries | 7.2 → 28.6 | 7.6 → 27.3 | 7.3 → 41.1 | 6.8 → 35.5 | 6.8 → 37.3 | 4.0 → 17.2 | 5.9 → 2.7 |
 
 ![Throughput of ReadThrough with a million entries by number of CPUs](bench/results/throughput-readthrough-capacity-1m.svg)
 
-- Lock-free reads scale: on 8 CPUs `sieve`, `s3fifo` and `tinylfu` read 28–36% faster than
+- Lock-free reads scale: on 8 CPUs `sieve`, `s3fifo` and `tinylfu` read 50–55% faster than
   otter, while `lru` and `twoq` slow down past 4 CPUs.
-- On one CPU all five caches beat otter at everything, by 1.3 to 5 times.
+- On one CPU all five caches beat otter at everything, by 1.5 to 5 times.
 - `lru` and `twoq` change entries in place and write fastest. The lock-free caches move a
   replaced entry to a fresh node so that readers need no lock, and their writes cost 1.2 to
-  3.4 times as much.
+  3.3 times as much.
 - Otter wins on 8 CPUs when 10–25% of the operations overwrite entries.
 - These are numbers from one machine. Otter's own, from Linux on x86, show its writes
   scaling five-fold from one CPU to eight, against less than two-fold here.
