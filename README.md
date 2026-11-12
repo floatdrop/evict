@@ -124,22 +124,22 @@ trace. Ten traces are public recordings of real systems; `optimal` is the upper 
 and `tinylfu` vary between replays (by up to 4.1 and 5.6 points), so theirs are medians of 11;
 **bold** means the cache beat every other on every replay.
 
-| trace | evict/lru | evict/twoq | evict/sieve | evict/s3fifo | evict/tinylfu | otter | golang-lru/2q | optimal |
-|:---|---:|---:|---:|---:|---:|---:|---:|---:|
-| Zipf | 29.97 | 36.53 | 37.55 | **38.25** | 37.66 | 37.90 | 37.61 | 44.07 |
-| S3 | 23.33 | 32.78 | 35.54 | 38.90 | **44.83** | 44.57 | 33.15 | 59.37 |
-| DS1 | 23.70 | 28.88 | 38.87 | 37.05 | **47.07** | 46.54 | 34.47 | 50.21 |
-| OLTP | 32.40 | 39.07 | 30.60 | 39.11 | 38.76 | 38.97 | 37.60 | 52.77 |
-| P8 | 24.10 | 32.11 | 27.66 | 35.31 | **37.86** | 36.20 | 31.45 | 53.53 |
-| Glimpse | 21.81 | 27.40 | 30.14 | 43.24 | 45.20 | 45.28 | 33.20 | 47.81 |
-| Mixed | 44.11 | 56.80 | 0.43 | 43.84 | 60.32 | **61.61** | 35.97 | 64.22 |
-| Scarab | 59.10 | 61.00 | 60.53 | **61.60** | 60.31 | 58.99 | 61.14 | 70.30 |
-| Twitter | 58.37 | 59.72 | 58.99 | **60.32** | 59.59 | 59.29 | 58.80 | 65.46 |
-| MSR | 64.40 | 66.31 | 66.16 | **67.22** | 67.06 | 66.54 | 66.57 | 73.60 |
-| CloudPhysics | 20.90 | 24.41 | 24.70 | 27.59 | 27.80 | 26.77 | 25.59 | 34.23 |
+| trace | evict/lru | evict/twoq | evict/sieve | evict/s3fifo | evict/tinylfu | otter | optimal |
+|:---|---:|---:|---:|---:|---:|---:|---:|
+| Zipf | 29.97 | 36.53 | 37.55 | **38.25** | 37.66 | 37.90 | 44.07 |
+| S3 | 23.33 | 32.78 | 35.54 | 38.90 | **44.83** | 44.57 | 59.37 |
+| DS1 | 23.70 | 28.88 | 38.87 | 37.05 | **47.07** | 46.54 | 50.21 |
+| OLTP | 32.40 | 39.07 | 30.60 | 39.11 | 38.76 | 38.97 | 52.77 |
+| P8 | 24.10 | 32.11 | 27.66 | 35.31 | **37.86** | 36.20 | 53.53 |
+| Glimpse | 21.81 | 27.40 | 30.14 | 43.24 | 45.20 | 45.28 | 47.81 |
+| Mixed | 44.11 | 56.80 | 0.43 | 43.84 | 60.32 | **61.61** | 64.22 |
+| Scarab | 59.10 | 61.00 | 60.53 | **61.60** | 60.31 | 58.99 | 70.30 |
+| Twitter | 58.37 | 59.72 | 58.99 | **60.32** | 59.59 | 59.29 | 65.46 |
+| MSR | 64.40 | 66.31 | 66.16 | **67.22** | 67.06 | 66.54 | 73.60 |
+| CloudPhysics | 20.90 | 24.41 | 24.70 | 27.59 | 27.80 | 26.77 | 34.23 |
 
-- Of the 88 trace-and-size rows, `s3fifo` wins 32 outright, `tinylfu` 25, the 2Q caches 6
-  and otter 1; 24 are too close to call.
+- Of the 88 trace-and-size rows, `s3fifo` wins 32 outright, `tinylfu` 25, hashicorp's 2Q 4,
+  `twoq` 2 and otter 1; 24 are too close to call.
 - `s3fifo` leads on Zipf, OLTP, Scarab, Twitter and MSR, though by less than a point.
 - `tinylfu` and otter lead on the traces with loops and on the ARC disk traces (S3, DS1,
   Glimpse, Mixed), by 2 to 18 points over `s3fifo`.
@@ -156,14 +156,14 @@ Millions of operations per second on one CPU and on eight (`1 → 8`), against a
 16,384 string entries unless noted. Medians of five runs on an Apple M3 Max with Go 1.27.3;
 [throughput.md](bench/results/throughput.md) has two and four CPUs and the spread.
 
-| Benchmark | evict/lru | evict/twoq | evict/sieve | evict/s3fifo | evict/tinylfu | otter | golang-lru |
-|:---|---:|---:|---:|---:|---:|---:|---:|
-| `Get`: reads, all of them hits | 40.2 → 34.7 | 47.3 → 44.9 | 40.1 → 317.8 | 40.7 → 308.7 | 38.9 → 307.0 | 26.1 → 204.7 | 33.1 → 4.2 |
-| `Mixed`: the same, 10% of them writes | 40.3 → 32.4 | 46.4 → 38.9 | 35.7 → 71.6 | 36.6 → 64.2 | 35.3 → 61.4 | 19.7 → 80.3 | 33.3 → 3.8 |
-| `Set`: writes that replace | 38.1 → 24.1 | 44.0 → 26.9 | 22.0 → 11.8 | 22.4 → 12.6 | 22.5 → 11.6 | 8.7 → 15.3 | 31.8 → 3.6 |
-| `Evict`: writes that evict | 17.8 → 31.6 | 16.9 → 30.3 | 14.4 → 12.0 | 9.6 → 10.3 | 8.4 → 9.5 | 3.4 → 5.6 | 7.1 → 3.2 |
-| `ReadThrough`: read, store on a miss | 31.3 → 35.3 | 30.6 → 35.9 | 31.3 → 55.1 | 23.8 → 42.2 | 22.7 → 46.0 | 10.9 → 22.8 | 16.2 → 3.4 |
-| `ReadThrough`, a million entries | 7.2 → 28.6 | 7.6 → 27.3 | 7.3 → 41.1 | 6.8 → 35.5 | 6.8 → 37.3 | 4.0 → 17.2 | 5.9 → 2.7 |
+| Benchmark | evict/lru | evict/twoq | evict/sieve | evict/s3fifo | evict/tinylfu | otter |
+|:---|---:|---:|---:|---:|---:|---:|
+| `Get`: reads, all of them hits | 40.2 → 34.7 | 47.3 → 44.9 | 40.1 → 317.8 | 40.7 → 308.7 | 38.9 → 307.0 | 26.1 → 204.7 |
+| `Mixed`: the same, 10% of them writes | 40.3 → 32.4 | 46.4 → 38.9 | 35.7 → 71.6 | 36.6 → 64.2 | 35.3 → 61.4 | 19.7 → 80.3 |
+| `Set`: writes that replace | 38.1 → 24.1 | 44.0 → 26.9 | 22.0 → 11.8 | 22.4 → 12.6 | 22.5 → 11.6 | 8.7 → 15.3 |
+| `Evict`: writes that evict | 17.8 → 31.6 | 16.9 → 30.3 | 14.4 → 12.0 | 9.6 → 10.3 | 8.4 → 9.5 | 3.4 → 5.6 |
+| `ReadThrough`: read, store on a miss | 31.3 → 35.3 | 30.6 → 35.9 | 31.3 → 55.1 | 23.8 → 42.2 | 22.7 → 46.0 | 10.9 → 22.8 |
+| `ReadThrough`, a million entries | 7.2 → 28.6 | 7.6 → 27.3 | 7.3 → 41.1 | 6.8 → 35.5 | 6.8 → 37.3 | 4.0 → 17.2 |
 
 ![Throughput of ReadThrough with a million entries by number of CPUs](bench/results/throughput-readthrough-capacity-1m.svg)
 
