@@ -42,6 +42,8 @@
 // WithShards option of each package sets the number for the others.
 //
 // This package holds what the caches have in common: the [Cache] interface.
+// [github.com/floatdrop/evict/stats] counts the hits, misses and evictions of
+// any of them.
 package evict
 
 import "iter"
