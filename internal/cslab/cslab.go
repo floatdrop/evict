@@ -42,16 +42,13 @@ package cslab
 
 import (
 	"math"
-	"math/bits"
 	"runtime"
 	"sync/atomic"
 	"unsafe"
 )
 
-// MaxCapacity is the largest capacity [Slab.Init] accepts. It keeps the index
-// addressable with 32 bits: that has between one and a half times and three
-// times as many slots as the slab has entries, and twice as many at this
-// capacity.
+// MaxCapacity is the largest capacity [Slab.Init] accepts. It keeps the index,
+// which has three slots for every entry, addressable with 32 bits.
 const MaxCapacity = 1 << 30
 
 // minSpare is the least number of nodes that a slab has beyond its capacity.
@@ -125,12 +122,13 @@ type Slab[K comparable, V any] struct {
 	// while others wait to be reused.
 	Nodes []Node[K, V]
 
-	// slots is the hash index: a linear-probing table whose size is a power
-	// of two. A slot holds the hash of an entry in its high half and the
-	// index of the entry's node in its low half. Zero is an empty slot: no
-	// entry lives in node 0.
+	// slots is the hash index: a linear-probing table of size slots. A slot
+	// holds the hash of an entry in its high half and the index of the
+	// entry's node in its low half. Zero is an empty slot: no entry lives in
+	// node 0. An entry's probe starts at the slot that its hash scaled to
+	// size points at, which spreads the hashes over a table of any size.
 	slots []uint64
-	mask  uint32
+	size  uint32
 
 	// readers is where a reader pins the node it looks at, and name is what
 	// the nodes of this slab are called there, less their index.
@@ -201,15 +199,15 @@ func (s *Slab[K, V]) Init(capacity, heads int, r *Readers) {
 		spare = max(patience, minSpare)
 	}
 
-	// The smallest power of two above 1.5 times the number of nodes that
-	// can be indexed keeps the load factor at or below 2/3 and guarantees
-	// an empty slot, which is what ends an unsuccessful probe.
-	size := uint(1) << bits.Len(uint(capacity+capacity/2))
+	// Three slots for every entry that can be indexed keep the load factor
+	// at or below a third, whatever the capacity, and guarantee an empty
+	// slot, which is what ends an unsuccessful probe.
+	size := max(3*uint(capacity), 1)
 
 	s.Nodes = make([]Node[K, V], heads+capacity+spare)
 	s.Links = make([]Link, len(s.Nodes))
 	s.slots = make([]uint64, size)
-	s.mask = uint32(size - 1)
+	s.size = uint32(size)
 	s.readers = r
 	s.name = r.name()
 	s.capacity = uint32(capacity)
@@ -251,8 +249,8 @@ func (s *Slab[K, V]) Hash(idx uint32) uint32 { return s.Links[idx].hash }
 func (s *Slab[K, V]) Lookup(hash uint32, key K, limit uint32, tally bool) (value V, found, certain bool) {
 	seq := atomic.LoadUint32(&s.seq)
 
-	slots, mask := s.slots, s.mask
-	i := hash & mask
+	slots, size := s.slots, s.size
+	i := uint32(uint64(hash) * uint64(size) >> 32)
 	// The index always has an empty slot, but with entries moving around a
 	// reader is not certain to see one. Give up after one round.
 	for range slots {
@@ -261,7 +259,10 @@ func (s *Slab[K, V]) Lookup(hash uint32, key K, limit uint32, tally bool) (value
 			return value, false, seq&1 == 0 && atomic.LoadUint32(&s.seq) == seq
 		}
 		if word>>32 != uint64(hash) {
-			i = (i + 1) & mask
+			i++
+			if i == size {
+				i = 0
+			}
 			continue
 		}
 
@@ -322,7 +323,10 @@ func (s *Slab[K, V]) Lookup(hash uint32, key K, limit uint32, tally bool) (value
 		}
 		var zero V
 		value = zero
-		i = (i + 1) & mask
+		i++
+		if i == size {
+			i = 0
+		}
 	}
 	return value, false, false
 }
@@ -389,8 +393,8 @@ func (s *Slab[K, V]) pinAny(node uint64) *Slot {
 // Find returns the index of the node that holds key, or 0 if there is none.
 // It is for writers.
 func (s *Slab[K, V]) Find(hash uint32, key K) uint32 {
-	slots, mask := s.slots, s.mask
-	for i := hash & mask; ; i = (i + 1) & mask {
+	slots, size := s.slots, s.size
+	for i := uint32(uint64(hash) * uint64(size) >> 32); ; {
 		slot := atomic.LoadUint64(&slots[i])
 		if slot == 0 {
 			return 0
@@ -399,6 +403,10 @@ func (s *Slab[K, V]) Find(hash uint32, key K) uint32 {
 			if idx := uint32(slot); s.Nodes[idx].Key == key {
 				return idx
 			}
+		}
+		i++
+		if i == size {
+			i = 0
 		}
 	}
 }
@@ -421,10 +429,13 @@ func (s *Slab[K, V]) Insert(hash uint32, key K, value V) uint32 {
 	n.Key = key
 	n.Value = value
 
-	slots, mask := s.slots, s.mask
-	i := hash & mask
+	slots, size := s.slots, s.size
+	i := uint32(uint64(hash) * uint64(size) >> 32)
 	for atomic.LoadUint64(&slots[i]) != 0 {
-		i = (i + 1) & mask
+		i++
+		if i == size {
+			i = 0
+		}
 	}
 	// From here on readers can find the node.
 	atomic.StoreUint64(&slots[i], uint64(hash)<<32|uint64(idx))
@@ -477,8 +488,8 @@ func (s *Slab[K, V]) Remove(idx uint32) {
 // slotOf returns the slot that refers to node idx. It panics if the node holds
 // no entry.
 func (s *Slab[K, V]) slotOf(hash, idx uint32) uint32 {
-	slots, mask := s.slots, s.mask
-	for i := hash & mask; ; i = (i + 1) & mask {
+	slots, size := s.slots, s.size
+	for i := uint32(uint64(hash) * uint64(size) >> 32); ; {
 		slot := atomic.LoadUint64(&slots[i])
 		if slot == 0 {
 			panic("cslab: node is not indexed")
@@ -486,24 +497,40 @@ func (s *Slab[K, V]) slotOf(hash, idx uint32) uint32 {
 		if slot&(1<<32-1) == uint64(idx) {
 			return i
 		}
+		i++
+		if i == size {
+			i = 0
+		}
 	}
 }
 
 // unindex empties the slot that refers to node idx, then closes the gap so
 // that probe sequences running through it stay unbroken.
 func (s *Slab[K, V]) unindex(hash, idx uint32) {
-	slots, mask := s.slots, s.mask
+	slots, size := s.slots, s.size
 	hole := s.slotOf(hash, idx)
 
 	// Every entry between the hole and the next empty slot moves back into
 	// the hole if that keeps it at or after its home slot. Distances are
-	// taken modulo the table size.
-	for i := (hole + 1) & mask; ; i = (i + 1) & mask {
+	// taken around the end of the table.
+	for i := hole; ; {
+		i++
+		if i == size {
+			i = 0
+		}
 		slot := atomic.LoadUint64(&slots[i])
 		if slot == 0 {
 			break
 		}
-		if home := uint32(slot>>32) & mask; (i-home)&mask >= (i-hole)&mask {
+		home := uint32((slot >> 32) * uint64(size) >> 32)
+		fromHome, fromHole := i-home, i-hole
+		if i < home {
+			fromHome += size
+		}
+		if i < hole {
+			fromHole += size
+		}
+		if fromHome >= fromHole {
 			atomic.StoreUint64(&slots[hole], slot)
 			hole = i
 		}
@@ -776,9 +803,16 @@ func (s *Slab[K, V]) release(looked uint64) bool {
 func (s *Slab[K, V]) MaxDisplacement() int {
 	longest := uint32(0)
 	for i := range s.slots {
-		if slot := atomic.LoadUint64(&s.slots[i]); slot != 0 {
-			longest = max(longest, (uint32(i)-uint32(slot>>32))&s.mask)
+		slot := atomic.LoadUint64(&s.slots[i])
+		if slot == 0 {
+			continue
 		}
+		at, home := uint32(i), uint32((slot>>32)*uint64(s.size)>>32)
+		distance := at - home
+		if at < home {
+			distance += s.size
+		}
+		longest = max(longest, distance)
 	}
 	return int(longest)
 }

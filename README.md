@@ -184,25 +184,24 @@ Bytes per entry with `uint64` keys and values, over caches of 10,000 to 10 milli
 
 | | Bytes per entry | of which the GC scans | One GC cycle, 1M entries | 10M entries |
 |:---|---:|---:|---:|---:|
-| evict/lru | 46–58 | 0–1 | 0.2 ms | 0.2 ms |
-| evict/sieve | 54–72 | 0–2 | 0.4 ms | 0.2 ms |
-| evict/twoq | 74–82 | 0–1 | 0.4 ms | 0.2 ms |
-| evict/s3fifo | 68–90 | 0–2 | 0.3 ms | 0.2 ms |
-| evict/tinylfu | 67–82 | 0–2 | 0.4 ms | 0.2 ms |
-| otter | 83–94 | 40–50 | 64 ms | 634 ms |
-| golang-lru | 110–127 | 93–111 | 65 ms | 740 ms |
-| golang-lru/2q | 156–183 | 136–163 | 97 ms | 1,167 ms |
+| evict/lru | 56–63 | 0–2 | 0.2 ms | 0.2 ms |
+| evict/sieve | 64–81 | 0–2 | 0.3 ms | 0.3 ms |
+| evict/twoq | 84–93 | 0–1 | 0.3 ms | 0.2 ms |
+| evict/s3fifo | 82–100 | 0–2 | 0.5 ms | 0.2 ms |
+| evict/tinylfu | 76–95 | 0–2 | 0.4 ms | 0.2 ms |
+| otter | 83–95 | 40–50 | 65 ms | 530 ms |
+| golang-lru | 110–127 | 94–111 | 66 ms | 719 ms |
+| golang-lru/2q | 156–183 | 136–163 | 101 ms | 1,157 ms |
 
-Sizes swing with capacity because indexes come in powers of two. The garbage collector's
-work does not: it grows with caches built from pointers and stays near zero for these. That
-holds for keys and values without pointers; what strings cost the collector was not
-measured.
+The garbage collector's work grows with caches built from pointers and stays near zero for
+these. That holds for keys and values without pointers; what strings cost the collector
+was not measured.
 
 ## How it works
 
 - **Arrays, not pointers.** Each shard allocates its nodes once and links them by 32-bit
-  index. An open-addressing index maps a 32-bit hash to a node, so a lookup compares hashes
-  before it touches an entry.
+  index. An open-addressing index with three slots per entry maps a 32-bit hash to a node,
+  so a lookup compares hashes before it touches an entry.
 - **Shards.** The upper half of a key's hash picks a shard, which writers lock on its own;
   the lower half indexes the key within it. Each shard evicts from its own share of the
   capacity. A cache under 512 entries is one shard; a larger one has up to eight per CPU, of

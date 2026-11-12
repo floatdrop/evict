@@ -85,7 +85,7 @@
 // nothing that would give Go the occasion to run another goroutine in its
 // place.
 //
-// Of a ghost the cache keeps a hash of the key and nothing else: sixteen
+// Of a ghost the cache keeps a hash of the key and nothing else: twenty
 // bytes or so, for nine tenths as many ghosts as there are entries unless
 // [WithGhostRatio] says otherwise. The key itself is let go like the rest of
 // the entry.
@@ -255,10 +255,10 @@ func WithSmallRatio(ratio float64) Option {
 //
 // The more ghosts, the longer a key may stay away and still be recognized
 // when it comes back, which is what tells an entry that is asked for every
-// now and then from one that is new. A ghost takes about sixteen bytes, so a
-// ratio of 6 costs about a hundred bytes for every entry. With a ratio of 0
-// nothing is remembered, and an entry gets to the main queue only by being
-// read in the small one.
+// now and then from one that is new. A ghost takes about twenty bytes, so a
+// ratio of 6 costs about a hundred and twenty bytes for every entry. With a
+// ratio of 0 nothing is remembered, and an entry gets to the main queue only
+// by being read in the small one.
 //
 // The ratio is brought into the range from 0 to 8 if it is outside, and is 0
 // if it is not a number. The number for a shard is rounded down to whole
