@@ -39,7 +39,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        # x86-64 and arm64: the reads that take no lock depend on the order in
+        # which memory is written, which arm64 keeps less of, and the compiler
+        # inlines differently on each.
+        os: [ubuntu-latest, ubuntu-24.04-arm]
         # The oldest release that go.mod allows, and the newest.
         go: ["1.26.x", stable]
     steps:
