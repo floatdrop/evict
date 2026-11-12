@@ -229,6 +229,43 @@ func (s *Slab[K, V]) Cap() int { return int(s.capacity) }
 // for writers.
 func (s *Slab[K, V]) Hash(idx uint32) uint32 { return s.Links[idx].hash }
 
+// Batch is the number of keys whose memory a reader that looks up several
+// keys at once touches before it looks any of them up; see [Slab.Touch].
+// Batches of 16 did as well with int keys and about 15% worse with string
+// keys, and batches of 8 worse with both.
+const Batch = 32
+
+// MinBatch is the fewest keys for which touching pays: with fewer, the reader
+// should look them up one by one. A batch of 4 keys took about as long as
+// looking them up one by one, a batch of 2 about 1.6 times as long, and a
+// batch of 1 more than twice as long.
+const MinBatch = 4
+
+// Touch loads the slot of the index at which a lookup of hash starts, so that
+// it is in the CPU's cache when the lookup comes, and returns it. It is for
+// readers that look up several keys: they touch the slots of all of them
+// first, then the nodes with [Slab.TouchNode], and the CPU fetches what they
+// touch from memory at the same time instead of one after another. That
+// takes loads that do not depend on each other and come one right after the
+// other; a reader that touches one key ahead of its lookups gains nothing.
+//
+// The word that Touch returns may be out of date by the time it is used. It
+// is good for TouchNode and nothing else.
+func (s *Slab[K, V]) Touch(hash uint32) uint64 {
+	return atomic.LoadUint64(&s.slots[uint32(uint64(hash)*uint64(s.size)>>32)])
+}
+
+// TouchNode loads the node that word, which [Slab.Touch] returned for hash,
+// points to, if it has the hash: the cache line with its Meta, which the Key
+// and Value usually share. A word that is out of date points to a node all
+// the same, since nodes are never taken away, so the worst it can do is load
+// the wrong one.
+func (s *Slab[K, V]) TouchNode(hash uint32, word uint64) {
+	if word>>32 == uint64(hash) {
+		atomic.LoadUint32(&s.Nodes[uint32(word)].meta)
+	}
+}
+
 // Lookup returns the value that is stored under key. The hash must be the one
 // the key was inserted with. Before it returns the value, Lookup counts the
 // read in the Meta of the node, unless the Meta has reached limit already: a
@@ -867,6 +904,8 @@ func (s *Slab[K, V]) Unlink(idx uint32) {
 // see the note in package lru. Instantiating the methods here sees to that.
 var (
 	_ = (*Slab[int, int]).Lookup
+	_ = (*Slab[int, int]).Touch
+	_ = (*Slab[int, int]).TouchNode
 	_ = (*Slab[int, int]).Find
 	_ = (*Slab[int, int]).Insert
 	_ = (*Slab[int, int]).Replace

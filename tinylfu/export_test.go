@@ -142,3 +142,17 @@ func Apart[V any](c *Cache[int, V], n int, others ...int) []int {
 	}
 	return keys
 }
+
+// Hits returns the hits that the window of the cache has been told of or will
+// be: those that readers counted in their slots, and those that shards counted
+// under their locks.
+func (c *Cache[K, V]) Hits() uint64 {
+	hits := c.window.readers.Hits() + c.window.hits.Load()
+	for i := range c.shards {
+		s := &c.shards[i]
+		s.mu.Lock()
+		hits += s.hits
+		s.mu.Unlock()
+	}
+	return hits
+}

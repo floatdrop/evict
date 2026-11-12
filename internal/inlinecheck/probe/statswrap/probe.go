@@ -13,5 +13,8 @@ type Cache[K comparable, V any] struct{ C *stats.Cache[K, V] }
 // Get reads from the counted cache.
 func (c Cache[K, V]) Get(key K) (V, bool) { return c.C.Get(key) }
 
+// GetMany reads several keys from the counted cache.
+func (c Cache[K, V]) GetMany(keys []K, values []V, found []bool) { c.C.GetMany(keys, values, found) }
+
 // Set writes to the counted cache.
 func (c Cache[K, V]) Set(key K, value V) { c.C.Set(key, value) }

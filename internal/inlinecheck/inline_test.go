@@ -25,13 +25,13 @@ import (
 )
 
 // hot matches the functions that every operation on a cache goes through.
-var hot = regexp.MustCompile(`/(lru|twoq|sieve|s3fifo|tinylfu|stats)\.\(\*(Cache|shard)\[.*\]\)\.(Get|Peek|Set|set|evict|Delete|look|victim|promote|asked)$|` +
+var hot = regexp.MustCompile(`/(lru|twoq|sieve|s3fifo|tinylfu|stats)\.\(\*(Cache|shard)\[.*\]\)\.(Get|GetMany|Peek|Set|set|evict|Delete|look|victim|promote|asked)$|` +
 	`/c?slab\.\(\*Slab\[.*\]\)\.(Find|Lookup|Insert|Replace|Remove)$`)
 
 // slow matches the calls that must not show up in them: functions that are
 // small enough to be inlined, and are, as long as the compiler knows them.
 var slow = regexp.MustCompile(`^sync\.\(\*(RW)?Mutex\)\.|^sync/atomic\.|` +
-	`slab\.\(\*Slab\[.*\]\)\.(MoveToFront|PushFront|Unlink|Len|Cap|Overdue|Hash|pin|preferred)$|` +
+	`slab\.\(\*Slab\[.*\]\)\.(MoveToFront|PushFront|Unlink|Len|Cap|Overdue|Hash|pin|preferred|Touch|TouchNode)$|` +
 	`cslab\.\(\*Node\[.*\]\)\.(Meta|SetMeta)$|cslab\.\(\*Slot\)\.Unpin$|/s3fifo\.(tagOf|ghostOf)$|` +
 	`/tinylfu\.(tagOf|kept|keep|printOf|printIn)$|/tinylfu\.\(\*climber\)\.(hit|miss)$|` +
 	`/stats\.\(\*Cache\[.*\]\)\.stripe$`)
@@ -45,9 +45,9 @@ var slow = regexp.MustCompile(`^sync\.\(\*(RW)?Mutex\)\.|^sync/atomic\.|` +
 // it builds in. A lock is taken only when a read cannot be sure, and calls
 // to it are fine.
 var (
-	read     = regexp.MustCompile(`/(sieve|s3fifo|tinylfu)\.\(\*Cache\[.*\]\)\.(Get|Peek)$|/cslab\.\(\*Slab\[.*\]\)\.Lookup$`)
+	read     = regexp.MustCompile(`/(sieve|s3fifo|tinylfu)\.\(\*Cache\[.*\]\)\.(Get|GetMany|Peek)$|/cslab\.\(\*Slab\[.*\]\)\.Lookup$`)
 	readSlow = regexp.MustCompile(`^sync/atomic\.|^github\.com/floatdrop/evict/[^\[]*$|` +
-		`cslab\.\(\*Slab\[.*\]\)\.(Overdue|pin|preferred)$|cslab\.\(\*Node\[.*\]\)\.(Meta|SetMeta)$`)
+		`cslab\.\(\*Slab\[.*\]\)\.(Overdue|pin|preferred|Touch|TouchNode)$|cslab\.\(\*Node\[.*\]\)\.(Meta|SetMeta)$`)
 )
 
 func TestHotPathsAreInlined(t *testing.T) {
@@ -145,13 +145,25 @@ func TestHotPathsAreInlined(t *testing.T) {
 			}
 		}
 	}
+	for _, pkg := range []string{"sieve", "s3fifo", "tinylfu", "stats"} {
+		found := false
+		for name := range seen {
+			found = found || strings.Contains(name, "/"+pkg+".(*Cache[") && strings.HasSuffix(name, ").GetMany")
+		}
+		if !found {
+			t.Errorf("the compiler's output has no code for %s.Cache.GetMany", pkg)
+		}
+	}
 	for _, want := range [][2]string{
 		{"sieve.(*Cache[", "Get"},
 		{"sieve.(*Cache[", "Peek"},
+		{"sieve.(*Cache[", "GetMany"},
 		{"s3fifo.(*Cache[", "Get"},
 		{"s3fifo.(*Cache[", "Peek"},
+		{"s3fifo.(*Cache[", "GetMany"},
 		{"tinylfu.(*Cache[", "Get"},
 		{"tinylfu.(*Cache[", "Peek"},
+		{"tinylfu.(*Cache[", "GetMany"},
 		{"cslab.(*Slab[", "Lookup"},
 	} {
 		found := false

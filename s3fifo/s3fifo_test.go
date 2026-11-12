@@ -15,6 +15,7 @@ import (
 
 	"github.com/floatdrop/evict"
 	"github.com/floatdrop/evict/internal/cachetest"
+	"github.com/floatdrop/evict/internal/cslab"
 	"github.com/floatdrop/evict/s3fifo"
 )
 
@@ -1003,6 +1004,14 @@ func TestReadersHelp(t *testing.T) {
 	t.Run("Peek", func(t *testing.T) {
 		t.Parallel()
 		testReadersHelp(t, func(c *s3fifo.Cache[int, *cachetest.Blob], key int) { c.Peek(key) })
+	})
+	t.Run("GetMany", func(t *testing.T) {
+		t.Parallel()
+		// Enough keys that GetMany loads ahead rather than call Get.
+		testReadersHelp(t, func(c *s3fifo.Cache[int, *cachetest.Blob], key int) {
+			keys := slices.Repeat([]int{key}, cslab.MinBatch)
+			c.GetMany(keys, make([]*cachetest.Blob, len(keys)), make([]bool, len(keys)))
+		})
 	})
 }
 

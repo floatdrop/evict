@@ -32,4 +32,19 @@ func (c Caches[K, V]) Read(key K) (found int) {
 	return found
 }
 
+// ReadMany looks up keys in every cache, all of them together, and returns
+// how often they were found.
+func (c Caches[K, V]) ReadMany(keys []K) (found int) {
+	values, ok := make([]V, len(keys)), make([]bool, len(keys))
+	for _, getMany := range []func([]K, []V, []bool){c.Sieve.GetMany, c.S3FIFO.GetMany, c.TinyLFU.GetMany} {
+		getMany(keys, values, ok)
+		for _, ok := range ok {
+			if ok {
+				found++
+			}
+		}
+	}
+	return found
+}
+
 func has[V any](_ V, ok bool) bool { return ok }
