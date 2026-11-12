@@ -17,5 +17,8 @@ func Use(c *tinylfu.Cache[Key, Value], k Key, v Value) (Value, bool) {
 	c.Set(k, v)
 	c.Peek(k)
 	c.Delete(k)
+	var values [2]Value
+	var found [2]bool
+	c.GetMany([]Key{k, k}, values[:], found[:])
 	return c.Get(k)
 }

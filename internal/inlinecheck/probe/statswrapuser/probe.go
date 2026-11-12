@@ -14,5 +14,8 @@ type Value struct{ Size, Hits int }
 // Use keeps the compiler from discarding the methods of the cache.
 func Use(c wrap.Cache[Key, Value], k Key, v Value) (Value, bool) {
 	c.Set(k, v)
+	var values [2]Value
+	var found [2]bool
+	c.GetMany([]Key{k, k}, values[:], found[:])
 	return c.Get(k)
 }

@@ -11,4 +11,4 @@ type Key struct{ Tenant, ID string }
 type Value struct{ Size, Hits int }
 
 // Use keeps the compiler from discarding the methods of the caches.
-func Use(c wrap.Caches[Key, Value], k Key) int { return c.Read(k) }
+func Use(c wrap.Caches[Key, Value], k Key) int { return c.Read(k) + c.ReadMany([]Key{k, k}) }

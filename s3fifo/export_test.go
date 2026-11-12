@@ -75,3 +75,16 @@ func Twins[V any](c *Cache[int, V]) (first, second int) {
 		seen[hash] = key
 	}
 }
+
+// Reads returns the reads that the entry for key has counted, and whether
+// there is one.
+func (c *Cache[K, V]) Reads(key K) (reads uint32, ok bool) {
+	h := maphash.Comparable(c.seed, key)
+	s := &c.shards[uint32(h>>32)&c.mask]
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if idx := s.slab.Find(uint32(h), key); idx != 0 {
+		return s.slab.Nodes[idx].Meta(), true
+	}
+	return 0, false
+}

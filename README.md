@@ -75,6 +75,27 @@ Every package takes `WithShards`. `twoq` and `s3fifo` also have options for tuni
 queues ([what that is worth for `s3fifo`](bench/results/tuning.md)); `tinylfu` tunes its
 own.
 
+### Batches
+
+`sieve`, `s3fifo` and `tinylfu` also have `GetMany(keys, values, found)`, which does what
+`Get` does for each key. For up to 32 keys at a time it loads the memory that the lookups
+start with before it looks any key up, so the CPU fetches it in parallel.
+
+| Time per key, `GetMany` against a `Get` loop | 1 CPU | 8 CPUs |
+|:---|---:|---:|
+| 1M `int` entries, 32 keys per call | −48 to −62% | −47 to −53% |
+| 1M `int` entries, 8 keys per call | −36 to −49% | −27 to −34% |
+| 1M entries with 23-byte string keys, 32 keys per call | −66 to −68% | −56 to −58% |
+| Zipf read-through with room for 1M, 32 keys per call | −49 to −55% | −48 to −51% |
+| 16K `int` entries, 32 keys per call | −2 to +3% | +1 to +9% |
+| 1M `int` entries, 1 key per call | +40 to +86% | +32 to +80% |
+
+- Ranges over the three caches of medians of three runs of `BenchmarkGetMany` in each
+  package, on an Apple M3 Max, keys picked at random. The times themselves vary more
+  between runs than these ratios.
+- For a single key, use `Get`.
+- `stats.Wrap` passes `GetMany` on to the cache it wraps, and counts a hit or a miss per key.
+
 ### Statistics
 
 [`stats.Wrap`](https://pkg.go.dev/github.com/floatdrop/evict/stats) counts the hits, misses

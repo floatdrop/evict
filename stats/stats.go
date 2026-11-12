@@ -11,6 +11,7 @@
 // What is counted:
 //
 //   - Get: a hit if it finds the key, a miss if it does not.
+//   - GetMany: the same for each key.
 //   - Set: an eviction if it pushed out the entry of another key to make
 //     room, or if the cache has no capacity and handed the new entry back.
 //     Replacing the entry of a key is not an eviction.
@@ -57,8 +58,8 @@ const cacheLine = 128
 // of one snapshot may be from slightly different moments. A count is never
 // less than that of a snapshot taken before it.
 type Snapshot struct {
-	// Hits and Misses count the calls to Get that found their key, and
-	// those that did not.
+	// Hits and Misses count the keys that Get and GetMany found, and those
+	// that they did not.
 	Hits, Misses uint64
 
 	// Evictions counts the entries that Set pushed out to make room, and
@@ -70,8 +71,8 @@ type Snapshot struct {
 	Len, Cap int
 }
 
-// HitRatio returns the share of calls to Get that found their key, from 0 to
-// 1, or 0 if there were none.
+// HitRatio returns the share of the keys looked up with Get and GetMany that
+// were found, from 0 to 1, or 0 if there were none.
 func (s Snapshot) HitRatio() float64 {
 	if s.Hits+s.Misses == 0 {
 		return 0
@@ -96,9 +97,16 @@ func (s Snapshot) Sub(prev Snapshot) Snapshot {
 // the cache it wraps are, as they are for every cache in this module.
 type Cache[K comparable, V any] struct {
 	cache   evict.Cache[K, V]
+	many    manyGetter[K, V] // cache, if it has a GetMany
 	stripes []stripe
 	shift   uint8 // 64 minus log2 of the number of stripes
 	zero    bool  // the cache has no capacity, and hands every entry back
+}
+
+// manyGetter is a cache that looks up several keys at once, as sieve, s3fifo
+// and tinylfu do.
+type manyGetter[K comparable, V any] interface {
+	GetMany(keys []K, values []V, found []bool)
 }
 
 // A stripe holds the counts of the goroutines that pick it, in a cache line
@@ -127,8 +135,10 @@ func Wrap[K comparable, V any](cache evict.Cache[K, V]) *Cache[K, V] {
 	// Sixteen stripes per CPU make it unlikely that two goroutines that run
 	// at the same time pick the same one.
 	n := 1 << bits.Len(uint(16*runtime.GOMAXPROCS(0)-1))
+	many, _ := cache.(manyGetter[K, V])
 	return &Cache[K, V]{
 		cache:   cache,
+		many:    many,
 		stripes: make([]stripe, n),
 		shift:   uint8(64 - bits.TrailingZeros(uint(n))),
 		zero:    cache.Cap() == 0,
@@ -160,6 +170,40 @@ func (c *Cache[K, V]) Get(key K) (value V, ok bool) {
 		atomic.AddUint64(&s.misses, 1)
 	}
 	return value, ok
+}
+
+// GetMany looks up each of keys, stores the value it finds for keys[i] in
+// values[i] and whether it found one in found[i], and counts a hit or a miss
+// for each key. It panics if values or found is shorter than keys.
+//
+// If the cache has a GetMany of its own, as sieve, s3fifo and tinylfu do,
+// GetMany uses it: for a cache that is too large for the CPU's caches it is
+// faster than Get for each key. Otherwise it calls Get for each key.
+func (c *Cache[K, V]) GetMany(keys []K, values []V, found []bool) {
+	if len(values) < len(keys) || len(found) < len(keys) {
+		panic("stats: GetMany: values and found must be at least as long as keys")
+	}
+	if c.many != nil {
+		c.many.GetMany(keys, values, found)
+	} else {
+		for i, key := range keys {
+			values[i], found[i] = c.cache.Get(key)
+		}
+	}
+
+	hits := 0
+	for _, ok := range found[:len(keys)] {
+		if ok {
+			hits++
+		}
+	}
+	s := c.stripe()
+	if hits > 0 {
+		atomic.AddUint64(&s.hits, uint64(hits))
+	}
+	if misses := len(keys) - hits; misses > 0 {
+		atomic.AddUint64(&s.misses, uint64(misses))
+	}
 }
 
 // Peek returns the value stored under key, and counts nothing.
