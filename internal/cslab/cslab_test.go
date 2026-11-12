@@ -1302,6 +1302,23 @@ func TestPatience(t *testing.T) {
 	}
 }
 
+// TestSlabLayout checks that what a reader needs of a slab fits on one cache
+// line, even when the slab starts a word into one, behind the header that the
+// allocator puts before most arrays of shards; and that the fields of the
+// writers keep a line away from it.
+func TestSlabLayout(t *testing.T) {
+	t.Parallel()
+
+	var s Slab[string, string]
+	end := unsafe.Offsetof(s.overdue) + unsafe.Sizeof(s.overdue)
+	if end > cacheLine-8 {
+		t.Errorf("what readers need ends %d bytes into the slab, want %d at most", end, cacheLine-8)
+	}
+	if gap := unsafe.Offsetof(s.Links) - end; gap < cacheLine {
+		t.Errorf("the fields of the writers start %d bytes after what readers need, want %d or more", gap, cacheLine)
+	}
+}
+
 func TestReaders(t *testing.T) {
 	t.Parallel()
 

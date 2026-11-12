@@ -109,18 +109,12 @@ type Slab[K comparable, V any] struct {
 	// while others wait to be reused.
 	Nodes []Node[K, V]
 
-	// Links holds a link for every node, under the same index.
-	Links []Link
-
 	// slots is the hash index: a linear-probing table whose size is a power
 	// of two. A slot holds the hash of an entry in its high half and the
 	// index of the entry's node in its low half. Zero is an empty slot: no
 	// entry lives in node 0.
 	slots []atomic.Uint64
 	mask  uint32
-
-	capacity uint32
-	heads    uint32 // number of list heads
 
 	// readers is where a reader pins the node it looks at, and name is what
 	// the nodes of this slab are called there, less their index.
@@ -139,10 +133,16 @@ type Slab[K comparable, V any] struct {
 	overdue atomic.Bool
 
 	// The fields above are what a reader needs, and they change only when
-	// an entry is removed. The ones below change with every write, and
-	// that should not cost the readers the cache line they keep coming
-	// back to.
+	// an entry is removed. The ones below are for writers, and most change
+	// with every write, which should not cost the readers the cache line
+	// they keep coming back to.
 	_ [cacheLine]byte
+
+	// Links holds a link for every node, under the same index.
+	Links []Link
+
+	capacity uint32
+	heads    uint32 // number of list heads
 
 	// count is the number of entries. Only writers change it.
 	count atomic.Int32
