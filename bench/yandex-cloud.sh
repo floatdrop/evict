@@ -176,7 +176,13 @@ remote() {
 echo "Waiting for $ip to accept SSH"
 for ((i = 0; ; i++)); do
 	if remote true 2> "$tmp/ssh.err"; then break; fi
-	((i < 30)) || die "$ip did not accept SSH in five minutes: $(tail -n 1 "$tmp/ssh.err")"
+	if ((i == 30)); then
+		# What the machine printed while it booted tells whether it is up,
+		# has an address and runs sshd, which SSH from here cannot.
+		mkdir -p "$OUT"
+		yc compute instance get-serial-port-output --name "$name" > "$OUT/serial.txt" 2>&1 || :
+		die "$ip did not accept SSH in five minutes: $(tail -n 1 "$tmp/ssh.err"); see $OUT/serial.txt"
+	fi
 	sleep 10
 done
 
