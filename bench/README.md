@@ -124,6 +124,21 @@ spread.
   otter on 8 CPUs and 5.5–7.1 times as much on 16. Otter gets little more done on 16 CPUs
   than on 4 (9.8 million a second against 8.9).
 
+Otter levels off where keys are added, which is what `Evict` and `ReadThrough` do and what
+otter's own benchmarks do not chart: they show a workload whose keys all fit by number of
+CPUs, so that every write replaces a value, and run the ones that evict on 8 CPUs only.
+Otter changes a replaced value in place and tells its policy of it as of a read, through
+buffers that drop what they cannot take, and that scales. A key that is added goes into one
+write buffer instead, which one goroutine at a time drains under a lock while it runs the
+policy; a writer that finds the buffer full a hundred times does that work itself. Otter
+therefore adds keys no faster than one core can run its policy, and reaches that by about
+4 CPUs. On the Xeon it added 1.6 million a second in `ReadThrough` on 16 CPUs (12.6% of
+12.6 million reads), 2.0 million in `Evict` on 8 (three in four of 2.6 million writes), and
+1.0 million in `ReadThrough` with a million entries on 16. In a profile of `ReadThrough`
+with eight goroutines, on an Intel laptop, 54% of the time spent waiting for locks was
+writers that had found the buffer full. Otter's loader, `Get` with a `Loader`, stores what
+it loads the same way.
+
 ### Memory
 
 Bytes per entry with `uint64` keys and values, over caches of 10,000 to 10 million entries;
