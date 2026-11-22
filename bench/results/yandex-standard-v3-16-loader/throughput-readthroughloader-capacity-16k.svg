@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" width="640" height="360" role="img" aria-labelledby="title desc">
+<title id="title">ReadThroughLoader, capacity=16K</title>
+<desc id="desc">Line chart of Million operations per second by CPUs for otter. The numbers are in the table that goes with it.</desc>
+<style>
+text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.title { font-size: 15px; font-weight: 600; }
+.unit, .legend { font-size: 12px; }
+.tick { font-size: 11px; font-variant-numeric: tabular-nums; }
+.grid, .axis { stroke-width: 1; }
+.line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.ref { fill: none; stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
+.mark { stroke-width: 2; paint-order: stroke; }
+.surface { fill: #fcfcfb; stroke: rgba(11,11,11,0.10); }
+.title { fill: #0b0b0b; }
+.unit, .legend { fill: #52514e; }
+.tick { fill: #898781; }
+.grid { stroke: #e1e0d9; }
+.axis { stroke: #c3c2b7; }
+.ref { stroke: #898781; }
+.mark { stroke: #fcfcfb; }
+.s4 { stroke: #e87ba4; } .m4 { fill: #e87ba4; }
+@media (prefers-color-scheme: dark) {
+  .surface { fill: #1a1a19; stroke: rgba(255,255,255,0.10); }
+  .title { fill: #f0efec; }
+  .unit, .legend { fill: #c3c2b7; }
+  .tick { fill: #898781; }
+  .grid { stroke: #2c2c2a; }
+  .axis { stroke: #383835; }
+  .ref { stroke: #898781; }
+  .mark { stroke: #1a1a19; }
+  .s4 { stroke: #d55181; } .m4 { fill: #d55181; }
+}
+</style>
+<rect class="surface" x="0.5" y="0.5" width="639" height="359" rx="8"/>
+<text class="title" x="20" y="28">ReadThroughLoader, capacity=16K</text>
+<text class="unit" x="20" y="46">Million operations per second</text>
+<path class="line s4" d="M20,66 h24"/><path class="mark m4" d="M32,70.8L36.6,62.6L27.4,62.6Z"/><text class="legend" x="50" y="70">otter</text>
+<path class="axis" d="M52,308 h568"/><text class="tick" x="44" y="312" text-anchor="end">2</text>
+<path class="grid" d="M52,252 h568"/><text class="tick" x="44" y="256" text-anchor="end">4</text>
+<path class="grid" d="M52,196 h568"/><text class="tick" x="44" y="200" text-anchor="end">6</text>
+<path class="grid" d="M52,140 h568"/><text class="tick" x="44" y="144" text-anchor="end">8</text>
+<path class="grid" d="M52,84 h568"/><text class="tick" x="44" y="88" text-anchor="end">10</text>
+<text class="tick" x="52" y="326" text-anchor="middle">1</text>
+<text class="tick" x="241.3" y="326" text-anchor="middle">2</text>
+<text class="tick" x="430.7" y="326" text-anchor="middle">4</text>
+<text class="tick" x="620" y="326" text-anchor="middle">8</text>
+<text class="tick" x="336" y="348" text-anchor="middle">CPUs</text>
+<path class="line s4" d="M52,294.4L241.3,246.8L430.7,136.8L620,109.9"/>
+<g><title>otter at 1: 2.49</title><path class="mark m4" d="M52,299.2L56.6,291L47.4,291Z"/></g>
+<g><title>otter at 2: 4.19</title><path class="mark m4" d="M241.3,251.6L245.9,243.4L236.7,243.4Z"/></g>
+<g><title>otter at 4: 8.11</title><path class="mark m4" d="M430.7,141.6L435.3,133.4L426.1,133.4Z"/></g>
+<g><title>otter at 8: 9.08</title><path class="mark m4" d="M620,114.7L624.6,106.5L615.4,106.5Z"/></g>
+</svg>

@@ -1,0 +1,120 @@
+go: go1.27.3
+golang-lru: v2.0.7
+otter: v2.4.0
+goos: linux
+goarch: amd64
+pkg: github.com/floatdrop/evict/bench
+cpu: Intel Xeon Processor (Icelake)
+BenchmarkReadThroughLoader/capacity=16K/cache=otter           	 3020480	       404.8 ns/op	         2.471 Mops/s	      47 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=16K/cache=otter-2         	 4795120	       251.5 ns/op	         3.976 Mops/s	      46 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=16K/cache=otter-4         	 8892537	       138.9 ns/op	         7.197 Mops/s	      47 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=16K/cache=otter-8         	11668662	       110.7 ns/op	         9.033 Mops/s	      47 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=1M/cache=otter            	 1619400	       727.7 ns/op	         1.374 Mops/s	      38 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=1M/cache=otter-2          	 2722824	       464.1 ns/op	         2.155 Mops/s	      38 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=1M/cache=otter-4          	 5859816	       215.2 ns/op	         4.647 Mops/s	      37 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=1M/cache=otter-8          	 7438447	       165.7 ns/op	         6.035 Mops/s	      37 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter                 	 4443202	       264.7 ns/op	         3.778 Mops/s	        86.94 hit%	      14 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter-2               	 6893264	       169.8 ns/op	         5.889 Mops/s	        86.98 hit%	      14 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter-4               	12967267	       110.0 ns/op	         9.090 Mops/s	        86.57 hit%	      15 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter-8               	12420746	       103.2 ns/op	         9.692 Mops/s	        87.19 hit%	      14 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter                  	 1805461	       664.9 ns/op	         1.504 Mops/s	        89.48 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter-2                	 3182288	       378.2 ns/op	         2.644 Mops/s	        89.36 hit%	      12 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter-4                	 6642184	       179.2 ns/op	         5.579 Mops/s	        89.49 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter-8                	 7100828	       162.1 ns/op	         6.168 Mops/s	        89.58 hit%	      11 B/op	       0 allocs/op
+PASS
+go: go1.27.3
+golang-lru: v2.0.7
+otter: v2.4.0
+goos: linux
+goarch: amd64
+pkg: github.com/floatdrop/evict/bench
+cpu: Intel Xeon Processor (Icelake)
+BenchmarkReadThroughLoader/capacity=16K/cache=otter           	 2781440	       424.5 ns/op	         2.356 Mops/s	      47 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=16K/cache=otter-2         	 4761254	       249.9 ns/op	         4.001 Mops/s	      46 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=16K/cache=otter-4         	 9438127	       125.2 ns/op	         7.989 Mops/s	      46 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=16K/cache=otter-8         	11765098	       113.1 ns/op	         8.845 Mops/s	      47 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=1M/cache=otter            	 1616722	       735.9 ns/op	         1.359 Mops/s	      37 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=1M/cache=otter-2          	 2702916	       443.5 ns/op	         2.255 Mops/s	      38 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=1M/cache=otter-4          	 6013628	       218.5 ns/op	         4.576 Mops/s	      37 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=1M/cache=otter-8          	 7453195	       157.2 ns/op	         6.360 Mops/s	      37 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter                 	 4609876	       255.4 ns/op	         3.915 Mops/s	        86.96 hit%	      14 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter-2               	 7219150	       164.8 ns/op	         6.067 Mops/s	        87.10 hit%	      14 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter-4               	13137958	       112.0 ns/op	         8.928 Mops/s	        86.37 hit%	      15 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter-8               	13318688	        99.04 ns/op	        10.10 Mops/s	        87.02 hit%	      14 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter                  	 1868880	       642.0 ns/op	         1.558 Mops/s	        89.50 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter-2                	 3440984	       351.2 ns/op	         2.847 Mops/s	        89.42 hit%	      12 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter-4                	 7887081	       153.9 ns/op	         6.498 Mops/s	        89.52 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter-8                	 8122257	       140.6 ns/op	         7.111 Mops/s	        89.60 hit%	      11 B/op	       0 allocs/op
+PASS
+go: go1.27.3
+golang-lru: v2.0.7
+otter: v2.4.0
+goos: linux
+goarch: amd64
+pkg: github.com/floatdrop/evict/bench
+cpu: Intel Xeon Processor (Icelake)
+BenchmarkReadThroughLoader/capacity=16K/cache=otter           	 2927190	       401.3 ns/op	         2.492 Mops/s	      47 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=16K/cache=otter-2         	 4983076	       238.9 ns/op	         4.187 Mops/s	      46 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=16K/cache=otter-4         	 9483142	       123.2 ns/op	         8.114 Mops/s	      46 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=16K/cache=otter-8         	12260706	       102.2 ns/op	         9.782 Mops/s	      45 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=1M/cache=otter            	 1634971	       721.2 ns/op	         1.387 Mops/s	      38 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=1M/cache=otter-2          	 2945712	       410.6 ns/op	         2.436 Mops/s	      38 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=1M/cache=otter-4          	 6457282	       209.8 ns/op	         4.767 Mops/s	      37 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=1M/cache=otter-8          	 7900546	       151.4 ns/op	         6.607 Mops/s	      37 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter                 	 4680010	       252.8 ns/op	         3.955 Mops/s	        86.94 hit%	      14 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter-2               	 7723820	       156.4 ns/op	         6.394 Mops/s	        87.08 hit%	      14 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter-4               	16957281	        69.80 ns/op	        14.33 Mops/s	        87.21 hit%	      14 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter-8               	14688660	        79.96 ns/op	        12.51 Mops/s	        87.53 hit%	      14 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter                  	 1813148	       661.1 ns/op	         1.513 Mops/s	        89.51 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter-2                	 3314848	       366.9 ns/op	         2.726 Mops/s	        89.35 hit%	      12 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter-4                	 7481329	       157.7 ns/op	         6.343 Mops/s	        89.55 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter-8                	 7394707	       155.8 ns/op	         6.418 Mops/s	        89.61 hit%	      11 B/op	       0 allocs/op
+PASS
+go: go1.27.3
+golang-lru: v2.0.7
+otter: v2.4.0
+goos: linux
+goarch: amd64
+pkg: github.com/floatdrop/evict/bench
+cpu: Intel Xeon Processor (Icelake)
+BenchmarkReadThroughLoader/capacity=16K/cache=otter           	 3057493	       396.4 ns/op	         2.523 Mops/s	      47 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=16K/cache=otter-2         	 5050030	       237.8 ns/op	         4.205 Mops/s	      46 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=16K/cache=otter-4         	 9628892	       121.0 ns/op	         8.263 Mops/s	      46 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=16K/cache=otter-8         	12318523	       105.1 ns/op	         9.516 Mops/s	      46 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=1M/cache=otter            	 1640514	       719.9 ns/op	         1.389 Mops/s	      38 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=1M/cache=otter-2          	 2748817	       435.4 ns/op	         2.297 Mops/s	      38 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=1M/cache=otter-4          	 6235096	       220.2 ns/op	         4.541 Mops/s	      37 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=1M/cache=otter-8          	 7627381	       154.4 ns/op	         6.479 Mops/s	      37 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter                 	 4488369	       262.2 ns/op	         3.814 Mops/s	        86.92 hit%	      14 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter-2               	 7013064	       174.2 ns/op	         5.740 Mops/s	        87.07 hit%	      14 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter-4               	11182093	       117.8 ns/op	         8.488 Mops/s	        86.74 hit%	      15 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter-8               	12502910	        99.19 ns/op	        10.08 Mops/s	        87.37 hit%	      14 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter                  	 1870543	       637.0 ns/op	         1.570 Mops/s	        89.49 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter-2                	 3337792	       361.0 ns/op	         2.770 Mops/s	        89.39 hit%	      12 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter-4                	 7204684	       165.6 ns/op	         6.038 Mops/s	        89.55 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter-8                	 7536604	       151.8 ns/op	         6.589 Mops/s	        89.60 hit%	      11 B/op	       0 allocs/op
+PASS
+go: go1.27.3
+golang-lru: v2.0.7
+otter: v2.4.0
+goos: linux
+goarch: amd64
+pkg: github.com/floatdrop/evict/bench
+cpu: Intel Xeon Processor (Icelake)
+BenchmarkReadThroughLoader/capacity=16K/cache=otter           	 3001264	       402.3 ns/op	         2.486 Mops/s	      47 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=16K/cache=otter-2         	 4991438	       235.5 ns/op	         4.246 Mops/s	      46 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=16K/cache=otter-4         	 9744052	       120.6 ns/op	         8.289 Mops/s	      45 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=16K/cache=otter-8         	12057018	       110.2 ns/op	         9.076 Mops/s	      46 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=1M/cache=otter            	 1577970	       746.6 ns/op	         1.339 Mops/s	      37 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=1M/cache=otter-2          	 2939305	       419.4 ns/op	         2.385 Mops/s	      38 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=1M/cache=otter-4          	 6359040	       210.5 ns/op	         4.750 Mops/s	      37 B/op	       0 allocs/op
+BenchmarkReadThroughLoader/capacity=1M/cache=otter-8          	 7649014	       149.0 ns/op	         6.710 Mops/s	      37 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter                 	 4625577	       256.5 ns/op	         3.899 Mops/s	        86.95 hit%	      14 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter-2               	 7443062	       158.9 ns/op	         6.292 Mops/s	        87.09 hit%	      14 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter-4               	15520840	        99.07 ns/op	        10.09 Mops/s	        85.98 hit%	      15 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=16K/cache=otter-8               	14423833	        85.17 ns/op	        11.74 Mops/s	        87.41 hit%	      14 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter                  	 1867316	       642.0 ns/op	         1.558 Mops/s	        89.50 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter-2                	 3523189	       340.6 ns/op	         2.936 Mops/s	        89.39 hit%	      12 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter-4                	 7484804	       158.2 ns/op	         6.323 Mops/s	        89.53 hit%	      11 B/op	       0 allocs/op
+BenchmarkReadThrough/capacity=1M/cache=otter-8                	 7539345	       150.1 ns/op	         6.662 Mops/s	        89.60 hit%	      11 B/op	       0 allocs/op
+PASS

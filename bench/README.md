@@ -137,7 +137,11 @@ therefore adds keys no faster than one core can run its policy, and reaches that
 1.0 million in `ReadThrough` with a million entries on 16. In a profile of `ReadThrough`
 with eight goroutines, on an Intel laptop, 54% of the time spent waiting for locks was
 writers that had found the buffer full. Otter's loader, `Get` with a `Loader`, stores what
-it loads the same way.
+it loads the same way, and gets no further. In `ReadThroughLoader`, on another VM with 8
+cores of the same Xeon, it was 11–36% slower than `GetIfPresent` and `Set` up to 4 CPUs,
+and on 8 it was 10% slower with 16,384 entries and level with a million
+([throughput.md](results/yandex-standard-v3-16-loader/throughput.md)). That VM was slower
+than the one with 16 cores, by up to a third, so its numbers compare with each other only.
 
 ### Memory
 
@@ -302,6 +306,7 @@ into.
 | `Mixed` | Reads them, and one time in a hundred, in ten or in four replaces a value instead. |
 | `Evict` | Writes keys from a set four times the size of the cache, each as likely as any other, so that three writes in four add an entry and evict another. |
 | `ReadThrough` | Reads a key from a set four times the size of the cache and stores it if it is missing. This is what a cache in front of a database does, and the benchmark in which the eviction policy has a say: fewer misses mean fewer writes. The hit ratio is reported next to the throughput. |
+| `ReadThroughLoader` | Does what `ReadThrough` does, with otter alone, through its loader: `Get` with a `Loader` in place of `GetIfPresent` and `Set`. |
 
 `make bench-throughput` runs all of this five times from start to end, rather than each
 benchmark five times in a row, so that a noisy minute on the machine does not land on one
