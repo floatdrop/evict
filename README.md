@@ -84,22 +84,22 @@ The counts only go up; `s.Sub(prev)` gives those of an interval. A `Get` that hi
 
 <p>
   <img src="bench/results/hitratio-s3.svg" alt="Hit ratio on the S3 trace by cache capacity" width="49%">
-  <img src="bench/results/throughput-readthrough-capacity-1m.svg" alt="Throughput of ReadThrough with a million entries by number of CPUs" width="49%">
+  <img src="bench/results/yandex-standard-v3-32/throughput-readthrough-capacity-1m.svg" alt="Throughput of ReadThrough with a million entries by number of CPUs, up to 16 cores of an Intel Xeon" width="49%">
 </p>
 
 - **Left:** requests answered on S3, disk reads of a search engine, by cache size. Caches
   in one shard; otter and `tinylfu` vary between replays, so theirs are medians of 11.
 - **Right:** reads of a million entries that store the key on a miss, by number of CPUs,
-  on an Apple M3 Max.
+  on 16 cores of an Intel Xeon (Ice Lake) under Linux, one thread of each.
 - `otter` is otter v2; `golang-lru` and `golang-lru/2q` are hashicorp's.
 - Averaged over 11 traces: `tinylfu` 47.9% of requests, otter 47.5%, `s3fifo` 44.8%,
   `lru` 36.6%. The gap between `tinylfu` and otter is within how much they vary between
   replays.
 - `tinylfu` was designed on these traces. On 14 others, in a simulation not in this
   repository, it was level with S3-FIFO and W-TinyLFU.
-- In the chart on the right, the lock-free caches do 2.1–2.4 times as many operations as
-  otter on 8 CPUs. On 16 cores of an Intel Xeon they do 5.5–7.1 times as many, as otter
-  gets little more done past 4.
+- In the chart on the right, the lock-free caches do 5.5–7.1 times as many operations as
+  otter on 16 CPUs, as otter gets little more done past 4. On 8 CPUs of an Apple M3 Max
+  they do 2.1–2.4 times as many.
 - Otter wins when 10–25% of the operations overwrite entries, on 8 CPUs of the M3 Max and
   on 16 of the Xeon. Its writes that replace entries get faster with more CPUs, three-fold
   from one to 16 on the Xeon; those of this module do not.
