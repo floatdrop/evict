@@ -274,6 +274,9 @@ Take the absolute numbers with a grain of salt.
   they do in the `Set` table here before concluding anything about writes: how the caches
   compare on such a machine may well differ. The `Benchmarks` workflow in
   `.github/workflows` runs the suite on one of GitHub's Linux runners for a second opinion.
+  For more CPUs than that, [yandex-cloud.sh](yandex-cloud.sh) rents a virtual machine in
+  Yandex Cloud, runs the benchmarks on one thread of each of its cores (16 by default),
+  and deletes it again; the comment at its top has the settings.
 
 ## Memory
 
