@@ -5,7 +5,7 @@ Three questions about a cache, three benchmarks:
 | Question | Run | Result |
 |:---|:---|:---|
 | How many requests does it answer? | `make bench-hitratio` | [results/hitratio.md](results/hitratio.md), [results/sharding.md](results/sharding.md) |
-| How fast is it, alone and with every CPU at work? | `make bench-throughput` | [results/throughput.md](results/throughput.md) |
+| How fast is it, alone and with every CPU at work? | `make bench-throughput` | [results/throughput.md](results/throughput.md), [on 16 cores](results/yandex-standard-v3-32/throughput.md) |
 | What does it cost in memory, and what does it cost the garbage collector? | `make bench-memory` | [results/memory.md](results/memory.md) |
 
 `make bench` runs all of them. The targets are in the Makefile at the root of the repository;
@@ -85,8 +85,44 @@ Millions of operations per second on one CPU and on eight (`1 → 8`), against a
   from the CPU that wrote them last, and in `Set` a tenth of the writes go to one key. These
   caches are made for workloads that mostly read, so they leave out what otter does about it,
   queueing the work of its policy and applying it in batches.
-- These are numbers from one machine. Otter's own, from Linux on x86, show its writes
-  scaling five-fold from one CPU to eight, against less than two-fold here.
+- Otter's own numbers, from Linux on x86, show its writes scaling five-fold from one CPU to
+  eight, against less than two-fold here. On the Xeon below they scale three-fold.
+
+#### On 16 cores of an Intel Xeon
+
+The same benchmarks on one CPU and on sixteen (`1 → 16`), on a virtual machine in Yandex
+Cloud with 16 cores of an Intel Xeon (Ice Lake), one thread of each. Medians of five runs
+on Linux with Go 1.27.3, made with [yandex-cloud.sh](yandex-cloud.sh);
+[throughput.md](results/yandex-standard-v3-32/throughput.md) has 2, 4 and 8 CPUs and the
+spread.
+
+| Benchmark | evict/lru | evict/twoq | evict/sieve | evict/s3fifo | evict/tinylfu | otter |
+|:---|---:|---:|---:|---:|---:|---:|
+| `Get`: reads, all of them hits | 22.6 → 22.6 | 25.5 → 30.8 | 23.3 → 343.4 | 23.9 → 341.5 | 21.6 → 300.6 | 14.8 → 236.0 |
+| `Mixed`: the same, 10% of them writes | 21.8 → 21.7 | 24.3 → 27.7 | 20.3 → 76.0 | 20.7 → 76.3 | 18.6 → 73.0 | 10.9 → 88.2 |
+| `Set`: writes that replace | 21.3 → 18.7 | 23.5 → 20.4 | 12.2 → 9.9 | 12.4 → 10.8 | 12.0 → 10.6 | 4.1 → 13.5 |
+| `Evict`: writes that evict | 9.8 → 31.7 | 8.6 → 28.6 | 7.3 → 24.5 | 4.6 → 19.5 | 3.9 → 16.0 | 1.3 → 2.0 |
+| `ReadThrough`: read, store on a miss | 14.9 → 26.2 | 14.1 → 24.9 | 14.4 → 93.2 | 11.2 → 75.4 | 10.3 → 62.1 | 4.8 → 12.6 |
+| `ReadThrough`, a million entries | 4.6 → 33.8 | 4.5 → 32.2 | 4.8 → 69.4 | 4.3 → 58.8 | 3.9 → 53.8 | 2.4 → 9.8 |
+
+- Reads scale with the cores, otter's too: from one CPU to 16, `Get` gets 14.7 times as fast
+  with `sieve` and 15.9 times with otter. On 16 CPUs `sieve`, `s3fifo` and `tinylfu` read
+  27–46% faster than otter. `lru` and `twoq` get about as much done on 16 CPUs as on one.
+- One CPU of the Xeon gets 41–46% less done in `Get` than one of the M3 Max. On it the five
+  caches beat otter at everything, by 1.5 to 7.5 times.
+- Otter's `Set` gets 3.0 times as fast from one CPU to 8 and 3.3 times to 16. That of the
+  lock-free caches stays near 10 million a second from 8 CPUs on, so from there otter writes
+  faster than they do. `lru` and `twoq` write faster than otter on every number of CPUs.
+- On 16 CPUs otter wins when 10–25% of the operations overwrite entries, by 16% with 10% and
+  by 24% with 25%. On 8 the lock-free caches beat it in every run with 10%, and are level
+  with it with 25%.
+- Evicting scales for the caches of this module and not for otter: from one CPU to 16,
+  `Evict` gets 3.2 to 4.2 times as fast with them, while otter gets no further than 2.6
+  million a second. On the M3 Max it got at most 13% faster for the lock-free caches, and
+  slower for `sieve`.
+- With `ReadThrough` and a million entries the lock-free caches do 2.8–3.6 times as much as
+  otter on 8 CPUs and 5.5–7.1 times as much on 16. Otter gets little more done on 16 CPUs
+  than on 4 (9.8 million a second against 8.9).
 
 ### Memory
 
@@ -268,15 +304,15 @@ Take the absolute numbers with a grain of salt.
 - `Get` is the best case of the caches that read without a lock, and of SIEVE and S3-FIFO in
   particular: nothing is evicted, and reading an entry that has been read before writes
   nothing at all.
-- The results in this repository are from one machine, an Apple laptop. In the results that
-  otter publishes, which are from Linux on an x86 CPU, its writes get more than five times
-  as fast between one CPU and eight (from 8 to 45 million a second). Compare that with what
-  they do in the `Set` table here before concluding anything about writes: how the caches
-  compare on such a machine may well differ. The `Benchmarks` workflow in
-  `.github/workflows` runs the suite on one of GitHub's Linux runners for a second opinion.
-  For more CPUs than that, [yandex-cloud.sh](yandex-cloud.sh) rents a virtual machine in
-  Yandex Cloud, runs the benchmarks on one thread of each of its cores (16 by default),
-  and deletes it again; the comment at its top has the settings.
+- The results in this repository are from two machines: an Apple laptop, and 16 cores of an
+  Intel Xeon in Yandex Cloud. In the results that otter publishes, which are from Linux on
+  an x86 CPU, its writes get more than five times as fast between one CPU and eight (from 8
+  to 45 million a second); on the Xeon here they get three times as fast, and on the laptop
+  less than twice. How the caches compare on another machine may well differ again. The
+  `Benchmarks` workflow in `.github/workflows` runs the suite on one of GitHub's Linux
+  runners, with four CPUs. [yandex-cloud.sh](yandex-cloud.sh) rents a virtual machine in
+  Yandex Cloud, runs the benchmarks on one thread of each of its cores (16 by default), and
+  deletes it again; the comment at its top has the settings.
 
 ## Memory
 

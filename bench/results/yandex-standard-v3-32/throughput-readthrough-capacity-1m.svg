@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 380" width="640" height="380" role="img" aria-labelledby="title desc">
+<title id="title">ReadThrough, capacity=1M</title>
+<desc id="desc">Line chart of Million operations per second by CPUs for evict/lru, evict/twoq, evict/sieve, evict/s3fifo, evict/tinylfu, otter, golang-lru, golang-lru/2q. The numbers are in the table that goes with it.</desc>
+<style>
+text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.title { font-size: 15px; font-weight: 600; }
+.unit, .legend { font-size: 12px; }
+.tick { font-size: 11px; font-variant-numeric: tabular-nums; }
+.grid, .axis { stroke-width: 1; }
+.line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.ref { fill: none; stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
+.mark { stroke-width: 2; paint-order: stroke; }
+.surface { fill: #fcfcfb; stroke: rgba(11,11,11,0.10); }
+.title { fill: #0b0b0b; }
+.unit, .legend { fill: #52514e; }
+.tick { fill: #898781; }
+.grid { stroke: #e1e0d9; }
+.axis { stroke: #c3c2b7; }
+.ref { stroke: #898781; }
+.mark { stroke: #fcfcfb; }
+.s0 { stroke: #2a78d6; } .m0 { fill: #2a78d6; }
+.s1 { stroke: #eb6834; } .m1 { fill: #eb6834; }
+.s2 { stroke: #1baf7a; } .m2 { fill: #1baf7a; }
+.s3 { stroke: #eda100; } .m3 { fill: #eda100; }
+.s7 { stroke: #e34948; } .m7 { fill: #e34948; }
+.s4 { stroke: #e87ba4; } .m4 { fill: #e87ba4; }
+.s5 { stroke: #008300; } .m5 { fill: #008300; }
+.s6 { stroke: #6250d6; } .m6 { fill: #6250d6; }
+@media (prefers-color-scheme: dark) {
+  .surface { fill: #1a1a19; stroke: rgba(255,255,255,0.10); }
+  .title { fill: #f0efec; }
+  .unit, .legend { fill: #c3c2b7; }
+  .tick { fill: #898781; }
+  .grid { stroke: #2c2c2a; }
+  .axis { stroke: #383835; }
+  .ref { stroke: #898781; }
+  .mark { stroke: #1a1a19; }
+  .s0 { stroke: #3987e5; } .m0 { fill: #3987e5; }
+  .s1 { stroke: #d95926; } .m1 { fill: #d95926; }
+  .s2 { stroke: #199e70; } .m2 { fill: #199e70; }
+  .s3 { stroke: #c98500; } .m3 { fill: #c98500; }
+  .s7 { stroke: #e66767; } .m7 { fill: #e66767; }
+  .s4 { stroke: #d55181; } .m4 { fill: #d55181; }
+  .s5 { stroke: #008300; } .m5 { fill: #008300; }
+  .s6 { stroke: #9085e9; } .m6 { fill: #9085e9; }
+}
+</style>
+<rect class="surface" x="0.5" y="0.5" width="639" height="379" rx="8"/>
+<text class="title" x="20" y="28">ReadThrough, capacity=1M</text>
+<text class="unit" x="20" y="46">Million operations per second</text>
+<path class="line s0" d="M20,66 h24"/><circle class="mark m0" cx="32" cy="66" r="4"/><text class="legend" x="50" y="70">evict/lru</text>
+<path class="line s1" d="M131,66 h24"/><path class="mark m1" d="M139.4,62.4L146.6,62.4L146.6,69.6L139.4,69.6Z"/><text class="legend" x="161" y="70">evict/twoq</text>
+<path class="line s2" d="M249,66 h24"/><path class="mark m2" d="M261,61.2L265.6,69.4L256.4,69.4Z"/><text class="legend" x="279" y="70">evict/sieve</text>
+<path class="line s3" d="M374,66 h24"/><path class="mark m3" d="M386,61L391,66L386,71L381,66Z"/><text class="legend" x="404" y="70">evict/s3fifo</text>
+<path class="line s7" d="M20,86 h24"/><path class="mark m7" d="M30,81.6L34,81.6L36.4,84L36.4,88L34,90.4L30,90.4L27.6,88L27.6,84Z"/><text class="legend" x="50" y="90">evict/tinylfu</text>
+<path class="line s4" d="M159,86 h24"/><path class="mark m4" d="M171,90.8L175.6,82.6L166.4,82.6Z"/><text class="legend" x="189" y="90">otter</text>
+<path class="line s5" d="M242,86 h24"/><path class="mark m5" d="M254,81.4L258.4,84.6L256.7,89.7L251.3,89.7L249.6,84.6Z"/><text class="legend" x="272" y="90">golang-lru</text>
+<path class="line s6" d="M360,86 h24"/><path class="mark m6" d="M369.7,82L374.3,82L376.6,86L374.3,90L369.7,90L367.4,86Z"/><text class="legend" x="390" y="90">golang-lru/2q</text>
+<path class="axis" d="M52,328 h568"/><text class="tick" x="44" y="332" text-anchor="end">0</text>
+<path class="grid" d="M52,272 h568"/><text class="tick" x="44" y="276" text-anchor="end">20</text>
+<path class="grid" d="M52,216 h568"/><text class="tick" x="44" y="220" text-anchor="end">40</text>
+<path class="grid" d="M52,160 h568"/><text class="tick" x="44" y="164" text-anchor="end">60</text>
+<path class="grid" d="M52,104 h568"/><text class="tick" x="44" y="108" text-anchor="end">80</text>
+<text class="tick" x="52" y="346" text-anchor="middle">1</text>
+<text class="tick" x="194" y="346" text-anchor="middle">2</text>
+<text class="tick" x="336" y="346" text-anchor="middle">4</text>
+<text class="tick" x="478" y="346" text-anchor="middle">8</text>
+<text class="tick" x="620" y="346" text-anchor="middle">16</text>
+<text class="tick" x="336" y="368" text-anchor="middle">CPUs</text>
+<path class="line s0" d="M52,315L194,308.7L336,294.4L478,271.6L620,233.2"/>
+<path class="line s1" d="M52,315.3L194,309.1L336,296.4L478,271.2L620,237.9"/>
+<path class="line s2" d="M52,314.4L194,303.2L336,279.6L478,230.8L620,133.7"/>
+<path class="line s3" d="M52,316L194,306L336,284.1L478,244.5L620,163.4"/>
+<path class="line s7" d="M52,317.2L194,307.1L336,285.9L478,251.6L620,177.2"/>
+<path class="line s4" d="M52,321.3L194,315.3L336,303.2L478,300.8L620,300.6"/>
+<path class="line s5" d="M52,320.4L194,322.1L336,322.1L478,321.9L620,321.9"/>
+<path class="line s6" d="M52,322.5L194,323.4L336,323.3L478,323.3L620,323.2"/>
+<g><title>evict/lru at 1: 4.64</title><circle class="mark m0" cx="52" cy="315" r="4"/></g>
+<g><title>evict/lru at 2: 6.91</title><circle class="mark m0" cx="194" cy="308.7" r="4"/></g>
+<g><title>evict/lru at 4: 11.99</title><circle class="mark m0" cx="336" cy="294.4" r="4"/></g>
+<g><title>evict/lru at 8: 20.16</title><circle class="mark m0" cx="478" cy="271.6" r="4"/></g>
+<g><title>evict/lru at 16: 33.84</title><circle class="mark m0" cx="620" cy="233.2" r="4"/></g>
+<g><title>evict/twoq at 1: 4.53</title><path class="mark m1" d="M48.4,311.7L55.6,311.7L55.6,318.9L48.4,318.9Z"/></g>
+<g><title>evict/twoq at 2: 6.76</title><path class="mark m1" d="M190.4,305.5L197.6,305.5L197.6,312.7L190.4,312.7Z"/></g>
+<g><title>evict/twoq at 4: 11.30</title><path class="mark m1" d="M332.4,292.8L339.6,292.8L339.6,300L332.4,300Z"/></g>
+<g><title>evict/twoq at 8: 20.27</title><path class="mark m1" d="M474.4,267.6L481.6,267.6L481.6,274.8L474.4,274.8Z"/></g>
+<g><title>evict/twoq at 16: 32.19</title><path class="mark m1" d="M616.4,234.3L623.6,234.3L623.6,241.5L616.4,241.5Z"/></g>
+<g><title>evict/sieve at 1: 4.84</title><path class="mark m2" d="M52,309.6L56.6,317.8L47.4,317.8Z"/></g>
+<g><title>evict/sieve at 2: 8.84</title><path class="mark m2" d="M194,298.4L198.6,306.6L189.4,306.6Z"/></g>
+<g><title>evict/sieve at 4: 17.27</title><path class="mark m2" d="M336,274.8L340.6,283L331.4,283Z"/></g>
+<g><title>evict/sieve at 8: 34.70</title><path class="mark m2" d="M478,226L482.6,234.2L473.4,234.2Z"/></g>
+<g><title>evict/sieve at 16: 69.40</title><path class="mark m2" d="M620,128.9L624.6,137.1L615.4,137.1Z"/></g>
+<g><title>evict/s3fifo at 1: 4.29</title><path class="mark m3" d="M52,311L57,316L52,321L47,316Z"/></g>
+<g><title>evict/s3fifo at 2: 7.86</title><path class="mark m3" d="M194,301L199,306L194,311L189,306Z"/></g>
+<g><title>evict/s3fifo at 4: 15.68</title><path class="mark m3" d="M336,279.1L341,284.1L336,289.1L331,284.1Z"/></g>
+<g><title>evict/s3fifo at 8: 29.83</title><path class="mark m3" d="M478,239.5L483,244.5L478,249.5L473,244.5Z"/></g>
+<g><title>evict/s3fifo at 16: 58.80</title><path class="mark m3" d="M620,158.4L625,163.4L620,168.4L615,163.4Z"/></g>
+<g><title>evict/tinylfu at 1: 3.85</title><path class="mark m7" d="M50,312.8L54,312.8L56.4,315.2L56.4,319.2L54,321.6L50,321.6L47.6,319.2L47.6,315.2Z"/></g>
+<g><title>evict/tinylfu at 2: 7.46</title><path class="mark m7" d="M192,302.7L196,302.7L198.4,305.1L198.4,309.1L196,311.5L192,311.5L189.6,309.1L189.6,305.1Z"/></g>
+<g><title>evict/tinylfu at 4: 15.04</title><path class="mark m7" d="M334,281.5L338,281.5L340.4,283.9L340.4,287.9L338,290.3L334,290.3L331.6,287.9L331.6,283.9Z"/></g>
+<g><title>evict/tinylfu at 8: 27.29</title><path class="mark m7" d="M476,247.2L480,247.2L482.4,249.6L482.4,253.6L480,256L476,256L473.6,253.6L473.6,249.6Z"/></g>
+<g><title>evict/tinylfu at 16: 53.84</title><path class="mark m7" d="M618,172.8L622,172.8L624.4,175.2L624.4,179.2L622,181.6L618,181.6L615.6,179.2L615.6,175.2Z"/></g>
+<g><title>otter at 1: 2.39</title><path class="mark m4" d="M52,326.1L56.6,317.9L47.4,317.9Z"/></g>
+<g><title>otter at 2: 4.54</title><path class="mark m4" d="M194,320.1L198.6,311.9L189.4,311.9Z"/></g>
+<g><title>otter at 4: 8.87</title><path class="mark m4" d="M336,308L340.6,299.8L331.4,299.8Z"/></g>
+<g><title>otter at 8: 9.72</title><path class="mark m4" d="M478,305.6L482.6,297.4L473.4,297.4Z"/></g>
+<g><title>otter at 16: 9.79</title><path class="mark m4" d="M620,305.4L624.6,297.2L615.4,297.2Z"/></g>
+<g><title>golang-lru at 1: 2.70</title><path class="mark m5" d="M52,315.8L56.4,319L54.7,324.1L49.3,324.1L47.6,319Z"/></g>
+<g><title>golang-lru at 2: 2.09</title><path class="mark m5" d="M194,317.5L198.4,320.7L196.7,325.8L191.3,325.8L189.6,320.7Z"/></g>
+<g><title>golang-lru at 4: 2.10</title><path class="mark m5" d="M336,317.5L340.4,320.7L338.7,325.8L333.3,325.8L331.6,320.7Z"/></g>
+<g><title>golang-lru at 8: 2.18</title><path class="mark m5" d="M478,317.3L482.4,320.5L480.7,325.6L475.3,325.6L473.6,320.5Z"/></g>
+<g><title>golang-lru at 16: 2.17</title><path class="mark m5" d="M620,317.3L624.4,320.5L622.7,325.6L617.3,325.6L615.6,320.5Z"/></g>
+<g><title>golang-lru/2q at 1: 1.98</title><path class="mark m6" d="M49.7,318.5L54.3,318.5L56.6,322.5L54.3,326.5L49.7,326.5L47.4,322.5Z"/></g>
+<g><title>golang-lru/2q at 2: 1.63</title><path class="mark m6" d="M191.7,319.4L196.3,319.4L198.6,323.4L196.3,327.4L191.7,327.4L189.4,323.4Z"/></g>
+<g><title>golang-lru/2q at 4: 1.69</title><path class="mark m6" d="M333.7,319.3L338.3,319.3L340.6,323.3L338.3,327.3L333.7,327.3L331.4,323.3Z"/></g>
+<g><title>golang-lru/2q at 8: 1.68</title><path class="mark m6" d="M475.7,319.3L480.3,319.3L482.6,323.3L480.3,327.3L475.7,327.3L473.4,323.3Z"/></g>
+<g><title>golang-lru/2q at 16: 1.73</title><path class="mark m6" d="M617.7,319.2L622.3,319.2L624.6,323.2L622.3,327.2L617.7,327.2L615.4,323.2Z"/></g>
+</svg>

@@ -98,9 +98,11 @@ The counts only go up; `s.Sub(prev)` gives those of an interval. A `Get` that hi
 - `tinylfu` was designed on these traces. On 14 others, in a simulation not in this
   repository, it was level with S3-FIFO and W-TinyLFU.
 - In the chart on the right, the lock-free caches do 2.1–2.4 times as many operations as
-  otter on 8 CPUs.
-- On 8 CPUs otter wins when 10–25% of the operations overwrite entries. These are numbers
-  from one machine; otter's own, from Linux on x86, show its writes scaling better.
+  otter on 8 CPUs. On 16 cores of an Intel Xeon they do 5.5–7.1 times as many, as otter
+  gets little more done past 4.
+- Otter wins when 10–25% of the operations overwrite entries, on 8 CPUs of the M3 Max and
+  on 16 of the Xeon. Its writes that replace entries get faster with more CPUs, three-fold
+  from one to 16 on the Xeon; those of this module do not.
 - 56–100 bytes per entry with `uint64` keys and values. A GC cycle with 10 million entries
   takes 0.2–0.3 ms, against 530 ms for otter.
 
