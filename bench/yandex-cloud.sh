@@ -8,10 +8,14 @@
 #
 #   bench/yandex-cloud.sh
 #   CORES=64 COUNT=3 bench/yandex-cloud.sh
+#   CORES=16 BENCH='^BenchmarkGet$/cache=otter$' bench/yandex-cloud.sh
 #
-# It needs yc, the CLI of Yandex Cloud, set up with `yc init` for a folder that
-# has a subnet in ZONE and the quota for CORES vCPUs. The benchmarks are
-# compiled here, from the working tree, so the machine needs nothing but SSH.
+# It needs yc, the CLI of Yandex Cloud, set up with `yc init` for a folder with
+# the quota for CORES vCPUs and for one more network. The machine gets a network
+# of its own, deleted with it, so that the routes and neighbours of whatever
+# else runs in the folder stay out of the way; SUBNET puts it in another one.
+# The benchmarks are compiled here, from the working tree, so the machine needs
+# nothing but SSH.
 #
 # A vCPU on these platforms is one of the two threads of a physical core, and
 # the two threads of a core share its L1 and L2 caches. The benchmarks are
@@ -27,10 +31,11 @@ CORES=${CORES:-32}                # vCPUs to rent, two to a physical core.
 MEMORY=${MEMORY:-$CORES}          # GB.
 PLATFORM=${PLATFORM:-standard-v3} # Intel Ice Lake.
 ZONE=${ZONE:-ru-central1-a}
-SUBNET=${SUBNET:-}                # The first subnet in ZONE when empty.
+SUBNET=${SUBNET:-}                # A network of its own when empty.
 IMAGE_FAMILY=${IMAGE_FAMILY:-ubuntu-2404-lts}
 PREEMPTIBLE=${PREEMPTIBLE:-1}     # Cheaper, but the cloud may stop it at any time.
 COUNT=${COUNT:-5}
+BENCH=${BENCH:-.}                 # The benchmarks to run, as for go test -bench.
 CPUS=${CPUS:-}                    # Powers of two up to the number of cores when empty.
 SMT=${SMT:-0}
 DEADLINE=${DEADLINE:-360}
@@ -48,19 +53,34 @@ command -v jq > /dev/null || die "jq is not installed"
 [[ -n $(yc config get folder-id 2> /dev/null) ]] || die "yc has no folder to work in: run yc init"
 
 tmp=$(mktemp -d)
-name=
+# The machine, and the network and subnet it gets, are all called name. Each
+# variable below is set before the thing it stands for is created, so that the
+# cleanup looks for it even when the script was stopped halfway.
+name=evict-bench-$(date +%Y%m%d-%H%M%S)
+instance=
+network=
 creating=
+
+# remove deletes the thing called name that a yc command such as `compute
+# instance` manages, if there is one, and says how to delete it by hand if it
+# cannot. It fails if there is none.
+remove() {
+	local what=$1
+	shift
+	yc "$@" get --name "$name" > /dev/null 2>&1 || return 1
+	echo "Deleting the $what $name"
+	yc "$@" delete --name "$name" > /dev/null ||
+		echo "Could not delete the $what $name: run yc $* delete --name $name" >&2
+}
 
 cleanup() {
 	local code=$?
-	if [[ -n $name ]]; then
-		if yc compute instance get --name "$name" > /dev/null 2>&1; then
-			echo "Deleting $name"
-			yc compute instance delete --name "$name" > /dev/null ||
-				echo "Could not delete $name: run yc compute instance delete --name $name" >&2
-		elif [[ -n $creating ]]; then
-			echo "Interrupted while $name was being created: see yc compute instance list" >&2
-		fi
+	if [[ -n $instance ]] && ! remove machine compute instance && [[ -n $creating ]]; then
+		echo "Interrupted while $name was being created: see yc compute instance list" >&2
+	fi
+	if [[ -n $network ]]; then
+		remove subnet vpc subnet || :
+		remove network vpc network || :
 	fi
 	rm -rf "$tmp"
 	exit "$code"
@@ -75,9 +95,11 @@ echo "Compiling the benchmarks for linux/amd64"
 rev=$(git describe --always --dirty)
 
 if [[ -z $SUBNET ]]; then
-	SUBNET=$(yc vpc subnet list --format json |
-		jq -r --arg zone "$ZONE" 'map(select(.zone_id == $zone))[0].id // empty')
-	[[ -n $SUBNET ]] || die "there is no subnet in $ZONE: create one, or set ZONE or SUBNET"
+	echo "Creating the network $name"
+	network=1
+	yc vpc network create --name "$name" > /dev/null
+	SUBNET=$(yc vpc subnet create --name "$name" --network-name "$name" --zone "$ZONE" \
+		--range 10.128.0.0/24 --format json | jq -r .id)
 fi
 image=$(yc compute image get-latest-from-family "$IMAGE_FAMILY" --folder-id standard-images --format json | jq -r .id)
 
@@ -97,7 +119,7 @@ EOF
 # a connection that drops does not end the benchmarks. It leaves its exit code
 # in a file called status.
 {
-	printf 'COUNT=%q CPUS=%q SMT=%q REV=%q\n' "$COUNT" "$CPUS" "$SMT" "$rev"
+	printf 'COUNT=%q BENCH=%q CPUS=%q SMT=%q REV=%q\n' "$COUNT" "$BENCH" "$CPUS" "$SMT" "$rev"
 	cat << 'EOF'
 set -euo pipefail
 trap 'echo $? > status' EXIT
@@ -116,17 +138,17 @@ fi
 {
 	echo "commit: $REV"
 	echo "pinned to CPUs: $pin"
+	echo "-bench: $BENCH"
 	echo "-cpu: $CPUS"
 	uname -a
 	lscpu
 } > machine.txt
 for ((run = 1; run <= COUNT; run++)); do
-	taskset -c "$pin" ./bench.test -test.run='^$' -test.bench=. -test.cpu="$CPUS" -test.timeout=0 >> throughput.txt
+	taskset -c "$pin" ./bench.test -test.run='^$' -test.bench="$BENCH" -test.cpu="$CPUS" -test.timeout=0 >> throughput.txt
 done
 EOF
 } > "$tmp/run.sh"
 
-name=evict-bench-$(date +%Y%m%d-%H%M%S)
 args=(
 	--name "$name" --zone "$ZONE" --platform "$PLATFORM"
 	--cores "$CORES" --core-fraction 100 --memory "${MEMORY}GB"
@@ -139,7 +161,7 @@ if [[ $PREEMPTIBLE == 1 ]]; then
 	args+=(--preemptible)
 fi
 echo "Creating $name: $CORES vCPUs and ${MEMORY} GB on $PLATFORM in $ZONE"
-creating=1
+instance=1 creating=1
 yc compute instance create "${args[@]}" > "$tmp/instance.json"
 creating=
 ip=$(jq -r '.network_interfaces[0].primary_v4_address.one_to_one_nat.address' "$tmp/instance.json")
@@ -153,8 +175,8 @@ remote() {
 
 echo "Waiting for $ip to accept SSH"
 for ((i = 0; ; i++)); do
-	if remote true 2> /dev/null; then break; fi
-	((i < 30)) || die "$ip did not accept SSH in five minutes"
+	if remote true 2> "$tmp/ssh.err"; then break; fi
+	((i < 30)) || die "$ip did not accept SSH in five minutes: $(tail -n 1 "$tmp/ssh.err")"
 	sleep 10
 done
 
