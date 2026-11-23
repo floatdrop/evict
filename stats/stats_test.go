@@ -110,16 +110,26 @@ func TestCounts(t *testing.T) {
 	}
 	want("an eviction", 2, 1, 1, 2)
 
+	if _, present, _, _, evicted := c.SetIfAbsent("a", 11); !present || evicted {
+		t.Fatalf("SetIfAbsent(a) = %t, evicted %t; want a found", present, evicted)
+	}
+	want("SetIfAbsent of a key that is there", 2, 1, 1, 2)
+
+	if _, present, k, _, evicted := c.SetIfAbsent("d", 4); present || !evicted || k == "d" {
+		t.Fatalf("SetIfAbsent(d) = %t, evicted %q, %t; want an entry evicted for d", present, k, evicted)
+	}
+	want("SetIfAbsent with an eviction", 2, 1, 2, 2)
+
 	c.Peek("a")
 	c.Peek("x")
 	c.Delete("a")
 	c.Delete("x")
 	for range c.All() {
 	}
-	want("Peek, Delete and All", 2, 1, 1, 1)
+	want("Peek, Delete and All", 2, 1, 2, 1)
 
 	c.Clear()
-	want("Clear", 2, 1, 1, 0)
+	want("Clear", 2, 1, 2, 0)
 }
 
 // A cache without capacity hands every new entry straight back, with the key
@@ -130,9 +140,10 @@ func TestZeroCapacity(t *testing.T) {
 	c := stats.Wrap(lru.New[int, int](0))
 	c.Set(1, 1)
 	c.Set(1, 1)
+	c.SetIfAbsent(1, 1)
 	c.Get(1)
 
-	want := stats.Snapshot{Misses: 1, Evictions: 2}
+	want := stats.Snapshot{Misses: 1, Evictions: 3}
 	if got := c.Stats(); got != want {
 		t.Errorf("Stats() = %+v, want %+v", got, want)
 	}
@@ -176,22 +187,38 @@ func TestEveryPolicy(t *testing.T) {
 			if s := c.Stats(); s.Evictions != 0 || s.Len != 1 {
 				t.Fatalf("-0 replacing +0: %d evictions and %d entries, want 0 and 1", s.Evictions, s.Len)
 			}
+			if _, present, _, _, _ := c.SetIfAbsent(0, 0); !present {
+				t.Fatal("SetIfAbsent(+0) did not find -0")
+			}
 
 			// Some keys are read, so that the policies that promote entries
 			// have some to promote, and twoq some to remember.
-			added := uint64(1)
+			// Every other key is written with SetIfAbsent, which counts no
+			// hit or miss.
+			added, gets := uint64(1), uint64(0)
 			for i := 1; i < 20*capacity; i++ {
 				key := float64(i % (3 * capacity))
-				if _, ok := c.Get(key); !ok {
-					added++
+				if i%2 == 0 {
+					if _, present, _, _, _ := c.SetIfAbsent(key, i); !present {
+						added++
+					}
+				} else {
+					if _, ok := c.Get(key); !ok {
+						added++
+					}
+					c.Set(key, i)
+					gets++
 				}
-				c.Set(key, i)
 				c.Get(float64(i % 50))
+				gets++
 			}
 
 			s := c.Stats()
 			if s.Evictions != added-uint64(s.Len) {
 				t.Errorf("%d entries added, %d evicted and %d left", added, s.Evictions, s.Len)
+			}
+			if s.Hits+s.Misses != gets {
+				t.Errorf("%d hits and %d misses for %d calls of Get", s.Hits, s.Misses, gets)
 			}
 		})
 	}

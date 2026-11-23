@@ -270,18 +270,8 @@ func (s *shard[K, V]) set(hash uint32, key K, value V) (oldKey K, oldValue V, di
 	sl := &s.slab
 
 	idx := sl.Find(hash, key)
-	if idx == 0 {
-		if s.capacity == 0 {
-			return key, value, true
-		}
-		oldKey, oldValue, displaced = s.makeRoom()
-		sl.PushFront(recent, sl.Insert(hash, key, value)) // Meta is zero, which is recent.
-		s.recents++
-		return oldKey, oldValue, displaced
-	}
-
-	n := &sl.Nodes[idx]
-	if n.Meta != ghost {
+	if idx != 0 && sl.Nodes[idx].Meta != ghost {
+		n := &sl.Nodes[idx]
 		oldKey, oldValue = n.Key, n.Value
 		// The new key takes the place of the old one, although they are
 		// equal: they may still differ in what they refer to, and the
@@ -292,19 +282,74 @@ func (s *shard[K, V]) set(hash uint32, key K, value V) (oldKey K, oldValue V, di
 		}
 		return oldKey, oldValue, true
 	}
+	return s.add(idx, hash, key, value)
+}
+
+// SetIfAbsent stores value under key unless the cache holds an entry for key
+// already. If it does, SetIfAbsent changes nothing but treats the entry as if
+// it had been read, and returns the value that key has, with present true.
+// Otherwise it stores value as Set does, returns it with present false, and
+// reports the entry that the key's shard evicted to make room, if any. A key
+// that the cache merely remembers having evicted counts as one that it does
+// not hold. A cache without capacity hands the new entry straight back as
+// evicted.
+//
+// Looking for key and storing value happen at once, under the lock of the
+// key's shard: of the goroutines that call SetIfAbsent for one key at the
+// same time, one stores its value and the others get it back as actual,
+// unless it has left the cache in between.
+func (c *Cache[K, V]) SetIfAbsent(key K, value V) (actual V, present bool, oldKey K, oldValue V, evicted bool) {
+	h := maphash.Comparable(c.seed, key)
+	s, hash := &c.shards[uint32(h>>32)&c.mask], uint32(h)
+
+	s.mu.Lock()
+	idx := s.slab.Find(hash, key)
+	if idx != 0 {
+		if n := &s.slab.Nodes[idx]; n.Meta != ghost {
+			if n.Meta == frequent {
+				s.slab.MoveToFront(frequent, idx)
+			}
+			actual = n.Value
+			s.mu.Unlock()
+			return actual, true, oldKey, oldValue, false
+		}
+	}
+	oldKey, oldValue, evicted = s.add(idx, hash, key, value)
+	s.mu.Unlock()
+
+	return value, false, oldKey, oldValue, evicted
+}
+
+// add stores an entry for a key that the shard does not hold, and returns the
+// entry that it evicted to make room, if any, or the new entry itself if the
+// shard has no capacity. idx is the node that remembers the key, or zero if
+// the shard does not remember it.
+func (s *shard[K, V]) add(idx, hash uint32, key K, value V) (oldKey K, oldValue V, evicted bool) {
+	sl := &s.slab
+
+	if idx == 0 {
+		if s.capacity == 0 {
+			return key, value, true
+		}
+		oldKey, oldValue, evicted = s.makeRoom()
+		sl.PushFront(recent, sl.Insert(hash, key, value)) // Meta is zero, which is recent.
+		s.recents++
+		return oldKey, oldValue, evicted
+	}
 
 	// The key was evicted from the recent queue not long ago, and here it
 	// is again. Its node becomes an entry of the frequent queue. It leaves
 	// the memory before room is made, so that the key of the entry evicted
 	// for it can take its place there instead of pushing out another one.
+	n := &sl.Nodes[idx]
 	sl.Unlink(idx)
 	s.ghosts--
-	oldKey, oldValue, displaced = s.makeRoom()
+	oldKey, oldValue, evicted = s.makeRoom()
 	n.Key, n.Value = key, value
 	n.Meta = frequent
 	sl.PushFront(frequent, idx)
 	s.frequents++
-	return oldKey, oldValue, displaced
+	return oldKey, oldValue, evicted
 }
 
 // makeRoom evicts an entry if the shard is full, and returns it.
@@ -449,6 +494,7 @@ var (
 	_ = (*Cache[int, int]).Get
 	_ = (*Cache[int, int]).Peek
 	_ = (*Cache[int, int]).Set
+	_ = (*Cache[int, int]).SetIfAbsent
 	_ = (*Cache[int, int]).Delete
 	_ = (*Cache[int, int]).Len
 	_ = (*Cache[int, int]).Clear

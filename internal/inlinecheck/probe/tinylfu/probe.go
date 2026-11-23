@@ -15,6 +15,7 @@ type Value struct{ Size, Hits int }
 // Use keeps the compiler from discarding the methods of the cache.
 func Use(c *tinylfu.Cache[Key, Value], k Key, v Value) (Value, bool) {
 	c.Set(k, v)
+	c.SetIfAbsent(k, v)
 	c.Peek(k)
 	c.Delete(k)
 	var values [2]Value

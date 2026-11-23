@@ -25,7 +25,7 @@ import (
 )
 
 // hot matches the functions that every operation on a cache goes through.
-var hot = regexp.MustCompile(`/(lru|twoq|sieve|s3fifo|tinylfu|stats|expire)\.\(\*(Cache|shard)\[.*\]\)\.(Get|GetMany|Peek|Set|SetWithTTL|set|evict|Delete|look|victim|promote|asked)$|` +
+var hot = regexp.MustCompile(`/(lru|twoq|sieve|s3fifo|tinylfu|stats|expire)\.\(\*(Cache|shard)\[.*\]\)\.(Get|GetMany|Peek|Set|SetWithTTL|set|SetIfAbsent|add|evict|Delete|look|victim|promote|asked)$|` +
 	`/c?slab\.\(\*Slab\[.*\]\)\.(Find|Lookup|Insert|Replace|Remove)$`)
 
 // slow matches the calls that must not show up in them: functions that are
@@ -135,7 +135,7 @@ func TestHotPathsAreInlined(t *testing.T) {
 
 	// The test is only worth something if it has looked at the right code.
 	for _, pkg := range []string{"lru", "twoq", "sieve", "s3fifo", "tinylfu", "stats", "expire"} {
-		for _, method := range []string{"Get", "Set", "Peek", "Delete"} {
+		for _, method := range []string{"Get", "Set", "SetIfAbsent", "Peek", "Delete"} {
 			found := false
 			for name := range seen {
 				found = found || strings.Contains(name, "/"+pkg+".(*Cache[") && strings.HasSuffix(name, ")."+method)

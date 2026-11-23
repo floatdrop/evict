@@ -679,6 +679,15 @@ func (m *model) evict() (key, value int) {
 	return against.key, against.value
 }
 
+// SetIfAbsent is Get for a key that is there and Set for one that is not.
+func (m *model) SetIfAbsent(key, value int) (actual int, present bool, oldKey, oldValue int, evicted bool) {
+	if actual, ok := m.Get(key); ok {
+		return actual, true, 0, 0, false
+	}
+	oldKey, oldValue, evicted = m.Set(key, value)
+	return value, false, oldKey, oldValue, evicted
+}
+
 func (m *model) Delete(key int) (int, bool) {
 	e := m.find(key)
 	if e == nil {

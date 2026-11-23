@@ -169,6 +169,43 @@ func (s *shard[K, V]) set(hash uint32, key K, value V) (oldKey K, oldValue V, di
 		sl.MoveToFront(queue, idx)
 		return oldKey, oldValue, displaced
 	}
+	return s.add(hash, key, value)
+}
+
+// SetIfAbsent stores value under key unless the cache holds key already. If
+// it does, SetIfAbsent changes nothing but marks the entry as the most
+// recently used, as Get does, and returns the value that key has, with
+// present true. Otherwise it stores value as Set does, returns it with
+// present false, and reports the least recently used entry of the key's
+// shard if it was evicted to make room. A cache without capacity hands the
+// new entry straight back as evicted.
+//
+// Looking for key and storing value happen at once, under the lock of the
+// key's shard: of the goroutines that call SetIfAbsent for one key at the
+// same time, one stores its value and the others get it back as actual,
+// unless it has left the cache in between.
+func (c *Cache[K, V]) SetIfAbsent(key K, value V) (actual V, present bool, oldKey K, oldValue V, evicted bool) {
+	h := maphash.Comparable(c.seed, key)
+	s, hash := &c.shards[uint32(h>>32)&c.mask], uint32(h)
+
+	s.mu.Lock()
+	if idx := s.slab.Find(hash, key); idx != 0 {
+		s.slab.MoveToFront(queue, idx)
+		actual = s.slab.Nodes[idx].Value
+		s.mu.Unlock()
+		return actual, true, oldKey, oldValue, false
+	}
+	oldKey, oldValue, evicted = s.add(hash, key, value)
+	s.mu.Unlock()
+
+	return value, false, oldKey, oldValue, evicted
+}
+
+// add stores an entry for a key that the shard does not hold, and returns the
+// entry that it evicted to make room, if any, or the new entry itself if the
+// shard has no capacity.
+func (s *shard[K, V]) add(hash uint32, key K, value V) (oldKey K, oldValue V, evicted bool) {
+	sl := &s.slab
 
 	if sl.Len() == sl.Cap() {
 		if sl.Cap() == 0 {
@@ -176,13 +213,13 @@ func (s *shard[K, V]) set(hash uint32, key K, value V) (oldKey K, oldValue V, di
 		}
 		lru := sl.Nodes[queue].Prev
 		n := &sl.Nodes[lru]
-		oldKey, oldValue, displaced = n.Key, n.Value, true
+		oldKey, oldValue, evicted = n.Key, n.Value, true
 		sl.Unlink(lru)
 		sl.Remove(lru)
 	}
 
 	sl.PushFront(queue, sl.Insert(hash, key, value))
-	return oldKey, oldValue, displaced
+	return oldKey, oldValue, evicted
 }
 
 // Delete removes key and returns the value it had.
@@ -273,6 +310,7 @@ var (
 	_ = (*Cache[int, int]).Get
 	_ = (*Cache[int, int]).Peek
 	_ = (*Cache[int, int]).Set
+	_ = (*Cache[int, int]).SetIfAbsent
 	_ = (*Cache[int, int]).Delete
 	_ = (*Cache[int, int]).Len
 	_ = (*Cache[int, int]).Clear

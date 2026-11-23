@@ -45,3 +45,25 @@ func ExampleCache_Set() {
 	// replaced a=first
 	// evicted a=second
 }
+
+// A value that is loaded after a miss is stored with SetIfAbsent, so that one
+// that was stored in the meantime, which may be newer, is kept and used.
+func ExampleCache_SetIfAbsent() {
+	cache := tinylfu.New[string, string](100)
+
+	load := func(key string) string {
+		// While this goroutine loads the value, another one stores a newer
+		// one.
+		cache.Set(key, "newer")
+		return "loaded"
+	}
+
+	value, ok := cache.Get("a")
+	if !ok {
+		value, _, _, _, _ = cache.SetIfAbsent("a", load("a"))
+	}
+	fmt.Println(value)
+
+	// Output:
+	// newer
+}

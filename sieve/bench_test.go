@@ -109,6 +109,39 @@ func BenchmarkSet(b *testing.B) {
 	})
 }
 
+// BenchmarkSetIfAbsent is BenchmarkSet with SetIfAbsent: for keys that the
+// cache holds, which it reads, and for new ones, which it stores.
+func BenchmarkSetIfAbsent(b *testing.B) {
+	b.Run("present", func(b *testing.B) {
+		c := sieve.New[int, int](benchCapacity, sieve.WithShards(1))
+		for key := range benchCapacity {
+			c.Set(key, key)
+		}
+		keys := benchKeys()
+
+		b.ReportAllocs()
+		i := 0
+		for b.Loop() {
+			c.SetIfAbsent(keys[i&(len(keys)-1)], i)
+			i++
+		}
+	})
+
+	b.Run("evict", func(b *testing.B) {
+		c := sieve.New[int, int](benchCapacity, sieve.WithShards(1))
+		for key := range benchCapacity {
+			c.Set(-key-1, key)
+		}
+
+		b.ReportAllocs()
+		i := 0
+		for b.Loop() {
+			c.SetIfAbsent(i, i) // Always a new key, so always an eviction.
+			i++
+		}
+	})
+}
+
 // BenchmarkParallel has every CPU working on the same cache: three reads for
 // every write, on keys of which a few are much more popular than the rest and
 // a quarter does not fit.

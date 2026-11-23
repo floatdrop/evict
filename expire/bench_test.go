@@ -117,6 +117,32 @@ func BenchmarkSet(b *testing.B) {
 	})
 }
 
+// BenchmarkSetIfAbsent finds the key, with tinylfu and through the wrapper,
+// which reads the time for the entry it may store, as Set does.
+func BenchmarkSetIfAbsent(b *testing.B) {
+	b.Run("direct", func(b *testing.B) {
+		c := tinylfu.New[int, int](benchCapacity)
+		fill(func(k, v int) { c.Set(k, v) })
+		b.ReportAllocs()
+		i := 0
+		for b.Loop() {
+			c.SetIfAbsent(i&(benchCapacity-1), i)
+			i++
+		}
+	})
+
+	b.Run("expire", func(b *testing.B) {
+		c := expire.Wrap(tinylfu.New[int, expire.Entry[int]](benchCapacity), time.Hour)
+		fill(func(k, v int) { c.Set(k, v) })
+		b.ReportAllocs()
+		i := 0
+		for b.Loop() {
+			c.SetIfAbsent(i&(benchCapacity-1), i)
+			i++
+		}
+	})
+}
+
 // BenchmarkGetMany looks up keys of a cache too large for the CPU's caches, on
 // every CPU at once: with the GetMany of s3fifo, and with that of the wrapper,
 // which looks them up in batches of its own. ns/key is the time per key.
