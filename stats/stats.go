@@ -152,11 +152,14 @@ func Wrap[K comparable, V any](cache evict.Cache[K, V]) *Cache[K, V] {
 // stripe returns the stripe that the calling goroutine counts in.
 //
 // There is no way to ask which goroutine or CPU this is, but the whereabouts
-// of the stack tell one goroutine from another: stacks are at least 2 KiB in
-// size. The bits of the address below that say how deep into its stack a
-// goroutine is, and are dropped. A goroutine that counts from about the same
-// depth thus picks the same stripe, which stays in the cache of its CPU, until
-// its stack grows and moves; from much deeper, it picks another.
+// of the stack tell one goroutine from another. Stacks are at least 2 KiB in
+// size and start at a multiple of 2 KiB, so no two stacks share a block of
+// 2 KiB at any one time, and the block that holds the caller's frame stands
+// for its goroutine. A goroutine that keeps counting from the same depth thus
+// picks the same stripe, one that few other goroutines write to, which tends
+// to keep it in the cache of the CPU the goroutine runs on. It may pick
+// another once its stack has grown or shrunk, which moves the stack, and, on
+// a stack of more than one block, when it counts from a depth in another one.
 func (c *Cache[K, V]) stripe() *stripe {
 	var onStack byte
 	//nolint:gosec // The address is only hashed, never turned back into a pointer.

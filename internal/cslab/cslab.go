@@ -22,11 +22,18 @@
 //     have been passed for reuse before.
 //
 // A reader that is held up in the middle of all this therefore keeps one node
-// waiting and is in nobody's way otherwise. It is not held up easily, either:
-// Go takes the CPU away from a goroutine that keeps computing when it calls a
-// function, and between pinning a node and letting go of it a reader calls
-// none. It does not even compare keys there, which for some types of keys is
-// a call: it copies what it finds and compares afterwards.
+// waiting and is in nobody's way otherwise. It is not held up easily, either.
+// When Go takes the CPU away from a goroutine that keeps computing, it asks
+// the goroutine to stop at the next function it calls, and on most platforms
+// also interrupts its thread, which can stop it almost anywhere. A running
+// thread takes microseconds to be interrupted, so a reader, which calls
+// functions far more often, stops at a call as a rule; and between pinning a
+// node and letting go of it, a reader calls no function that could stop it.
+// It does not even compare keys there, which for some types of keys is a
+// call: it copies what it finds and compares afterwards. A thread that the
+// operating system has set aside, though, is interrupted as soon as it runs
+// again, wherever it is: on a machine with more busy threads than CPUs, a
+// reader is stopped with a node pinned in proportion to the time it holds one.
 //
 // Changing a slab is not concurrent: writers serialize among themselves. The
 // methods say which side they are for.
@@ -318,13 +325,13 @@ func (s *Slab[K, V]) Lookup(hash uint32, key K, limit uint32, tally bool) (value
 			continue
 		}
 
-		// While the node is pinned, nothing here calls a function: that
-		// is where a goroutine may have to make way for another, and the
-		// node would stay pinned until its turn came again. So the key is
-		// not compared here but copied, like the value. The read has to
-		// be counted here all the same, where the node is sure to be the
-		// one that was found, and so it is counted before the key is known
-		// to be the right one.
+		// While the node is pinned, nothing here calls a function that
+		// could stop the goroutine: a call is where a goroutine usually
+		// has to make way for another, and the node would stay pinned
+		// until its turn came again. So the key is not compared here but
+		// copied, like the value. The read has to be counted here all the
+		// same, where the node is sure to be the one that was found, and
+		// so it is counted before the key is known to be the right one.
 		n := &s.Nodes[uint32(word)]
 		f := n.Meta()
 		if f < limit {
@@ -398,11 +405,16 @@ func (s *Slab[K, V]) pin(node uint64) *Slot {
 
 // preferred returns the slot that the calling goroutine goes for first.
 //
-// A goroutine picks the same slot every time, which keeps the slot in the
-// cache of the CPU it runs on. There is no way to ask which goroutine or CPU
-// this is, but the whereabouts of the stack tell one goroutine from another:
-// stacks are at least 2 KiB in size. The bits of the address below that say
-// how deep into its stack a goroutine is, and are dropped.
+// There is no way to ask which goroutine or CPU this is, but the whereabouts
+// of the stack tell one goroutine from another. Stacks are at least 2 KiB in
+// size and start at a multiple of 2 KiB, so no two stacks share a block of
+// 2 KiB at any one time, and the block that holds the caller's frame stands
+// for its goroutine. A goroutine that keeps calling from the same depth thus
+// picks the same slot, one that few other goroutines write to, which tends to
+// keep it in the cache of the CPU the goroutine runs on. It may pick another
+// once its stack has grown or shrunk, which moves the stack, and, on a stack
+// of more than one block, when it calls from a depth in another one. A poor
+// pick costs time and nothing else: pin takes a slot only if it is free.
 func (s *Slab[K, V]) preferred() uint64 {
 	var onStack byte
 	//nolint:gosec // The address is only hashed, never turned back into a pointer.
