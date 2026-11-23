@@ -86,6 +86,8 @@ func Run(t *testing.T, f Factories) {
 
 	t.Run("Empty", func(t *testing.T) { t.Parallel(); testEmpty(t, f.Int) })
 	t.Run("SetGet", func(t *testing.T) { t.Parallel(); testSetGet(t, f.Int) })
+	t.Run("SetIfAbsent", func(t *testing.T) { t.Parallel(); testSetIfAbsent(t, f.Int) })
+	t.Run("SetIfAbsentOnce", func(t *testing.T) { t.Parallel(); SetIfAbsentOnce(t, f.Int) })
 	t.Run("ZeroCapacity", func(t *testing.T) { t.Parallel(); testZeroCapacity(t, f.Int) })
 	t.Run("Full", func(t *testing.T) { t.Parallel(); testFull(t, f.Int) })
 	t.Run("Clear", func(t *testing.T) { t.Parallel(); testClear(t, f.Int) })
@@ -201,6 +203,56 @@ func testSetGet(t *testing.T, newCache Factory[int, int]) {
 	}
 }
 
+func testSetIfAbsent(t *testing.T, newCache Factory[int, int]) {
+	t.Helper()
+
+	c := newCache(2, 1)
+
+	// A key that is not there gets the value, which is a zero here: it is
+	// present that tells whether the key was there, not the value.
+	if a, present, k, v, evicted := c.SetIfAbsent(1, 0); present || a != 0 || evicted || k != 0 || v != 0 {
+		t.Errorf("SetIfAbsent(1, 0) = %d, %t, %d, %d, %t, want 0 stored and nothing evicted", a, present, k, v, evicted)
+	}
+	if a, present, k, v, evicted := c.SetIfAbsent(1, 10); !present || a != 0 || evicted || k != 0 || v != 0 {
+		t.Errorf("SetIfAbsent(1, 10) = %d, %t, %d, %d, %t, want the value 0 that 1 has", a, present, k, v, evicted)
+	}
+	if v, ok := c.Peek(1); !ok || v != 0 {
+		t.Errorf("Peek(1) = %d, %t after SetIfAbsent found it, want 0", v, ok)
+	}
+
+	// What Set stores, SetIfAbsent finds.
+	c.Set(1, 11)
+	if a, present, _, _, _ := c.SetIfAbsent(1, 12); !present || a != 11 {
+		t.Errorf("SetIfAbsent(1, 12) = %d, %t after Set(1, 11), want 11, true", a, present)
+	}
+
+	// A deleted key is absent again.
+	c.Delete(1)
+	if a, present, _, _, evicted := c.SetIfAbsent(1, 13); present || a != 13 || evicted {
+		t.Errorf("SetIfAbsent(1, 13) = %d, %t, evicted %t after Delete, want 13 stored", a, present, evicted)
+	}
+	if got := c.Len(); got != 1 {
+		t.Errorf("Len() = %d, want 1", got)
+	}
+
+	// A full cache makes room as Set does, and says for whom.
+	c.SetIfAbsent(2, 20)
+	a, present, k, v, evicted := c.SetIfAbsent(3, 30)
+	held := k == 1 && v == 13 || k == 2 && v == 20
+	if present || a != 30 || !evicted || !held {
+		t.Errorf("SetIfAbsent(3, 30) = %d, %t, %d, %d, %t, want 30 stored and 1=13 or 2=20 evicted", a, present, k, v, evicted)
+	}
+	if got := c.Len(); got != 2 {
+		t.Errorf("Len() = %d, want 2", got)
+	}
+	if _, ok := c.Peek(k); ok {
+		t.Errorf("Peek(%d) found the key that SetIfAbsent evicted", k)
+	}
+	if v, ok := c.Peek(3); !ok || v != 30 {
+		t.Errorf("Peek(3) = %d, %t, want 30", v, ok)
+	}
+}
+
 func testZeroCapacity(t *testing.T, newCache Factory[int, int]) {
 	t.Helper()
 
@@ -213,6 +265,9 @@ func testZeroCapacity(t *testing.T, newCache Factory[int, int]) {
 			}
 			if k, v, displaced := c.Set(1, 2); !displaced || k != 1 || v != 2 {
 				t.Errorf("capacity %d: Set(1, 2) = %d, %d, %t, want the entry handed back", capacity, k, v, displaced)
+			}
+			if a, present, k, v, evicted := c.SetIfAbsent(1, 2); present || a != 2 || !evicted || k != 1 || v != 2 {
+				t.Errorf("capacity %d: SetIfAbsent(1, 2) = %d, %t, %d, %d, %t, want the entry handed back", capacity, a, present, k, v, evicted)
 			}
 			if _, ok := c.Get(1); ok {
 				t.Errorf("capacity %d: Get found a key", capacity)
@@ -466,6 +521,35 @@ func testModel(t *testing.T, newCache Factory[int, int]) {
 						t.Fatalf("step %d: Peek(%d) = %d, %t, want %d, %t", step, key, v, ok, want, present)
 					}
 
+				case op < 60:
+					actual, found, oldKey, oldValue, evicted := c.SetIfAbsent(key, step)
+					if present {
+						if !found || actual != want || evicted {
+							t.Fatalf("step %d: SetIfAbsent(%d) = %d, %t, %d, %d, %t, want the value %d that is there",
+								step, key, actual, found, oldKey, oldValue, evicted, want)
+						}
+						break
+					}
+					if found || actual != step {
+						t.Fatalf("step %d: SetIfAbsent(%d) = %d, %t for a key that is not there", step, key, actual, found)
+					}
+					if evicted {
+						if tt.shards == 1 && len(model) < tt.capacity {
+							t.Fatalf("step %d: SetIfAbsent(%d) evicted %d=%d from a cache that holds %d entries of %d",
+								step, key, oldKey, oldValue, len(model), tt.capacity)
+						}
+						gone, ok := model[oldKey]
+						if !ok || gone != oldValue || oldKey == key {
+							t.Fatalf("step %d: SetIfAbsent(%d) evicted %d=%d, which the cache did not hold (%d, %t)",
+								step, key, oldKey, oldValue, gone, ok)
+						}
+						delete(model, oldKey)
+					}
+					model[key] = step
+					if len(model) > tt.capacity {
+						t.Fatalf("step %d: SetIfAbsent(%d) took the cache past its capacity", step, key)
+					}
+
 				case op < 90:
 					oldKey, oldValue, displaced := c.Set(key, step)
 					switch {
@@ -575,9 +659,15 @@ func testConcurrent(t *testing.T, newCache Factory[int, int]) {
 							if v, ok := c.Peek(key); ok {
 								check("Peek", key, v)
 							}
-						case op < 900:
+						case op < 800:
 							if k, v, displaced := c.Set(key, valueOf(key)); displaced {
 								check("Set", k, v)
+							}
+						case op < 900:
+							actual, _, k, v, evicted := c.SetIfAbsent(key, valueOf(key))
+							check("SetIfAbsent", key, actual)
+							if evicted {
+								check("SetIfAbsent", k, v)
 							}
 						case op < 990:
 							if v, ok := c.Delete(key); ok {
@@ -643,6 +733,16 @@ func testKeyIdentity(t *testing.T, newCache Factory[float64, int]) {
 			t.Errorf("%d shards: Len() = %d, want 1", shards, got)
 		}
 
+		// SetIfAbsent finds an equal key, and changes nothing about it.
+		if a, present, _, _, _ := c.SetIfAbsent(zero, 9); !present || a != 2 {
+			t.Errorf("%d shards: SetIfAbsent(+0) = %d, %t, want 2, true", shards, a, present)
+		}
+		for k := range c.All() {
+			if !math.Signbit(k) {
+				t.Errorf("%d shards: SetIfAbsent(+0) replaced the key -0", shards)
+			}
+		}
+
 		// A key that is not equal to itself is one that nobody can ask for.
 		// Its entries take up room like any other until they are evicted.
 		nan := math.NaN()
@@ -664,6 +764,9 @@ func testKeyIdentity(t *testing.T, newCache Factory[float64, int]) {
 		}
 		if nans != 2 || c.Len() != 3 {
 			t.Errorf("%d shards: the cache holds %d entries, %d of them under NaN, want 3 and 2", shards, c.Len(), nans)
+		}
+		if a, present, _, _, _ := c.SetIfAbsent(nan, 5); present || a != 5 {
+			t.Errorf("%d shards: SetIfAbsent(NaN) = %d, %t, want 5 stored", shards, a, present)
 		}
 		for i := range 1000 {
 			c.Set(float64(i), i)
@@ -773,8 +876,11 @@ func NoAllocs(t *testing.T, f Factories) {
 				c.Get(-key)      // Misses.
 				c.Peek(key)      // Finds it again.
 				if key%8 == 0 {
-					c.Delete(key - 1) // Deletes the one before.
+					c.Delete(key - 1)         // Deletes the one before.
+					c.SetIfAbsent(key-1, key) // Stores it again.
 				}
+				c.SetIfAbsent(key, key)   // Finds it once more.
+				c.SetIfAbsent(-key, -key) // Stores an entry and evicts one.
 				c.Len()
 			}
 			if c.Len() < capacity/2 {
@@ -799,6 +905,7 @@ func NoAllocs(t *testing.T, f Factories) {
 				c.Get(key)
 				c.Get("missing")
 				c.Peek(key)
+				c.SetIfAbsent(keys[(i+7)%len(keys)], key)
 				if i%3 == 0 {
 					c.Delete(key)
 				}

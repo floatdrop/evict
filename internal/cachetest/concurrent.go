@@ -280,6 +280,104 @@ func Present(t *testing.T, newCache Factory[int, int]) {
 	}
 }
 
+// SetIfAbsentOnce checks that of the goroutines that call SetIfAbsent for one
+// key at the same time, exactly one stores its value, and that the others and
+// any reader get that one.
+//
+// Every shard has room for every key, so nothing that is stored leaves the
+// cache. The writers go through the keys in the same order, so that they get
+// to each key at about the same time, while readers look the keys up.
+func SetIfAbsentOnce(t *testing.T, newCache Factory[int, int]) {
+	t.Helper()
+
+	const (
+		writers = 6
+		readers = 2
+	)
+	rounds := 100
+	if testing.Short() {
+		rounds = 10
+	}
+
+	for _, tt := range []struct{ keys, shards int }{{1, 1}, {7, 1}, {500, 1}, {500, 8}} {
+		t.Run(fmt.Sprintf("keys=%d/shards=%d", tt.keys, tt.shards), func(t *testing.T) {
+			t.Parallel()
+
+			c := newCache(tt.keys*tt.shards, tt.shards)
+			for round := range rounds {
+				c.Clear()
+
+				var (
+					wg    sync.WaitGroup
+					start = make(chan struct{})
+					won   = make([]atomic.Int32, tt.keys)
+					got   = make([][]int, writers) // What SetIfAbsent returned to each writer.
+					seen  = make([][]int, readers) // What Get returned to each reader, or -1.
+				)
+				for w := range writers {
+					got[w] = make([]int, tt.keys)
+					wg.Go(func() {
+						<-start
+						for key := range tt.keys {
+							value := round*writers + w
+							actual, present, oldKey, _, evicted := c.SetIfAbsent(key, value)
+							if evicted {
+								t.Errorf("SetIfAbsent(%d) evicted %d from a cache with room for it", key, oldKey)
+								return
+							}
+							if !present {
+								if actual != value {
+									t.Errorf("SetIfAbsent(%d, %d) stored %d", key, value, actual)
+									return
+								}
+								won[key].Add(1)
+							}
+							got[w][key] = actual
+						}
+					})
+				}
+				for r := range readers {
+					seen[r] = make([]int, tt.keys)
+					wg.Go(func() {
+						<-start
+						for key := range tt.keys {
+							seen[r][key] = -1
+							if v, ok := c.Get(key); ok {
+								seen[r][key] = v
+							}
+						}
+					})
+				}
+				close(start)
+				wg.Wait()
+				if t.Failed() {
+					return
+				}
+
+				for key := range tt.keys {
+					if n := won[key].Load(); n != 1 {
+						t.Fatalf("round %d: %d goroutines stored a value for key %d, want 1", round, n, key)
+					}
+					want, ok := c.Peek(key)
+					if !ok {
+						t.Fatalf("round %d: key %d is missing", round, key)
+					}
+					for w := range writers {
+						if got[w][key] != want {
+							t.Fatalf("round %d: SetIfAbsent(%d) gave writer %d the value %d, want %d", round, key, w, got[w][key], want)
+						}
+					}
+					for r := range readers {
+						if v := seen[r][key]; v >= 0 && v != want {
+							t.Fatalf("round %d: Get(%d) gave reader %d the value %d, want %d", round, key, r, v, want)
+						}
+					}
+				}
+			}
+		})
+	}
+}
+
 // ClearAtOnce checks that a shard is cleared in one go as far as anyone can
 // tell: once a reader has found a key gone, no reader finds another key that
 // was to go with it.

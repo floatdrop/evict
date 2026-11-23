@@ -17,6 +17,7 @@ const (
 	Get Kind = iota
 	Peek
 	Set
+	SetIfAbsent
 	Delete
 	Clear
 )
@@ -28,18 +29,20 @@ type Op struct {
 }
 
 // RandomOps returns n operations on keys in [0, keys): mostly reads and
-// writes, some deletions, and a rare Clear.
+// writes, some of them with SetIfAbsent, some deletions, and a rare Clear.
 func RandomOps(rng *rand.Rand, keys, n int) iter.Seq[Op] {
 	return func(yield func(Op) bool) {
 		for i := range n {
 			op := Op{Key: rng.IntN(keys), Value: i}
 			switch p := rng.IntN(1000); {
-			case p < 400:
+			case p < 350:
 				op.Kind = Get
-			case p < 500:
+			case p < 450:
 				op.Kind = Peek
-			case p < 900:
+			case p < 800:
 				op.Kind = Set
+			case p < 900:
+				op.Kind = SetIfAbsent
 			case p < 999:
 				op.Kind = Delete
 			default:
@@ -59,8 +62,10 @@ func BytesOps(data []byte) iter.Seq[Op] {
 		for i, b := range data {
 			op := Op{Key: int(b & 31), Value: i}
 			switch b >> 5 {
-			case 0, 1, 2:
+			case 0, 1:
 				op.Kind = Get
+			case 2:
+				op.Kind = SetIfAbsent
 			case 3:
 				op.Kind = Peek
 			case 4, 5:
@@ -119,6 +124,13 @@ func Compare(t *testing.T, got, want evict.Cache[int, int], ops iter.Seq[Op]) {
 			if gk != wk || gv != wv || gok != wok {
 				t.Fatalf("step %d: Set(%d, %d) = %d, %d, %t, want %d, %d, %t",
 					step, op.Key, op.Value, gk, gv, gok, wk, wv, wok)
+			}
+		case SetIfAbsent:
+			ga, gp, gk, gv, gok := got.SetIfAbsent(op.Key, op.Value)
+			wa, wp, wk, wv, wok := want.SetIfAbsent(op.Key, op.Value)
+			if ga != wa || gp != wp || gk != wk || gv != wv || gok != wok {
+				t.Fatalf("step %d: SetIfAbsent(%d, %d) = %d, %t, %d, %d, %t, want %d, %t, %d, %d, %t",
+					step, op.Key, op.Value, ga, gp, gk, gv, gok, wa, wp, wk, wv, wok)
 			}
 		case Delete:
 			gv, gok := got.Delete(op.Key)

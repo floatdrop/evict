@@ -328,10 +328,11 @@ func TestTTLBounds(t *testing.T) {
 }
 
 // hooked is a cache that runs a function after each Peek, to let an entry come
-// or go between SetWithTTL's look and its Set.
+// or go between SetWithTTL's look and its Set, and another after each
+// SetIfAbsent.
 type hooked struct {
 	evict.Cache[string, expire.Entry[int]]
-	after func()
+	after, afterAbsent func()
 }
 
 func (h *hooked) Peek(key string) (expire.Entry[int], bool) {
@@ -340,6 +341,14 @@ func (h *hooked) Peek(key string) (expire.Entry[int], bool) {
 		h.after()
 	}
 	return e, ok
+}
+
+func (h *hooked) SetIfAbsent(key string, e expire.Entry[int]) (actual expire.Entry[int], present bool, oldKey string, oldValue expire.Entry[int], evicted bool) {
+	actual, present, oldKey, oldValue, evicted = h.Cache.SetIfAbsent(key, e)
+	if h.afterAbsent != nil {
+		h.afterAbsent()
+	}
+	return actual, present, oldKey, oldValue, evicted
 }
 
 // SetWithTTL with a time to live of zero or less decides by what it sees when
@@ -378,6 +387,245 @@ func TestSetWithTTLRace(t *testing.T) {
 	}
 	if !found(t, c, "y", 4) {
 		t.Error("y is gone after SetWithTTL found no entry of it")
+	}
+}
+
+// SetIfAbsent takes an expired entry for no entry, by any policy: it stores the
+// new one in its place, with a time to live of its own, and hands the expired
+// one back.
+func TestSetIfAbsentExpired(t *testing.T) {
+	t.Parallel()
+
+	type result struct {
+		actual    int
+		present   bool
+		oldKey    string
+		oldValue  int
+		displaced bool
+	}
+	setIfAbsent := func(c *expire.Cache[string, int], key string, value int) result {
+		var r result
+		r.actual, r.present, r.oldKey, r.oldValue, r.displaced = c.SetIfAbsent(key, value)
+		return r
+	}
+
+	for name, newCache := range policies {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			clock := expire.NewClock()
+			c := expire.WrapWith(newCache(), time.Second, clock)
+
+			c.Set("a", 1)
+			clock.Advance(time.Second - 1)
+			if r, want := setIfAbsent(c, "a", 2), (result{1, true, "", 0, false}); r != want {
+				t.Errorf("SetIfAbsent(a, 2) before a expired = %+v, want %+v", r, want)
+			}
+			clock.Advance(1)
+			if r, want := setIfAbsent(c, "a", 3), (result{3, false, "a", 1, true}); r != want {
+				t.Errorf("SetIfAbsent(a, 3) after a expired = %+v, want %+v", r, want)
+			}
+			if !found(t, c, "a", 3) {
+				t.Fatal("a is not found after SetIfAbsent replaced it")
+			}
+
+			clock.Advance(time.Second - 1)
+			if r, want := setIfAbsent(c, "a", 4), (result{3, true, "", 0, false}); r != want {
+				t.Errorf("SetIfAbsent(a, 4) before the new a expired = %+v, want %+v", r, want)
+			}
+			clock.Advance(1)
+			if found(t, c, "a", 3) {
+				t.Error("a is found when the second of the new entry is up")
+			}
+
+			// One that SetWithTTL stored expired is no entry either.
+			c.SetWithTTL("a", 5, 0)
+			if r, want := setIfAbsent(c, "a", 6), (result{6, false, "a", 5, true}); r != want {
+				t.Errorf("SetIfAbsent(a, 6) over an entry set to expire at once = %+v, want %+v", r, want)
+			}
+			if n := c.Len(); n != 1 {
+				t.Errorf("Len() = %d, want 1", n)
+			}
+		})
+	}
+}
+
+// SetIfAbsent that finds an expired entry looks again before it replaces it.
+// An entry that has not expired, stored in between, is found. If the expired
+// one has left, before the second look or after, the new one is stored as if
+// there had been none, with eviction if that is what it takes, and an entry
+// that comes instead is found, or replaced if it has expired too. A Set just
+// after the second look is replaced and handed back, as the documentation
+// says.
+func TestSetIfAbsentRace(t *testing.T) {
+	t.Parallel()
+
+	clock := expire.NewClock()
+	h := &hooked{Cache: lru.New[string, expire.Entry[int]](2)}
+	c := expire.WrapWith(h, time.Second, clock)
+
+	// Another SetIfAbsent replaces it first.
+	c.Set("a", 1)
+	clock.Advance(time.Second)
+	h.afterAbsent = func() {
+		h.afterAbsent = nil
+		if v, present, _, _, _ := c.SetIfAbsent("a", 2); v != 2 || present {
+			t.Errorf("the other SetIfAbsent(a, 2) = %d, %t; want 2, false", v, present)
+		}
+	}
+	if v, present, k, old, evicted := c.SetIfAbsent("a", 3); v != 2 || !present || k != "" || old != 0 || evicted {
+		t.Errorf("SetIfAbsent(a, 3) = %d, %t, %q, %d, %t; want 2, true, \"\", 0, false", v, present, k, old, evicted)
+	}
+
+	// The expired entry leaves, and another key takes its place, so the
+	// cache is full.
+	c.Set("live", 4)
+	clock.Advance(time.Second)
+	c.Set("live", 4)
+	h.afterAbsent = func() {
+		h.afterAbsent = nil
+		c.Delete("a")
+		c.Set("other", 5)
+	}
+	if v, present, k, old, evicted := c.SetIfAbsent("a", 6); v != 6 || present || k != "live" || old != 4 || !evicted {
+		t.Errorf("SetIfAbsent(a, 6) as a left = %d, %t, %q, %d, %t; want 6, false, live, 4, true", v, present, k, old, evicted)
+	}
+	if !found(t, c, "a", 6) || !found(t, c, "other", 5) {
+		t.Fatal("a or other is gone")
+	}
+
+	// The expired entry leaves, and one comes instead that expires too.
+	clock.Advance(time.Second)
+	h.afterAbsent = func() {
+		h.afterAbsent = nil
+		c.Delete("a")
+		h.after = func() {
+			h.after = nil
+			c.Set("a", 7)
+			clock.Advance(time.Second)
+		}
+	}
+	if v, present, k, old, evicted := c.SetIfAbsent("a", 8); v != 8 || present || k != "a" || old != 7 || !evicted {
+		t.Errorf("SetIfAbsent(a, 8) as an entry came and expired = %d, %t, %q, %d, %t; want 8, false, a, 7, true", v, present, k, old, evicted)
+	}
+
+	// A Set just after SetIfAbsent has looked again.
+	clock.Advance(time.Second)
+	h.after = func() {
+		h.after = nil
+		c.Set("a", 9)
+	}
+	if v, present, k, old, evicted := c.SetIfAbsent("a", 10); v != 10 || present || k != "a" || old != 9 || !evicted {
+		t.Errorf("SetIfAbsent(a, 10) as a was set = %d, %t, %q, %d, %t; want 10, false, a, 9, true", v, present, k, old, evicted)
+	}
+	if !found(t, c, "a", 10) {
+		t.Error("a does not have the value of SetIfAbsent")
+	}
+
+	// The expired entry leaves just after SetIfAbsent has looked again:
+	// nothing leaves for the new one while there is room, and the least
+	// recently used entry when there is not.
+	clock.Advance(time.Second)
+	h.after = func() {
+		h.after = nil
+		c.Delete("a")
+	}
+	if v, present, k, old, evicted := c.SetIfAbsent("a", 11); v != 11 || present || k != "" || old != 0 || evicted {
+		t.Errorf("SetIfAbsent(a, 11) as a left = %d, %t, %q, %d, %t; want 11, false, \"\", 0, false", v, present, k, old, evicted)
+	}
+	clock.Advance(time.Second)
+	h.after = func() {
+		h.after = nil
+		c.Delete("a")
+		c.Set("live", 12)
+	}
+	if v, present, k, old, evicted := c.SetIfAbsent("a", 13); v != 13 || present || k != "other" || old != 5 || !evicted {
+		t.Errorf("SetIfAbsent(a, 13) as a left a full cache = %d, %t, %q, %d, %t; want 13, false, other, 5, true", v, present, k, old, evicted)
+	}
+
+	// The expired entry leaves, and one that has not expired comes before
+	// SetIfAbsent stores its own: that is found.
+	clock.Advance(time.Second)
+	h.afterAbsent = func() {
+		h.afterAbsent = nil
+		c.Delete("a")
+		h.after = func() {
+			h.after = nil
+			c.Set("a", 14)
+		}
+	}
+	if v, present, k, old, evicted := c.SetIfAbsent("a", 15); v != 14 || !present || k != "" || old != 0 || evicted {
+		t.Errorf("SetIfAbsent(a, 15) as a came back = %d, %t, %q, %d, %t; want 14, true, \"\", 0, false", v, present, k, old, evicted)
+	}
+	if !found(t, c, "a", 14) {
+		t.Error("a does not have the value that came in")
+	}
+}
+
+// Of the goroutines that call SetIfAbsent for a key whose entry has expired,
+// one replaces it and the others find what it stored. In each round the
+// entries of several keys expire, and the goroutines go over them in the same
+// order, so that they race for each. The keys are few enough for no shard to
+// be full.
+func TestSetIfAbsentExpiredOnce(t *testing.T) {
+	t.Parallel()
+
+	rounds := 200
+	if testing.Short() {
+		rounds = 20
+	}
+	const goroutines, keys = 8, 16
+	names := make([]string, keys)
+	for k := range names {
+		names[k] = "k" + strconv.Itoa(k)
+	}
+	for name, newCache := range policies {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			clock := expire.NewClock()
+			c := expire.WrapWith(newCache(), time.Second, clock)
+			for round := range rounds {
+				for _, key := range names {
+					c.Set(key, -1)
+				}
+				clock.Advance(time.Second)
+
+				start := make(chan struct{})
+				var stored [keys]atomic.Int32
+				var actual [goroutines][keys]int
+				var wg sync.WaitGroup
+				for g := range goroutines {
+					wg.Go(func() {
+						<-start
+						for k, key := range names {
+							v, present, oldKey, old, evicted := c.SetIfAbsent(key, g)
+							if !present {
+								stored[k].Add(1)
+								if v != g || oldKey != key || old != -1 || !evicted {
+									t.Errorf("round %d: SetIfAbsent(%s, %d) stored it but returned %d, %q, %d, %t; want %d, %s, -1, true", round, key, g, v, oldKey, old, evicted, g, key)
+								}
+							}
+							actual[g][k] = v
+						}
+					})
+				}
+				close(start)
+				wg.Wait()
+
+				for k, key := range names {
+					if n := stored[k].Load(); n != 1 {
+						t.Fatalf("round %d: %d goroutines stored their value under %s, want 1", round, n, key)
+					}
+					want, _ := c.Get(key)
+					for g := range actual {
+						if actual[g][k] != want {
+							t.Fatalf("round %d: goroutine %d got %d for %s, but it has %d", round, g, actual[g][k], key, want)
+						}
+					}
+				}
+			}
+		})
 	}
 }
 
@@ -590,7 +838,11 @@ func TestConcurrent(t *testing.T) {
 						key := strconv.Itoa(k)
 						switch rng.IntN(4) {
 						case 0:
-							c.SetWithTTL(key, k, time.Duration(rng.IntN(20))*time.Millisecond)
+							if rng.IntN(2) == 0 {
+								c.SetWithTTL(key, k, time.Duration(rng.IntN(20))*time.Millisecond)
+							} else if v, _, _, _, _ := c.SetIfAbsent(key, k); v != k {
+								t.Errorf("SetIfAbsent(%q) = %d", key, v)
+							}
 						case 1:
 							if v, ok := c.Delete(key); ok && v != k {
 								t.Errorf("Delete(%q) = %d", key, v)
@@ -647,6 +899,16 @@ func TestStats(t *testing.T) {
 
 	if s := c.Stats(); s.Hits != 6 || s.Misses != 4 {
 		t.Errorf("%d hits and %d misses, want 6 and 4", s.Hits, s.Misses)
+	}
+
+	// An expired entry that SetIfAbsent replaces is handed back, but was
+	// not evicted, as one that Set replaces was not.
+	if _, present, k, old, displaced := c.SetIfAbsent(5, 100); present || k != 5 || old != 5 || !displaced {
+		t.Errorf("SetIfAbsent(5, 100) over an expired 5 = %t, %d, %d, %t; want false, 5, 5, true", present, k, old, displaced)
+	}
+	c.Set(6, 101)
+	if s := c.Stats(); s.Evictions != 0 || s.Hits != 6 || s.Misses != 4 {
+		t.Errorf("%d evictions, %d hits and %d misses, want 0, 6 and 4", s.Evictions, s.Hits, s.Misses)
 	}
 }
 

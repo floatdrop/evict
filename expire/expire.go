@@ -10,15 +10,16 @@
 // # Expired entries
 //
 // An entry that has expired is not found: Get, Peek, GetMany and Delete report
-// it missing, and All passes it over. It stays in the cache all the same, until
-// it is evicted, replaced or deleted, or the cache is cleared. Until then it
-// takes up room, Len counts it, and what it holds on to is not garbage.
+// it missing, All passes it over, and SetIfAbsent stores a new entry in its
+// place. It stays in the cache all the same, until it is evicted, replaced or
+// deleted, or the cache is cleared. Until then it takes up room, Len counts
+// it, and what it holds on to is not garbage.
 //
-// Set hands an expired entry back when it pushes it out or replaces it, as it
-// does any entry, so that what it holds on to can be released. Delete and
-// Clear do not. Where values have to be released, use the wrapped cache for
-// those: its Delete and All return entries whether they have expired or not,
-// and [Entry.Value] gives their values.
+// Set and SetIfAbsent hand an expired entry back when they push it out or
+// replace it, as they do any entry, so that what it holds on to can be
+// released. Delete and Clear do not. Where values have to be released, use the
+// wrapped cache for those: its Delete and All return entries whether they have
+// expired or not, and [Entry.Value] gives their values.
 //
 // A read that finds an expired entry leaves it there, for the Set that usually
 // follows: that replaces the entry in place, and the policy goes on treating
@@ -66,6 +67,7 @@
 package expire
 
 import (
+	"hash/maphash"
 	"iter"
 	"math"
 	"sync"
@@ -89,6 +91,10 @@ const (
 	// cacheLine is a size that no two CPUs' cache lines straddle on the
 	// platforms Go runs on.
 	cacheLine = 128
+
+	// stripes is how many locks the keys share for replacing expired
+	// entries in SetIfAbsent.
+	stripes = 64
 )
 
 // Entry is a value as the wrapped cache holds it, together with the time at
@@ -114,6 +120,12 @@ type Cache[K comparable, V any] struct {
 	// batches holds arrays that GetMany looks up entries in. Its own
 	// would move to the heap, since the cache is behind an interface.
 	batches sync.Pool
+
+	// locks have the SetIfAbsent calls that find an expired entry of the
+	// same key take turns, and seed picks one for a key. They are apart
+	// from the fields that readers look at, since they are written to.
+	locks *[stripes]sync.Mutex
+	seed  maphash.Seed
 }
 
 // manyGetter is a cache that looks up several keys at once, as sieve, s3fifo
@@ -205,7 +217,9 @@ func (c *clock) deadline(ttl time.Duration) int64 {
 //
 // Using cache directly as well is fine: its entries are the ones the Cache
 // holds, and its methods do not look at the time. They return entries that
-// have expired, which those of the Cache do not.
+// have expired, which those of the Cache do not. The methods of a cache of your
+// own must not call those of the Cache, though: SetIfAbsent holds a lock while
+// it calls them.
 func Wrap[K comparable, V any](cache evict.Cache[K, Entry[V]], ttl time.Duration) *Cache[K, V] {
 	if ttl <= 0 {
 		panic("expire: Wrap: ttl must be positive")
@@ -216,7 +230,10 @@ func Wrap[K comparable, V any](cache evict.Cache[K, Entry[V]], ttl time.Duration
 func wrap[K comparable, V any](cache evict.Cache[K, Entry[V]], ttl time.Duration, clock *clock) *Cache[K, V] {
 	clock.begin()
 	many, _ := cache.(manyGetter[K, Entry[V]])
-	return &Cache[K, V]{cache: cache, many: many, clock: clock, ttl: ttl}
+	return &Cache[K, V]{
+		cache: cache, many: many, clock: clock, ttl: ttl,
+		locks: new([stripes]sync.Mutex), seed: maphash.MakeSeed(),
+	}
 }
 
 // expired reports whether an entry that expires at deadline has. Neither the
@@ -315,6 +332,62 @@ func (c *Cache[K, V]) SetWithTTL(key K, value V, ttl time.Duration) (oldKey K, o
 	}
 	oldKey, old, displaced := c.cache.Set(key, Entry[V]{value: value, deadline: c.clock.deadline(ttl)})
 	return oldKey, old.value, displaced
+}
+
+// SetIfAbsent stores value under key, to expire after the time to live that
+// the Cache was made with, unless key has an entry that has not expired. If it
+// has, SetIfAbsent changes nothing but records the access with the eviction
+// policy, and returns the value of the entry with present true. Otherwise it
+// returns value with present false, and reports the entry that left the cache
+// for it, if there is one: one of another key, evicted to make room, or the
+// expired entry of key, which the new one replaces as Set would. See
+// [evict.Cache].
+//
+// Of the goroutines that call SetIfAbsent for one key at the same time, one
+// stores its value and the others get it back, unless it leaves the cache or
+// expires in between. Those that find an expired entry take turns replacing
+// it, and look again first. The exception is a value stored just after one of
+// them has looked: by a Set of key, or by a SetIfAbsent that found no entry
+// because the expired one had just left the cache. That value is replaced and
+// handed back, with oldKey == key, so two goroutines may each be told that
+// they stored theirs.
+func (c *Cache[K, V]) SetIfAbsent(key K, value V) (actual V, present bool, oldKey K, oldValue V, evicted bool) {
+	e := Entry[V]{value: value, deadline: c.clock.deadline(c.ttl)}
+	a, present, oldKey, old, evicted := c.cache.SetIfAbsent(key, e)
+	if present && c.expired(a.deadline) {
+		return c.replace(key, e)
+	}
+	return a.value, present, oldKey, old.value, evicted
+}
+
+// replace stores e under key for SetIfAbsent, which found an expired entry
+// there, unless another goroutine has stored one that has not expired since.
+// It looks again under a lock that goroutines doing the same for key share,
+// with Peek, since SetIfAbsent has told the policy about the access already.
+func (c *Cache[K, V]) replace(key K, e Entry[V]) (actual V, present bool, oldKey K, oldValue V, evicted bool) {
+	mu := &c.locks[maphash.Comparable(c.seed, key)%stripes]
+	mu.Lock()
+	defer mu.Unlock()
+
+	a, ok := c.cache.Peek(key)
+	if !ok {
+		// The expired entry has left, so e goes in as if there had been
+		// none, unless an entry has come in its place.
+		b, found, k, old, out := c.cache.SetIfAbsent(key, e)
+		if !found {
+			return e.value, false, k, old.value, out
+		}
+		a = b
+	}
+	if !c.expired(a.deadline) {
+		var none K
+		var zero V
+		return a.value, true, none, zero, false
+	}
+	// It has expired, as one that came in may have too: SetWithTTL stores
+	// such entries.
+	k, old, out := c.cache.Set(key, e)
+	return e.value, false, k, old.value, out
 }
 
 // Delete removes key and returns the value it had, unless that had expired.

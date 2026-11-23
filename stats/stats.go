@@ -15,6 +15,9 @@
 //   - Set: an eviction if it pushed out the entry of another key to make
 //     room, or if the cache has no capacity and handed the new entry back.
 //     Replacing the entry of a key is not an eviction.
+//   - SetIfAbsent: the same as Set if it stores the value, nothing if the
+//     key was there. It counts no hit or miss either way: a caller that
+//     loads what a Get missed has had the miss counted already.
 //   - Peek, Delete, Clear and All: nothing.
 //
 // The counts only go up, and Clear does not reset them. For rates, take a
@@ -62,8 +65,9 @@ type Snapshot struct {
 	// that they did not.
 	Hits, Misses uint64
 
-	// Evictions counts the entries that Set pushed out to make room, and
-	// those that a cache without capacity handed straight back.
+	// Evictions counts the entries that Set and SetIfAbsent pushed out to
+	// make room, and those that a cache without capacity handed straight
+	// back.
 	Evictions uint64
 
 	// Len is the number of entries in the cache, and Cap the number it can
@@ -219,6 +223,20 @@ func (c *Cache[K, V]) Set(key K, value V) (oldKey K, oldValue V, displaced bool)
 		atomic.AddUint64(&c.stripe().evictions, 1)
 	}
 	return oldKey, oldValue, displaced
+}
+
+// SetIfAbsent stores value under key unless the cache holds key already, and
+// counts an eviction if the entry it reports is not one that key had, as Set
+// does.
+func (c *Cache[K, V]) SetIfAbsent(key K, value V) (actual V, present bool, oldKey K, oldValue V, evicted bool) {
+	actual, present, oldKey, oldValue, evicted = c.cache.SetIfAbsent(key, value)
+	// The caches of this module only report an entry of another key, or
+	// the new one itself if they have no capacity. An expire.Cache may also
+	// report the expired entry of key that the new one replaced.
+	if evicted && (oldKey != key || c.zero) {
+		atomic.AddUint64(&c.stripe().evictions, 1)
+	}
+	return actual, present, oldKey, oldValue, evicted
 }
 
 // Delete removes key and returns the value it had, and counts nothing.

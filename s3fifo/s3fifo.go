@@ -159,7 +159,7 @@ type shard[K comparable, V any] struct {
 
 	// evicted says that the shard has been full since it was made or last
 	// cleared. Until then, new entries are not all sent through the small
-	// queue; see set.
+	// queue; see add.
 	evicted bool
 }
 
@@ -527,6 +527,44 @@ func (s *shard[K, V]) set(h uint64, key K, value V) (oldKey K, oldValue V, displ
 		n.SetMeta(min(n.Meta()+1, maxFrequency))
 		return oldKey, oldValue, true
 	}
+	return s.add(h, key, value)
+}
+
+// SetIfAbsent stores value under key unless the cache holds key already. If
+// it does, SetIfAbsent changes nothing but counts a read, as Get does, and
+// returns the value that key has, with present true. Otherwise it stores value
+// as Set does, returns it with present false, and reports the entry that the
+// key's shard evicted to make room, if any. A cache without capacity hands the
+// new entry straight back as evicted.
+//
+// Looking for key and storing value happen at once, under the lock of the
+// key's shard: of the goroutines that call SetIfAbsent for one key at the
+// same time, one stores its value and the others get it back as actual,
+// unless it has left the cache in between.
+func (c *Cache[K, V]) SetIfAbsent(key K, value V) (actual V, present bool, oldKey K, oldValue V, evicted bool) {
+	h := maphash.Comparable(c.seed, key)
+	s := &c.shards[uint32(h>>32)&c.mask]
+
+	s.mu.Lock()
+	if idx := s.slab.Find(uint32(h), key); idx != 0 {
+		n := &s.slab.Nodes[idx]
+		n.SetMeta(min(n.Meta()+1, maxFrequency))
+		actual = n.Value
+		s.mu.Unlock()
+		return actual, true, oldKey, oldValue, false
+	}
+	oldKey, oldValue, evicted = s.add(h, key, value)
+	s.mu.Unlock()
+
+	return value, false, oldKey, oldValue, evicted
+}
+
+// add stores an entry for a key that the shard does not hold, and returns the
+// entry that it evicted to make room, if any, or the new entry itself if the
+// shard has no capacity.
+func (s *shard[K, V]) add(h uint64, key K, value V) (oldKey K, oldValue V, evicted bool) {
+	sl := &s.slab
+	hash := uint32(h)
 
 	if s.capacity == 0 {
 		return key, value, true
@@ -537,7 +575,7 @@ func (s *shard[K, V]) set(h uint64, key K, value V) (oldKey K, oldValue V, displ
 	remembered := s.ghosts.Recall(ghostOf(hash, tagOf(h, small)), s.returns)
 	if s.smalls+s.mains == s.capacity {
 		oldKey, oldValue = s.evict()
-		displaced = true
+		evicted = true
 	}
 
 	// A shard that has yet to fill up for the first time has nothing to
@@ -557,7 +595,7 @@ func (s *shard[K, V]) set(h uint64, key K, value V) (oldKey K, oldValue V, displ
 		sl.PushFront(small, idx)
 		s.smalls++
 	}
-	return oldKey, oldValue, displaced
+	return oldKey, oldValue, evicted
 }
 
 // evict takes one entry out of the shard, which must not be empty, and
@@ -736,6 +774,7 @@ var (
 	_ = (*Cache[int, int]).Peek
 	_ = (*Cache[int, int]).GetMany
 	_ = (*Cache[int, int]).Set
+	_ = (*Cache[int, int]).SetIfAbsent
 	_ = (*Cache[int, int]).Delete
 	_ = (*Cache[int, int]).Len
 	_ = (*Cache[int, int]).Clear

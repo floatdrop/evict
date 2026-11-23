@@ -12,6 +12,8 @@ Fixed-capacity in-memory caches for Go.
 - **Nothing for the GC to scan** when keys and values hold no pointers.
 - **Batch lookups.** `GetMany` loads up to 32 entries from memory in parallel.
 - **Evictions handed back.** `Set` returns the entry it replaced or evicted.
+- **Insert if absent.** `SetIfAbsent` stores a value only if the key has none; of goroutines
+  racing on one key, one stores its value and the rest get it back.
 - **Statistics.** `stats.Wrap` counts hits, misses and evictions.
 - **Expiry.** `expire.Wrap` gives entries a time to live.
 - **Safe for concurrent use**, and depends only on the standard library.

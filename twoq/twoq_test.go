@@ -321,6 +321,15 @@ func (m *model) Set(key, value int) (oldKey, oldValue int, displaced bool) {
 	return oldKey, oldValue, displaced
 }
 
+// SetIfAbsent is Get for a key that is there and Set for one that is not.
+func (m *model) SetIfAbsent(key, value int) (actual int, present bool, oldKey, oldValue int, evicted bool) {
+	if actual, ok := m.Get(key); ok {
+		return actual, true, 0, 0, false
+	}
+	oldKey, oldValue, evicted = m.Set(key, value)
+	return value, false, oldKey, oldValue, evicted
+}
+
 func (m *model) Delete(key int) (int, bool) {
 	value, ok := m.Peek(key)
 	m.frequent = slices.DeleteFunc(m.frequent, func(e entry) bool { return e.key == key })

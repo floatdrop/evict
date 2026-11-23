@@ -75,6 +75,22 @@ type Cache[K comparable, V any] interface {
 	// returns the one it had.
 	Set(key K, value V) (oldKey K, oldValue V, displaced bool)
 
+	// SetIfAbsent stores value under key unless the cache holds key
+	// already. If it does, SetIfAbsent changes nothing but records the
+	// access with the eviction policy, as Get does, and returns the value
+	// that key has, with present true. Otherwise it stores value as Set
+	// does, returns it with present false, and reports the entry that left
+	// the cache for it, if there is one: one evicted to make room, or, in an
+	// expire.Cache, the expired entry of key, with oldKey == key. A cache
+	// with no capacity keeps nothing and hands the new entry straight back
+	// as evicted.
+	//
+	// Looking for key and storing value happen at once: of the goroutines
+	// that call SetIfAbsent for one key at the same time, one stores its
+	// value and the others get it back as actual, unless it has left the
+	// cache in between.
+	SetIfAbsent(key K, value V) (actual V, present bool, oldKey K, oldValue V, evicted bool)
+
 	// Delete removes key and returns the value it had.
 	Delete(key K) (value V, ok bool)
 
