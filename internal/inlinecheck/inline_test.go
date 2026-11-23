@@ -25,7 +25,7 @@ import (
 )
 
 // hot matches the functions that every operation on a cache goes through.
-var hot = regexp.MustCompile(`/(lru|twoq|sieve|s3fifo|tinylfu|stats)\.\(\*(Cache|shard)\[.*\]\)\.(Get|GetMany|Peek|Set|set|evict|Delete|look|victim|promote|asked)$|` +
+var hot = regexp.MustCompile(`/(lru|twoq|sieve|s3fifo|tinylfu|stats|expire)\.\(\*(Cache|shard)\[.*\]\)\.(Get|GetMany|Peek|Set|SetWithTTL|set|evict|Delete|look|victim|promote|asked)$|` +
 	`/c?slab\.\(\*Slab\[.*\]\)\.(Find|Lookup|Insert|Replace|Remove)$`)
 
 // slow matches the calls that must not show up in them: functions that are
@@ -34,7 +34,7 @@ var slow = regexp.MustCompile(`^sync\.\(\*(RW)?Mutex\)\.|^sync/atomic\.|` +
 	`slab\.\(\*Slab\[.*\]\)\.(MoveToFront|PushFront|Unlink|Len|Cap|Overdue|Hash|pin|preferred|Touch|TouchNode)$|` +
 	`cslab\.\(\*Node\[.*\]\)\.(Meta|SetMeta)$|cslab\.\(\*Slot\)\.Unpin$|/s3fifo\.(tagOf|ghostOf)$|` +
 	`/tinylfu\.(tagOf|kept|keep|printOf|printIn)$|/tinylfu\.\(\*climber\)\.(hit|miss)$|` +
-	`/stats\.\(\*Cache\[.*\]\)\.stripe$`)
+	`/stats\.\(\*Cache\[.*\]\)\.stripe$|/expire\.\(\*Cache\[.*\]\)\.expired$`)
 
 // read matches the functions that a read without a lock goes through, and
 // readSlow the calls that must not show up in them even where the compiler
@@ -134,7 +134,7 @@ func TestHotPathsAreInlined(t *testing.T) {
 	}
 
 	// The test is only worth something if it has looked at the right code.
-	for _, pkg := range []string{"lru", "twoq", "sieve", "s3fifo", "tinylfu", "stats"} {
+	for _, pkg := range []string{"lru", "twoq", "sieve", "s3fifo", "tinylfu", "stats", "expire"} {
 		for _, method := range []string{"Get", "Set", "Peek", "Delete"} {
 			found := false
 			for name := range seen {
@@ -145,7 +145,7 @@ func TestHotPathsAreInlined(t *testing.T) {
 			}
 		}
 	}
-	for _, pkg := range []string{"sieve", "s3fifo", "tinylfu", "stats"} {
+	for _, pkg := range []string{"sieve", "s3fifo", "tinylfu", "stats", "expire"} {
 		found := false
 		for name := range seen {
 			found = found || strings.Contains(name, "/"+pkg+".(*Cache[") && strings.HasSuffix(name, ").GetMany")
@@ -153,6 +153,13 @@ func TestHotPathsAreInlined(t *testing.T) {
 		if !found {
 			t.Errorf("the compiler's output has no code for %s.Cache.GetMany", pkg)
 		}
+	}
+	found := false
+	for name := range seen {
+		found = found || strings.Contains(name, "/expire.(*Cache[") && strings.HasSuffix(name, ").SetWithTTL")
+	}
+	if !found {
+		t.Error("the compiler's output has no code for expire.Cache.SetWithTTL")
 	}
 	for _, want := range [][2]string{
 		{"sieve.(*Cache[", "Get"},
