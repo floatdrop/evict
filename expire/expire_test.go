@@ -1,0 +1,755 @@
+package expire_test
+
+import (
+	"math"
+	"math/rand/v2"
+	"runtime"
+	"slices"
+	"strconv"
+	"sync"
+	"sync/atomic"
+	"testing"
+	"time"
+
+	"github.com/floatdrop/evict"
+	"github.com/floatdrop/evict/expire"
+	"github.com/floatdrop/evict/internal/cachetest"
+	"github.com/floatdrop/evict/lru"
+	"github.com/floatdrop/evict/s3fifo"
+	"github.com/floatdrop/evict/sieve"
+	"github.com/floatdrop/evict/stats"
+	"github.com/floatdrop/evict/tinylfu"
+	"github.com/floatdrop/evict/twoq"
+)
+
+// A wrapped cache must still be a cache, as long as nothing expires. One with
+// a lock and one without get the suite.
+var (
+	lruFactories = cachetest.Factories{
+		Int: func(capacity, shards int) evict.Cache[int, int] {
+			return expire.Wrap(lru.New[int, expire.Entry[int]](capacity, lru.WithShards(shards)), time.Hour)
+		},
+		String: func(capacity, shards int) evict.Cache[string, string] {
+			return expire.Wrap(lru.New[string, expire.Entry[string]](capacity, lru.WithShards(shards)), time.Hour)
+		},
+		Float: func(capacity, shards int) evict.Cache[float64, int] {
+			return expire.Wrap(lru.New[float64, expire.Entry[int]](capacity, lru.WithShards(shards)), time.Hour)
+		},
+		Blob: func(capacity, shards int) evict.Cache[int, *cachetest.Blob] {
+			return expire.Wrap(lru.New[int, expire.Entry[*cachetest.Blob]](capacity, lru.WithShards(shards)), time.Hour)
+		},
+		BlobKey: func(capacity, shards int) evict.Cache[*cachetest.Blob, int] {
+			return expire.Wrap(lru.New[*cachetest.Blob, expire.Entry[int]](capacity, lru.WithShards(shards)), time.Hour)
+		},
+		Wide: func(capacity, shards int) evict.Cache[string, cachetest.Wide] {
+			return expire.Wrap(lru.New[string, expire.Entry[cachetest.Wide]](capacity, lru.WithShards(shards)), time.Hour)
+		},
+	}
+
+	s3fifoFactories = cachetest.Factories{
+		Int: func(capacity, shards int) evict.Cache[int, int] {
+			return expire.Wrap(s3fifo.New[int, expire.Entry[int]](capacity, s3fifo.WithShards(shards)), time.Hour)
+		},
+		String: func(capacity, shards int) evict.Cache[string, string] {
+			return expire.Wrap(s3fifo.New[string, expire.Entry[string]](capacity, s3fifo.WithShards(shards)), time.Hour)
+		},
+		Float: func(capacity, shards int) evict.Cache[float64, int] {
+			return expire.Wrap(s3fifo.New[float64, expire.Entry[int]](capacity, s3fifo.WithShards(shards)), time.Hour)
+		},
+		Blob: func(capacity, shards int) evict.Cache[int, *cachetest.Blob] {
+			return expire.Wrap(s3fifo.New[int, expire.Entry[*cachetest.Blob]](capacity, s3fifo.WithShards(shards)), time.Hour)
+		},
+		BlobKey: func(capacity, shards int) evict.Cache[*cachetest.Blob, int] {
+			return expire.Wrap(s3fifo.New[*cachetest.Blob, expire.Entry[int]](capacity, s3fifo.WithShards(shards)), time.Hour)
+		},
+		Wide: func(capacity, shards int) evict.Cache[string, cachetest.Wide] {
+			return expire.Wrap(s3fifo.New[string, expire.Entry[cachetest.Wide]](capacity, s3fifo.WithShards(shards)), time.Hour)
+		},
+		Ghosts: 0.9,
+	}
+)
+
+func TestCache(t *testing.T) {
+	t.Parallel()
+
+	t.Run("lru", func(t *testing.T) { t.Parallel(); cachetest.Run(t, lruFactories) })
+	t.Run("s3fifo", func(t *testing.T) { t.Parallel(); cachetest.Run(t, s3fifoFactories) })
+}
+
+// TestNoAllocs is not parallel: counting allocations needs the process to
+// itself.
+func TestNoAllocs(t *testing.T) {
+	warmClock(t)
+	t.Run("lru", func(t *testing.T) { cachetest.NoAllocs(t, lruFactories) })
+	t.Run("s3fifo", func(t *testing.T) { cachetest.NoAllocs(t, s3fifoFactories) })
+
+	// GetMany takes its batch from a pool, which the collector empties now
+	// and then, and which a goroutine that has moved to another CPU may
+	// find empty. Once in a while is fine; once a call is not.
+	t.Run("GetMany", func(t *testing.T) {
+		c := expire.Wrap(s3fifo.New[int, expire.Entry[int]](1000), time.Hour)
+		keys := make([]int, 100)
+		for i := range keys {
+			keys[i] = i
+			c.Set(i, i)
+		}
+		values, found := make([]int, len(keys)), make([]bool, len(keys))
+		if allocs := testing.AllocsPerRun(100, func() { c.GetMany(keys, values, found) }); allocs != 0 {
+			t.Errorf("%v allocations per GetMany, want 0", allocs)
+		}
+	})
+}
+
+// warmClock starts the clock that Wrap uses, if no test has yet, and waits for
+// it to tick twice. Then it keeps every CPU busy for a moment.
+//
+// Each tick runs a goroutine, and the runtime may start a thread for it, which
+// allocates. Threads are never stopped, so once there are enough of them to
+// keep every CPU busy, the ticks need no new ones, and a test of the caches
+// counts no allocations of theirs.
+func warmClock(t *testing.T) {
+	t.Helper()
+
+	expire.Wrap(lru.New[int, expire.Entry[int]](1), time.Hour)
+	start := time.Now()
+	for range 2 {
+		before := expire.SystemNow()
+		for expire.SystemNow() == before {
+			if time.Since(start) > 5*time.Second {
+				t.Fatal("the clock that Wrap uses has not ticked for seconds")
+			}
+			time.Sleep(time.Millisecond)
+		}
+	}
+
+	var wg sync.WaitGroup
+	for range runtime.GOMAXPROCS(0) {
+		wg.Go(func() {
+			spin := time.Now()
+			for time.Since(spin) < 20*time.Millisecond {
+				runtime.Gosched()
+			}
+		})
+	}
+	wg.Wait()
+}
+
+// policies make a cache of each policy, of 100 entries in 4 shards.
+var policies = map[string]func() evict.Cache[string, expire.Entry[int]]{
+	"lru": func() evict.Cache[string, expire.Entry[int]] {
+		return lru.New[string, expire.Entry[int]](100, lru.WithShards(4))
+	},
+	"twoq": func() evict.Cache[string, expire.Entry[int]] {
+		return twoq.New[string, expire.Entry[int]](100, twoq.WithShards(4))
+	},
+	"sieve": func() evict.Cache[string, expire.Entry[int]] {
+		return sieve.New[string, expire.Entry[int]](100, sieve.WithShards(4))
+	},
+	"s3fifo": func() evict.Cache[string, expire.Entry[int]] {
+		return s3fifo.New[string, expire.Entry[int]](100, s3fifo.WithShards(4))
+	},
+	"tinylfu": func() evict.Cache[string, expire.Entry[int]] {
+		return tinylfu.New[string, expire.Entry[int]](100, tinylfu.WithShards(4))
+	},
+}
+
+// found reports whether key is found, and checks that every way of reading
+// agrees: Get, Peek, GetMany with a batch large enough to be looked up as one,
+// and All. A key that is found must have the value want.
+func found(t *testing.T, c *expire.Cache[string, int], key string, want int) bool {
+	t.Helper()
+
+	v, ok := c.Get(key)
+	if pv, pok := c.Peek(key); pv != v || pok != ok {
+		t.Fatalf("Get(%q) = %d, %t but Peek gives %d, %t", key, v, ok, pv, pok)
+	}
+	keys := slices.Repeat([]string{key}, 8)
+	values, founds := make([]int, len(keys)), make([]bool, len(keys))
+	c.GetMany(keys, values, founds)
+	for i := range keys {
+		if values[i] != v || founds[i] != ok {
+			t.Fatalf("Get(%q) = %d, %t but GetMany gives %d, %t", key, v, ok, values[i], founds[i])
+		}
+	}
+	all := false
+	for k, av := range c.All() {
+		if k == key {
+			all = true
+			if av != v {
+				t.Fatalf("Get(%q) = %d but All yields %d", key, v, av)
+			}
+		}
+	}
+	if all != ok {
+		t.Fatalf("Get(%q) finds it: %t, but All yields it: %t", key, ok, all)
+	}
+	if ok && v != want {
+		t.Fatalf("Get(%q) = %d, want %d", key, v, want)
+	}
+	return ok
+}
+
+// An entry is found until its time is up, and from then on not at all, by any
+// policy, whatever way it is looked for.
+func TestExpiry(t *testing.T) {
+	t.Parallel()
+
+	for name, newCache := range policies {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			clock := expire.NewClock()
+			c := expire.WrapWith(newCache(), time.Minute, clock)
+			c.Set("a", 1)
+			c.SetWithTTL("b", 2, time.Second)
+			c.SetWithTTL("c", 3, 2*time.Second)
+
+			clock.Advance(time.Second - 1)
+			if !found(t, c, "a", 1) || !found(t, c, "b", 2) || !found(t, c, "c", 3) {
+				t.Fatal("an entry is gone before its time")
+			}
+
+			clock.Advance(1)
+			if found(t, c, "b", 2) {
+				t.Error("b is found when its second is up")
+			}
+			if !found(t, c, "a", 1) || !found(t, c, "c", 3) {
+				t.Fatal("an entry is gone before its time")
+			}
+			// It is still there, and takes up room.
+			if n := c.Len(); n != 3 {
+				t.Errorf("Len() = %d, want 3 with b expired", n)
+			}
+
+			// Deleting it says it was not there, and removes it.
+			if v, ok := c.Delete("b"); ok || v != 0 {
+				t.Errorf("Delete(b) = %d, %t after it expired, want 0, false", v, ok)
+			}
+			if n := c.Len(); n != 2 {
+				t.Errorf("Len() = %d after b was deleted, want 2", n)
+			}
+
+			// Setting it again starts it over.
+			c.SetWithTTL("b", 20, time.Second)
+			clock.Advance(time.Second / 2)
+			if !found(t, c, "b", 20) {
+				t.Error("b is not found after it was set again")
+			}
+			if v, ok := c.Delete("b"); !ok || v != 20 {
+				t.Errorf("Delete(b) = %d, %t, want 20, true", v, ok)
+			}
+
+			clock.Advance(time.Minute)
+			if found(t, c, "a", 1) || found(t, c, "c", 3) {
+				t.Error("an entry is found when its time is up")
+			}
+		})
+	}
+}
+
+// An expired entry that leaves the cache is handed back by Set, as any entry
+// is, whether it is replaced or evicted.
+func TestExpiredLeave(t *testing.T) {
+	t.Parallel()
+
+	clock := expire.NewClock()
+	c := expire.WrapWith(lru.New[string, expire.Entry[int]](1), time.Second, clock)
+
+	c.Set("a", 1)
+	clock.Advance(time.Second)
+	if k, v, displaced := c.Set("a", 2); !displaced || k != "a" || v != 1 {
+		t.Errorf("Set(a) over an expired a = %q, %d, %t; want a, 1, true", k, v, displaced)
+	}
+	if !found(t, c, "a", 2) {
+		t.Error("a is not found after it was replaced")
+	}
+
+	clock.Advance(time.Second)
+	if k, v, displaced := c.Set("b", 3); !displaced || k != "a" || v != 2 {
+		t.Errorf("Set(b) in place of an expired a = %q, %d, %t; want a, 2, true", k, v, displaced)
+	}
+}
+
+// A time to live that is zero or less has run out before the entry is stored,
+// and one that is too long for the clock never does.
+func TestTTLBounds(t *testing.T) {
+	t.Parallel()
+
+	clock := expire.NewClock()
+	c := expire.WrapWith(lru.New[string, expire.Entry[int]](10), time.Second, clock)
+	clock.Advance(time.Hour) // So that a negative time to live has room to go below zero.
+
+	// For a key with an entry, expired or not, the new entry takes its
+	// place. Each round replaces the one that the round before stored, which
+	// had expired before it was stored.
+	c.Set("a", 1)
+	prev := 1
+	for i, ttl := range []time.Duration{0, -1, -time.Hour, math.MinInt64} {
+		if k, v, displaced := c.SetWithTTL("a", 10+i, ttl); !displaced || k != "a" || v != prev {
+			t.Errorf("SetWithTTL(a, %d, %v) = %q, %d, %t; want a, %d, true", 10+i, ttl, k, v, displaced, prev)
+		}
+		if found(t, c, "a", 10+i) {
+			t.Errorf("a is found after it was set with a time to live of %v", ttl)
+		}
+		prev = 10 + i
+	}
+
+	// For a key without an entry, nothing is stored, and the new entry comes
+	// straight back. Nothing is evicted for it either.
+	one := expire.WrapWith(lru.New[string, expire.Entry[int]](1), time.Second, clock)
+	one.Set("live", 1)
+	if k, v, displaced := one.SetWithTTL("dead", 2, 0); !displaced || k != "dead" || v != 2 {
+		t.Errorf("SetWithTTL(dead, 2, 0) = %q, %d, %t; want dead, 2, true", k, v, displaced)
+	}
+	if !found(t, one, "live", 1) || one.Len() != 1 {
+		t.Error("SetWithTTL with a time to live of 0 evicted an entry of another key")
+	}
+
+	c.SetWithTTL("b", 2, math.MaxInt64)
+	c.SetWithTTL("c", 3, math.MaxInt64-2*time.Hour)
+	if d := expire.DeadlineOf(c, "b"); d != math.MaxInt64 {
+		t.Errorf("a time to live of MaxInt64 gives a deadline of %d, want MaxInt64", d)
+	}
+	clock.Advance(100 * 365 * 24 * time.Hour)
+	if !found(t, c, "b", 2) || !found(t, c, "c", 3) {
+		t.Error("an entry with a time to live too long for the clock expired")
+	}
+
+	for _, ttl := range []time.Duration{0, -1} {
+		func() {
+			defer func() {
+				if recover() == nil {
+					t.Errorf("Wrap with a time to live of %v did not panic", ttl)
+				}
+			}()
+			expire.Wrap(lru.New[string, expire.Entry[int]](10), ttl)
+		}()
+	}
+}
+
+// hooked is a cache that runs a function after each Peek, to let an entry come
+// or go between SetWithTTL's look and its Set.
+type hooked struct {
+	evict.Cache[string, expire.Entry[int]]
+	after func()
+}
+
+func (h *hooked) Peek(key string) (expire.Entry[int], bool) {
+	e, ok := h.Cache.Peek(key)
+	if h.after != nil {
+		h.after()
+	}
+	return e, ok
+}
+
+// SetWithTTL with a time to live of zero or less decides by what it sees when
+// it looks. An entry of key that leaves in between is stored as Set would
+// store it: with eviction, if that is what it takes. One that comes in between
+// is handed back, as if it had come after.
+func TestSetWithTTLRace(t *testing.T) {
+	t.Parallel()
+
+	clock := expire.NewClock()
+	h := &hooked{Cache: lru.New[string, expire.Entry[int]](2)}
+	c := expire.WrapWith(h, time.Hour, clock)
+
+	// x leaves and another key takes its place, so the cache is full.
+	c.Set("x", 1)
+	c.Set("live", 2)
+	h.after = func() {
+		h.after = nil
+		c.Delete("x")
+		c.Set("other", 3)
+	}
+	if k, v, displaced := c.SetWithTTL("x", 9, 0); !displaced || k != "live" || v != 2 {
+		t.Errorf("SetWithTTL(x, 9, 0) after x left = %q, %d, %t; want live to be evicted", k, v, displaced)
+	}
+	if found(t, c, "x", 9) {
+		t.Error("x is found after it was set with a time to live of 0")
+	}
+
+	// y comes in: the new entry is handed back, and y's stays.
+	h.after = func() {
+		h.after = nil
+		c.Set("y", 4)
+	}
+	if k, v, displaced := c.SetWithTTL("y", 8, 0); !displaced || k != "y" || v != 8 {
+		t.Errorf("SetWithTTL(y, 8, 0) as y came in = %q, %d, %t; want y, 8, true", k, v, displaced)
+	}
+	if !found(t, c, "y", 4) {
+		t.Error("y is gone after SetWithTTL found no entry of it")
+	}
+}
+
+// Readers look at a copy of the time that may lag behind. An entry that is due
+// to expire within 50 ms of it is checked against the time itself, so a lag of
+// up to 50 ms changes nothing. With more than that, an entry is found for up to
+// as much longer.
+func TestLag(t *testing.T) {
+	t.Parallel()
+
+	clock := expire.NewClock()
+	c := expire.WrapWith(lru.New[string, expire.Entry[int]](10), time.Second, clock)
+	c.SetWithTTL("a", 1, 100*time.Millisecond)
+	c.SetWithTTL("b", 2, 150*time.Millisecond)
+
+	// At 99 ms, nothing has expired, whatever the lag: the copy of the
+	// time is never ahead of it.
+	clock.Advance(99 * time.Millisecond)
+	for _, lag := range []time.Duration{0, 10 * time.Millisecond, 49 * time.Millisecond, 99 * time.Millisecond} {
+		clock.Lag(lag)
+		if !found(t, c, "a", 1) {
+			t.Errorf("a is gone 1 ms before its time, with the copy of the time %v behind", lag)
+		}
+	}
+
+	// At 100 ms exactly, a has expired, also where the time itself has to
+	// tell.
+	clock.Advance(time.Millisecond)
+	clock.Lag(10 * time.Millisecond)
+	if found(t, c, "a", 1) {
+		t.Error("a is found at its deadline, with the copy of the time 10 ms behind")
+	}
+	clock.Lag(0)
+	if found(t, c, "a", 1) {
+		t.Error("a is found at its deadline")
+	}
+
+	// At 120 ms, a has expired 20 ms ago. A copy of the time that lags by up
+	// to 50 ms shows it, and one that lags by 70 ms still does: a is due 50
+	// ms after that copy, which is near enough to be checked.
+	clock.Advance(20 * time.Millisecond)
+	for _, lag := range []time.Duration{0, 10 * time.Millisecond, 50 * time.Millisecond, 70 * time.Millisecond} {
+		clock.Lag(lag)
+		if found(t, c, "a", 1) {
+			t.Errorf("a is found 20 ms after it expired, with the copy of the time %v behind", lag)
+		}
+		if !found(t, c, "b", 2) {
+			t.Errorf("b is gone 30 ms before its time, with the copy of the time %v behind", lag)
+		}
+	}
+
+	// One that lags by 80 ms does not: a is due 60 ms after it, and taken
+	// to be there.
+	clock.Lag(80 * time.Millisecond)
+	if !found(t, c, "a", 1) {
+		t.Error("a was checked against the time when it was due 60 ms after the copy of it; the test expects it was not")
+	}
+}
+
+// GetMany has to find what Peek finds, among entries of which some expired,
+// with batches of every size, whether the cache has a GetMany of its own or
+// not.
+func TestGetMany(t *testing.T) {
+	t.Parallel()
+
+	const capacity = 500
+	for name, cache := range map[string]evict.Cache[int, expire.Entry[int]]{
+		"lru":     lru.New[int, expire.Entry[int]](capacity),
+		"s3fifo":  s3fifo.New[int, expire.Entry[int]](capacity),
+		"tinylfu": tinylfu.New[int, expire.Entry[int]](capacity),
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			clock := expire.NewClock()
+			c := expire.WrapWith(cache, time.Hour, clock)
+			for k := range capacity / 2 {
+				// Every third entry expires in a second.
+				ttl := time.Hour
+				if k%3 == 0 {
+					ttl = time.Second
+				}
+				c.SetWithTTL(k, -k, ttl)
+			}
+			clock.Advance(time.Second)
+
+			rng := rand.New(rand.NewPCG(1, 2))
+			for _, n := range []int{0, 1, 3, 4, 31, 32, 33, 64, 100} {
+				keys := make([]int, n)
+				for i := range keys {
+					keys[i] = rng.IntN(capacity)
+				}
+				// The values and the found are filled with garbage, which
+				// GetMany must overwrite.
+				values, founds := make([]int, n), make([]bool, n)
+				for i := range values {
+					values[i], founds[i] = 1, true
+				}
+				c.GetMany(keys, values, founds)
+				for i, k := range keys {
+					v, ok := c.Peek(k)
+					if values[i] != v || founds[i] != ok {
+						t.Fatalf("GetMany of %d keys: key %d gave %d, %t; Peek gives %d, %t", n, k, values[i], founds[i], v, ok)
+					}
+					if want := k < capacity/2 && k%3 != 0; ok != want {
+						t.Fatalf("key %d found: %t, want %t", k, ok, want)
+					}
+				}
+			}
+
+			// The values may be the keys themselves.
+			keys := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+			founds := make([]bool, len(keys))
+			c.GetMany(keys, keys, founds)
+			want := []int{0, -1, -2, 0, -4, -5, 0, -7, -8, 0}
+			if !slices.Equal(keys, want) {
+				t.Errorf("GetMany into its own keys gives %v, want %v", keys, want)
+			}
+
+			for _, short := range [][2]int{{9, 10}, {10, 9}} {
+				func() {
+					defer func() {
+						if recover() == nil {
+							t.Errorf("GetMany with %d values and %d found for 10 keys did not panic", short[0], short[1])
+						}
+					}()
+					c.GetMany(make([]int, 10), make([]int, short[0]), make([]bool, short[1]))
+				}()
+			}
+		})
+	}
+}
+
+// The clock that Wrap uses keeps time: an entry is found until its time to
+// live is up, and stops being found soon after. How soon depends on how busy
+// the machine is, so the test gives it a few seconds.
+func TestSystemClock(t *testing.T) {
+	t.Parallel()
+
+	const ttl = 30 * time.Millisecond
+	c := expire.Wrap(lru.New[string, expire.Entry[int]](10), time.Hour)
+
+	start := time.Now()
+	c.SetWithTTL("a", 1, ttl)
+	for {
+		// The copy of the time that readers look at is never ahead.
+		if now, read := expire.SystemNow(), expire.SystemRead(); now > read {
+			t.Fatalf("the copy of the time is %v, ahead of the time, %v", now, read)
+		}
+		if _, ok := c.Get("a"); !ok {
+			break
+		}
+		if time.Since(start) > 5*time.Second {
+			t.Fatalf("a is still found after %v, with a time to live of %v", time.Since(start), ttl)
+		}
+		time.Sleep(time.Millisecond)
+	}
+	if elapsed := time.Since(start); elapsed < ttl {
+		t.Errorf("a expired after %v, with a time to live of %v", elapsed, ttl)
+	}
+
+	// The timer keeps the copy up to date: it lags by half a tick of 10 ms
+	// on average. A busy machine may hold the timer up now and then, so the
+	// test looks at the median of many samples, and allows for four ticks.
+	lags := make([]time.Duration, 200)
+	for i := range lags {
+		now := expire.SystemNow()
+		lags[i] = expire.SystemRead() - now
+		time.Sleep(time.Millisecond + time.Duration(i%7)*100*time.Microsecond)
+	}
+	slices.Sort(lags)
+	if median := lags[len(lags)/2]; median > 40*time.Millisecond {
+		t.Errorf("the copy of the time lags by %v in the median, want a few ms", median)
+	}
+}
+
+// Goroutines that read and write while time passes must only ever find what
+// was stored under a key, and nothing once the time to live of every entry is
+// up.
+func TestConcurrent(t *testing.T) {
+	t.Parallel()
+
+	for _, name := range []string{"lru", "s3fifo", "tinylfu"} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			const (
+				goroutines = 8
+				requests   = 3000
+				keys       = 200
+			)
+			clock := expire.NewClock()
+			c := expire.WrapWith(policies[name](), time.Second, clock)
+
+			var done atomic.Bool
+			var wg sync.WaitGroup
+			wg.Go(func() {
+				for !done.Load() {
+					clock.Advance(time.Millisecond)
+					time.Sleep(time.Microsecond)
+				}
+			})
+			var workers sync.WaitGroup
+			for g := range goroutines {
+				workers.Go(func() {
+					rng := rand.New(rand.NewPCG(uint64(g), 3))
+					batch, values, founds := make([]string, 8), make([]int, 8), make([]bool, 8)
+					for range requests {
+						k := rng.IntN(keys)
+						key := strconv.Itoa(k)
+						switch rng.IntN(4) {
+						case 0:
+							c.SetWithTTL(key, k, time.Duration(rng.IntN(20))*time.Millisecond)
+						case 1:
+							if v, ok := c.Delete(key); ok && v != k {
+								t.Errorf("Delete(%q) = %d", key, v)
+							}
+						case 2:
+							for i := range batch {
+								batch[i] = strconv.Itoa(rng.IntN(keys))
+							}
+							c.GetMany(batch, values, founds)
+							for i, key := range batch {
+								if founds[i] && strconv.Itoa(values[i]) != key {
+									t.Errorf("GetMany found %d for %q", values[i], key)
+								}
+							}
+						default:
+							if v, ok := c.Get(key); ok && v != k {
+								t.Errorf("Get(%q) = %d", key, v)
+							}
+						}
+					}
+				})
+			}
+			workers.Wait()
+			done.Store(true)
+			wg.Wait()
+
+			clock.Advance(time.Second)
+			for k, v := range c.All() {
+				t.Errorf("All yields %q=%d after every entry expired", k, v)
+			}
+		})
+	}
+}
+
+// Wrapped in stats, an expired entry counts as a miss, through Get and
+// GetMany alike.
+func TestStats(t *testing.T) {
+	t.Parallel()
+
+	clock := expire.NewClock()
+	c := stats.Wrap(expire.WrapWith(s3fifo.New[int, expire.Entry[int]](100), time.Second, clock))
+	for k := range 10 {
+		c.Set(k, k)
+	}
+	clock.Advance(time.Second)
+	for k := 10; k < 20; k++ {
+		c.Set(k, k)
+	}
+
+	c.Get(0)
+	c.Get(10)
+	keys := []int{1, 2, 3, 11, 12, 13, 14, 15}
+	c.GetMany(keys, make([]int, len(keys)), make([]bool, len(keys)))
+
+	if s := c.Stats(); s.Hits != 6 || s.Misses != 4 {
+		t.Errorf("%d hits and %d misses, want 6 and 4", s.Hits, s.Misses)
+	}
+}
+
+// Readers look at the copy of the time on every read. It has to have a cache
+// line to itself, or whatever shares the line would take it away from the
+// readers' CPUs when it is written to. The clock is not aligned to a line, so
+// that takes 128 bytes on either side.
+func TestClockLayout(t *testing.T) {
+	t.Parallel()
+
+	if expire.NowOffset < 128 || expire.FakeOffset-expire.NowOffset < 128 {
+		t.Errorf("the copy of the time is at %d, and the next field at %d; want a line of 128 bytes to itself",
+			expire.NowOffset, expire.FakeOffset)
+	}
+}
+
+// batcher is a cache with a GetMany of its own, which says how often it was
+// called.
+type batcher struct {
+	evict.Cache[int, expire.Entry[int]]
+	calls int
+}
+
+func (b *batcher) GetMany(keys []int, values []expire.Entry[int], found []bool) {
+	b.calls++
+	for i, k := range keys {
+		values[i], found[i] = b.Get(k)
+	}
+}
+
+// GetMany has to go to the GetMany of the cache, in batches as large as those
+// of the caches of this module.
+func TestGetManyForwards(t *testing.T) {
+	t.Parallel()
+
+	b := &batcher{Cache: lru.New[int, expire.Entry[int]](200)}
+	c := expire.WrapWith(b, time.Hour, expire.NewClock())
+	keys := make([]int, 100)
+	for i := range keys {
+		keys[i] = i
+		c.Set(i, -i)
+	}
+	values, founds := make([]int, len(keys)), make([]bool, len(keys))
+	c.GetMany(keys, values, founds)
+	if b.calls != 4 {
+		t.Errorf("GetMany of 100 keys called that of the cache %d times, want 4", b.calls)
+	}
+	for i, k := range keys {
+		if !founds[i] || values[i] != -k {
+			t.Fatalf("GetMany found %d, %t for %d", values[i], founds[i], k)
+		}
+	}
+}
+
+// What GetMany looks up goes through a batch that it keeps for the next call.
+// The batch must not keep the values alive until then.
+func TestGetManyLetsGo(t *testing.T) {
+	t.Parallel()
+
+	c := expire.WrapWith(s3fifo.New[int, expire.Entry[*cachetest.Blob]](100), time.Hour, expire.NewClock())
+	keys := make([]int, 40)
+	for i := range keys {
+		keys[i] = i
+		c.Set(i, new(cachetest.Blob))
+	}
+	values, founds := make([]*cachetest.Blob, len(keys)), make([]bool, len(keys))
+	for range 10 {
+		c.GetMany(keys, values, founds)
+		clean, got := expire.PooledBatch(c)
+		if !got {
+			continue // Taken from another CPU's share of the pool; try again.
+		}
+		if !clean {
+			t.Error("the batch that GetMany keeps holds entries")
+		}
+		return
+	}
+	t.Skip("the pool never had a batch to hand")
+}
+
+// The values of expired entries can be had from the wrapped cache, for those
+// that need releasing.
+func TestRelease(t *testing.T) {
+	t.Parallel()
+
+	clock := expire.NewClock()
+	inner := lru.New[string, expire.Entry[int]](10)
+	c := expire.WrapWith(inner, time.Second, clock)
+	c.Set("a", 1)
+	c.Set("b", 2)
+	clock.Advance(time.Second)
+
+	values := map[string]int{}
+	for k, e := range inner.All() {
+		values[k] = e.Value()
+	}
+	if len(values) != 2 || values["a"] != 1 || values["b"] != 2 {
+		t.Errorf("the wrapped cache yields %v, want a=1 and b=2", values)
+	}
+	if e, ok := inner.Delete("a"); !ok || e.Value() != 1 {
+		t.Errorf("the wrapped cache's Delete(a) = %d, %t; want 1, true", e.Value(), ok)
+	}
+	if v := (expire.Entry[int]{}).Value(); v != 0 {
+		t.Errorf("Entry{}.Value() = %d", v)
+	}
+}

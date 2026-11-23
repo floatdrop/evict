@@ -13,6 +13,7 @@ Fixed-capacity in-memory caches for Go.
 - **Batch lookups.** `GetMany` loads up to 32 entries from memory in parallel.
 - **Evictions handed back.** `Set` returns the entry it replaced or evicted.
 - **Statistics.** `stats.Wrap` counts hits, misses and evictions.
+- **Expiry.** `expire.Wrap` gives entries a time to live.
 - **Safe for concurrent use**, and depends only on the standard library.
 
 ## Install
@@ -79,6 +80,20 @@ fmt.Println(s.HitRatio(), s.Evictions, s.Len, s.Cap)
 
 The counts only go up; `s.Sub(prev)` gives those of an interval. A `Get` that hits took
 10–14% longer through the wrapper (`tinylfu`, Apple M3 Max).
+
+### Expiry
+
+```go
+cache := expire.Wrap(tinylfu.New[string, expire.Entry[int]](10_000), time.Minute)
+
+cache.Set("a", 1)                        // Expires in a minute,
+cache.SetWithTTL("b", 2, 10*time.Second) // and this one in ten seconds.
+```
+
+An expired entry is a miss, but takes up room until it is evicted, set again, deleted or
+cleared, and reads of it still count with the policy. Reads look at a copy of the time that a
+timer updates every 10 ms, and at the time itself near a deadline. A `Get` that hits took
+11–15% longer through the wrapper, and a `Set` 17 ns longer (`tinylfu`, Apple M3 Max).
 
 ## Benchmarks
 
@@ -151,9 +166,8 @@ own.
 
 ## What it does not do
 
-No expiry, no weights or sizes in bytes, no loading functions. If you need those, or if many
-CPUs overwrite a tenth to a quarter of what they read, use
-[otter](https://github.com/maypok86/otter).
+No weights or sizes in bytes, no loading functions. If you need those, or if many CPUs
+overwrite a tenth to a quarter of what they read, use [otter](https://github.com/maypok86/otter).
 
 ## License
 
