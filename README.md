@@ -166,8 +166,12 @@ own.
 
 ## What it does not do
 
-No weights or sizes in bytes, no loading functions. If you need those, or if many CPUs
-overwrite a tenth to a quarter of what they read, use [otter](https://github.com/maypok86/otter).
+- **No sizes in bytes or weights.** Capacity counts entries; set it from a typical entry size.
+- **No loader** that fetches a missing key once for all the callers that ask for it.
+- **No cleanup of expired entries**; see [Expiry](#expiry).
+- **Overwrites do not scale with CPUs**; otter's do ([Benchmarks](#benchmarks)).
+
+For any of these, use [otter](https://github.com/maypok86/otter).
 
 ## License
 
