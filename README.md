@@ -5,18 +5,11 @@
 
 Fixed-capacity in-memory caches for Go.
 
-- **High hit ratio.** `tinylfu` admits a new entry only if it is asked for more often than
-  the one it would evict, and sizes its queues to the workload.
-- **Reads that scale.** `tinylfu`, `s3fifo` and `sieve` read without locks.
-- **No allocations after `New`.** Entries live in arrays, linked by 32-bit indices.
-- **Nothing for the GC to scan** when keys and values hold no pointers.
-- **Batch lookups.** `GetMany` loads up to 32 entries from memory in parallel.
-- **Evictions handed back.** `Set` returns the entry it replaced or evicted.
-- **Insert if absent.** `SetIfAbsent` stores a value only if the key has none; of goroutines
-  racing on one key, one stores its value and the rest get it back.
-- **Statistics.** `stats.Wrap` counts hits, misses and evictions.
-- **Expiry.** `expire.Wrap` gives entries a time to live.
-- **Safe for concurrent use**, and depends only on the standard library.
+- **High hit ratio.** `tinylfu` uses frequency-based admission and adapts its queue sizes
+  to the workload.
+- **Reads that scale.** `tinylfu`, `s3fifo`, and `sieve` serve reads without locks.
+- **No allocations after `New`.** Entries live in preallocated arrays that the GC skips
+  when keys and values contain no pointers.
 
 ## Install
 
