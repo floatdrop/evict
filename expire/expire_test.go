@@ -1,6 +1,7 @@
 package expire_test
 
 import (
+	"errors"
 	"math"
 	"math/rand/v2"
 	"runtime"
@@ -247,6 +248,86 @@ func TestExpiry(t *testing.T) {
 	}
 }
 
+func TestPurgeExpired(t *testing.T) {
+	t.Parallel()
+
+	for name, newCache := range policies {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			clock := expire.NewClock()
+			inner := stats.Wrap(newCache())
+			c := expire.WrapWith(inner, time.Second, clock)
+			c.Set("due", 1)
+			c.SetWithTTL("later", 2, time.Second+1)
+			inner.Set("zero", expire.Entry[int]{}) // A zero Entry is already expired.
+			clock.Advance(time.Second)
+			clock.Lag(time.Second) // Purging must use the clock, not the readers' copy.
+
+			if n, err := c.PurgeExpired(); n != 2 || err != nil {
+				t.Fatalf("PurgeExpired = %d, %v, want 2, nil", n, err)
+			}
+			if s := inner.Stats(); s.Len != 1 || s.Evictions != 0 || s.Hits != 0 || s.Misses != 0 {
+				t.Errorf("stats after purge = %+v, want one entry and no hits, misses or evictions", s)
+			}
+			if v, ok := c.Peek("later"); !ok || v != 2 {
+				t.Errorf("Peek(later) = %d, %t, want 2, true", v, ok)
+			}
+			if n, err := c.PurgeExpired(); n != 0 || err != nil {
+				t.Errorf("repeat PurgeExpired = %d, %v, want 0, nil", n, err)
+			}
+		})
+	}
+}
+
+func TestDeleteFuncSkipsExpired(t *testing.T) {
+	t.Parallel()
+
+	clock := expire.NewClock()
+	inner := lru.New[string, expire.Entry[int]](2)
+	c := stats.Wrap(expire.WrapWith(inner, time.Second, clock))
+	c.Set("expired", 1)
+	clock.Advance(time.Second)
+	c.Set("live", 2)
+	n, err := c.DeleteFunc(func(k string, v int) bool {
+		if k != "live" || v != 2 {
+			t.Errorf("DeleteFunc visited %s=%d, want live=2", k, v)
+		}
+		return true
+	})
+	if n != 1 || err != nil {
+		t.Errorf("DeleteFunc = %d, %v, want 1, nil", n, err)
+	}
+	if e, ok := inner.Peek("expired"); !ok || e.Value() != 1 || inner.Len() != 1 {
+		t.Error("DeleteFunc did not leave just the expired entry")
+	}
+}
+
+func TestPurgeExpiredUnsupported(t *testing.T) {
+	t.Parallel()
+
+	clock := expire.NewClock()
+	// Expose only the base interface, as an older third-party cache would.
+	inner := struct {
+		evict.Cache[int, expire.Entry[int]]
+	}{lru.New[int, expire.Entry[int]](2)}
+	c := expire.WrapWith(stats.Wrap(inner), time.Second, clock)
+	c.Set(1, 1)
+	if n, err := c.DeleteFunc(func(_, _ int) bool {
+		t.Error("unsupported DeleteFunc called the predicate")
+		return true
+	}); n != 0 || !errors.Is(err, errors.ErrUnsupported) {
+		t.Errorf("DeleteFunc = %d, %v, want 0, ErrUnsupported", n, err)
+	}
+	clock.Advance(time.Second)
+	if n, err := c.PurgeExpired(); n != 0 || !errors.Is(err, errors.ErrUnsupported) {
+		t.Errorf("PurgeExpired = %d, %v, want 0, ErrUnsupported", n, err)
+	}
+	if c.Len() != 1 {
+		t.Error("unsupported purge removed an entry")
+	}
+}
+
 // An expired entry that leaves the cache is handed back by Set, as any entry
 // is, whether it is replaced or evicted.
 func TestExpiredLeave(t *testing.T) {
@@ -328,11 +409,11 @@ func TestTTLBounds(t *testing.T) {
 }
 
 // hooked is a cache that runs a function after each Peek, to let an entry come
-// or go between SetWithTTL's look and its Set, and another after each
-// SetIfAbsent.
+// or go between SetWithTTL's look and its Set. It can also interpose after a
+// SetIfAbsent or before a DeleteFunc scan.
 type hooked struct {
 	evict.Cache[string, expire.Entry[int]]
-	after, afterAbsent func()
+	after, afterAbsent, beforeScan func()
 }
 
 func (h *hooked) Peek(key string) (expire.Entry[int], bool) {
@@ -349,6 +430,44 @@ func (h *hooked) SetIfAbsent(key string, e expire.Entry[int]) (actual expire.Ent
 		h.afterAbsent()
 	}
 	return actual, present, oldKey, oldValue, evicted
+}
+
+func (h *hooked) DeleteFunc(del func(string, expire.Entry[int]) bool) (int, error) {
+	if h.beforeScan != nil {
+		h.beforeScan()
+	}
+	return evict.DeleteFunc(h.Cache, del)
+}
+
+// A refresh between taking the cutoff and scanning a shard must survive.
+// A deadline that passes in that interval belongs to the next purge.
+func TestPurgeExpiredCutoff(t *testing.T) {
+	t.Parallel()
+
+	clock := expire.NewClock()
+	h := &hooked{Cache: lru.New[string, expire.Entry[int]](3)}
+	c := expire.WrapWith(h, time.Second, clock)
+	c.Set("expired", 1)
+	c.Set("refresh", 2)
+	c.SetWithTTL("later", 3, 2*time.Second)
+	clock.Advance(time.Second)
+	h.beforeScan = func() {
+		clock.Advance(time.Second)
+		c.Set("refresh", 4)
+	}
+	if n, err := c.PurgeExpired(); n != 1 || err != nil {
+		t.Fatalf("PurgeExpired = %d, %v, want 1, nil", n, err)
+	}
+	if v, ok := c.Peek("refresh"); !ok || v != 4 {
+		t.Error("purge removed the refreshed value")
+	}
+	if _, ok := h.Peek("later"); !ok {
+		t.Error("purge removed an entry that expired during the scan")
+	}
+	h.beforeScan = nil
+	if n, err := c.PurgeExpired(); n != 1 || err != nil {
+		t.Errorf("next PurgeExpired = %d, %v, want 1, nil", n, err)
+	}
 }
 
 // SetWithTTL with a time to live of zero or less decides by what it sees when
@@ -825,6 +944,10 @@ func TestConcurrent(t *testing.T) {
 			wg.Go(func() {
 				for !done.Load() {
 					clock.Advance(time.Millisecond)
+					if _, err := c.PurgeExpired(); err != nil {
+						t.Error(err)
+						return
+					}
 					time.Sleep(time.Microsecond)
 				}
 			})

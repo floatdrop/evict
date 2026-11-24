@@ -62,7 +62,9 @@ func main() {
 ```
 
 Every package implements [`evict.Cache`](https://pkg.go.dev/github.com/floatdrop/evict#Cache);
-`sieve`, `s3fifo` and `tinylfu` also have `GetMany`.
+`sieve`, `s3fifo` and `tinylfu` also have `GetMany`. All built-in policies support
+[`evict.DeleteFunc`](https://pkg.go.dev/github.com/floatdrop/evict#DeleteFunc) to test and
+remove entries under the same shard lock. The predicate must not call back into the cache.
 
 ### Statistics
 
@@ -85,10 +87,15 @@ cache.Set("a", 1)                        // Expires in a minute,
 cache.SetWithTTL("b", 2, 10*time.Second) // and this one in ten seconds.
 ```
 
-An expired entry is a miss, but takes up room until it is evicted, set again, deleted or
-cleared, and reads of it still count with the policy. Reads look at a copy of the time that a
-timer updates every 10 ms, and at the time itself near a deadline. A `Get` that hits took
-11–15% longer through the wrapper, and a `Set` 17 ns longer (`tinylfu`, Apple M3 Max).
+An expired entry is a miss, but still takes up room and counts toward `Len` until removed.
+To free that room on your own schedule, call `n, err := cache.PurgeExpired()`. It scans one
+shard at a time and removes entries that were due when the call began. It returns the number
+removed, or `errors.ErrUnsupported` if a custom backing cache does not support `DeleteFunc`.
+There is no background sweep.
+
+Reads still count with the policy, even for expired entries. They look at a copy of the time
+that a timer updates every 10 ms, and at the time itself near a deadline. A `Get` that hits
+took 11–15% longer through the wrapper, and a `Set` 17 ns longer (`tinylfu`, Apple M3 Max).
 
 ## Benchmarks
 

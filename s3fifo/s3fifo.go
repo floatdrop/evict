@@ -675,22 +675,48 @@ func (c *Cache[K, V]) Delete(key K) (value V, ok bool) {
 	s.mu.Lock()
 	if idx := s.slab.Find(hash, key); idx != 0 {
 		value, ok = s.slab.Nodes[idx].Value, true
-		if s.slab.Links[idx].Tag&1 == main {
-			s.mains--
-		} else {
-			s.smalls--
-		}
-		s.slab.Unlink(idx)
-		s.slab.Remove(idx)
-	}
-	// An entry has no ghost, unless ghosts have to come back more than
-	// once and this one has only come back.
-	if !ok || s.returns > 1 {
+		s.remove(idx)
+	} else {
 		s.ghosts.Remove(ghostOf(hash, tagOf(h, small)))
 	}
 	s.mu.Unlock()
 
 	return value, ok
+}
+
+func (s *shard[K, V]) remove(idx uint32) {
+	tag := s.slab.Links[idx].Tag
+	if tag&1 == main {
+		s.mains--
+	} else {
+		s.smalls--
+	}
+	// An entry has no ghost, unless ghosts have to come back more than
+	// once and this one has only come back.
+	if s.returns > 1 {
+		s.ghosts.Remove(ghostOf(s.slab.Hash(idx), tag))
+	}
+	s.slab.Unlink(idx)
+	s.slab.Remove(idx)
+}
+
+// DeleteFunc removes the entries for which del returns true and reports how
+// many it removed. del runs under one shard's lock at a time and must not
+// call back into the cache. The error is always nil.
+func (c *Cache[K, V]) DeleteFunc(del func(K, V) bool) (int, error) {
+	n := 0
+	for i := range c.shards {
+		n += c.shards[i].deleteFunc(del)
+	}
+	return n, nil
+}
+
+func (s *shard[K, V]) deleteFunc(del func(K, V) bool) int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	defer s.slab.Reclaim()
+
+	return s.slab.DeleteFunc(main, del, s.remove) + s.slab.DeleteFunc(small, del, s.remove)
 }
 
 // Len returns the number of entries in the cache.
@@ -776,6 +802,7 @@ var (
 	_ = (*Cache[int, int]).Set
 	_ = (*Cache[int, int]).SetIfAbsent
 	_ = (*Cache[int, int]).Delete
+	_ = (*Cache[int, int]).DeleteFunc
 	_ = (*Cache[int, int]).Len
 	_ = (*Cache[int, int]).Clear
 	_ = (*Cache[int, int]).All

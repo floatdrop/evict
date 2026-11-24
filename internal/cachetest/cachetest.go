@@ -92,6 +92,7 @@ func Run(t *testing.T, f Factories) {
 	t.Run("Full", func(t *testing.T) { t.Parallel(); testFull(t, f.Int) })
 	t.Run("Clear", func(t *testing.T) { t.Parallel(); testClear(t, f.Int) })
 	t.Run("All", func(t *testing.T) { t.Parallel(); testAll(t, f.Int) })
+	t.Run("DeleteFunc", func(t *testing.T) { t.Parallel(); testDeleteFunc(t, f.Int) })
 	t.Run("Strings", func(t *testing.T) { t.Parallel(); testStrings(t, f.String) })
 	t.Run("Model", func(t *testing.T) { t.Parallel(); testModel(t, f.Int) })
 	t.Run("Concurrent", func(t *testing.T) { t.Parallel(); testConcurrent(t, f.Int) })
@@ -424,6 +425,62 @@ func testAll(t *testing.T, newCache Factory[int, int]) {
 	}
 }
 
+func testDeleteFunc(t *testing.T, newCache Factory[int, int]) {
+	t.Helper()
+
+	for _, shards := range []int{1, 8} {
+		c := newCache(80, shards)
+		// Fill the queues and give policies that keep ghosts some keys to
+		// remember. Only resident entries should be passed to del.
+		for key := range 300 {
+			c.Set(key, -key)
+		}
+		want := maps.Collect(c.All())
+		seen := map[int]int{}
+		n, err := evict.DeleteFunc(c, func(k, v int) bool {
+			if _, ok := seen[k]; ok {
+				t.Errorf("DeleteFunc visited %d twice", k)
+			}
+			seen[k] = v
+			return k%2 == 0
+		})
+		if !maps.Equal(seen, want) {
+			t.Fatalf("DeleteFunc visited %v, want %v", seen, want)
+		}
+		maps.DeleteFunc(want, func(k, _ int) bool { return k%2 == 0 })
+		if removed := len(seen) - len(want); n != removed || err != nil {
+			t.Errorf("DeleteFunc = %d, %v, want %d, nil", n, err, removed)
+		}
+		if c.Len() != len(want) || !maps.Equal(maps.Collect(c.All()), want) {
+			t.Fatal("DeleteFunc did not leave just the nonmatching entries")
+		}
+	}
+
+	// A panic leaves the earlier deletions in place and the shard unlocked.
+	c := newCache(2, 1)
+	c.Set(1, 1)
+	c.Set(2, 2)
+	const stop = "stop the scan"
+	func() {
+		defer func() {
+			if p := recover(); p != stop {
+				t.Errorf("DeleteFunc panic = %v, want %q", p, stop)
+			}
+		}()
+		first := true
+		_, _ = evict.DeleteFunc(c, func(_, _ int) bool {
+			if !first {
+				panic(stop)
+			}
+			first = false
+			return true
+		})
+	}()
+	if n, err := evict.DeleteFunc(c, func(_, _ int) bool { return true }); n != 1 || err != nil {
+		t.Errorf("DeleteFunc after panic = %d, %v, want 1, nil", n, err)
+	}
+}
+
 func testStrings(t *testing.T, newCache Factory[string, string]) {
 	t.Helper()
 
@@ -677,6 +734,14 @@ func testConcurrent(t *testing.T, newCache Factory[int, int]) {
 							if n := c.Len(); n < 0 || n > tt.capacity {
 								t.Errorf("Len() = %d with capacity %d", n, tt.capacity)
 							}
+						case op < 996:
+							_, err := evict.DeleteFunc(c, func(k, v int) bool {
+								check("DeleteFunc", k, v)
+								return k == key
+							})
+							if err != nil {
+								t.Error(err)
+							}
 						case op < 999:
 							n := 0
 							for k, v := range c.All() {
@@ -768,6 +833,9 @@ func testKeyIdentity(t *testing.T, newCache Factory[float64, int]) {
 		if a, present, _, _, _ := c.SetIfAbsent(nan, 5); present || a != 5 {
 			t.Errorf("%d shards: SetIfAbsent(NaN) = %d, %t, want 5 stored", shards, a, present)
 		}
+		if n, err := evict.DeleteFunc(c, func(k float64, _ int) bool { return math.IsNaN(k) }); n != 3 || err != nil || c.Len() != 1 {
+			t.Errorf("%d shards: DeleteFunc(NaN) = %d, %v, Len() = %d, want 3, nil, 1", shards, n, err, c.Len())
+		}
 		for i := range 1000 {
 			c.Set(float64(i), i)
 			c.Set(nan, i)
@@ -838,6 +906,18 @@ func letsGo[K comparable, V any](t *testing.T, newCache Factory[K, V], ghosts fl
 		c.Clear()
 		if got := Alive(refs, 0); got != 0 {
 			t.Errorf("capacity %d, %d shards: %d blobs are alive after Clear", tt.capacity, tt.shards, got)
+		}
+
+		// With no readers to wait for, a sweep releases even a single
+		// removed entry; it need not wait for the next batch of writes.
+		key, value, blob := entry(0)
+		c.Set(key, value)
+		ref := weak.Make(blob)
+		if n, err := evict.DeleteFunc(c, func(K, V) bool { return true }); n != 1 || err != nil {
+			t.Fatalf("DeleteFunc = %d, %v, want 1, nil", n, err)
+		}
+		if got := Alive([]weak.Pointer[Blob]{ref}, 0); got != 0 {
+			t.Error("DeleteFunc kept a removed entry alive")
 		}
 
 		// Keep the cache itself reachable until here; otherwise there

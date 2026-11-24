@@ -18,7 +18,7 @@
 //   - SetIfAbsent: the same as Set if it stores the value, nothing if the
 //     key was there. It counts no hit or miss either way: a caller that
 //     loads what a Get missed has had the miss counted already.
-//   - Peek, Delete, Clear and All: nothing.
+//   - Peek, Delete, DeleteFunc, Clear and All: nothing.
 //
 // The counts only go up, and Clear does not reset them. For rates, take a
 // [Snapshot] at intervals and subtract the one before with [Snapshot.Sub].
@@ -244,6 +244,12 @@ func (c *Cache[K, V]) SetIfAbsent(key K, value V) (actual V, present bool, oldKe
 
 // Delete removes key and returns the value it had, and counts nothing.
 func (c *Cache[K, V]) Delete(key K) (value V, ok bool) { return c.cache.Delete(key) }
+
+// DeleteFunc applies [evict.DeleteFunc] to the wrapped cache and counts
+// nothing, just like [Cache.Delete].
+func (c *Cache[K, V]) DeleteFunc(del func(K, V) bool) (int, error) {
+	return evict.DeleteFunc(c.cache, del)
+}
 
 // Len returns the number of entries in the cache.
 func (c *Cache[K, V]) Len() int { return c.cache.Len() }
