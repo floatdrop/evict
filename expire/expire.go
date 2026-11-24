@@ -12,14 +12,15 @@
 // An entry that has expired is not found: Get, Peek, GetMany and Delete report
 // it missing, All passes it over, and SetIfAbsent stores a new entry in its
 // place. It stays in the cache all the same, until it is evicted, replaced or
-// deleted, or the cache is cleared. Until then it takes up room, Len counts
-// it, and what it holds on to is not garbage.
+// deleted, or the cache is cleared. Until then it takes up room and Len counts
+// it. Call [Cache.PurgeExpired] to remove expired entries on demand; the
+// cache does not run a background sweep.
 //
 // Set and SetIfAbsent hand an expired entry back when they push it out or
 // replace it, as they do any entry, so that what it holds on to can be
-// released. Delete and Clear do not. Where values have to be released, use the
-// wrapped cache for those: its Delete and All return entries whether they have
-// expired or not, and [Entry.Value] gives their values.
+// released. Delete, Clear and PurgeExpired do not hand back expired values.
+// Where values have to be released, the wrapped cache's Delete and All return
+// entries whether they have expired or not, and [Entry.Value] gives their values.
 //
 // A read that finds an expired entry leaves it there, for the Set that usually
 // follows: that replaces the entry in place, and the policy goes on treating
@@ -399,6 +400,30 @@ func (c *Cache[K, V]) Delete(key K) (value V, ok bool) {
 		return value, false
 	}
 	return e.value, true
+}
+
+// DeleteFunc calls del only for entries that have not expired, removing those
+// for which it returns true. Expired entries are left for [Cache.PurgeExpired].
+// It uses [evict.DeleteFunc] on the wrapped cache, with the same locking
+// restrictions and error if unsupported.
+func (c *Cache[K, V]) DeleteFunc(del func(K, V) bool) (int, error) {
+	return evict.DeleteFunc(c.cache, func(k K, e Entry[V]) bool {
+		return !c.expired(e.deadline) && del(k, e.value)
+	})
+}
+
+// PurgeExpired removes entries whose deadlines are at or before the time the
+// call began and returns the number removed. It checks the current entry as
+// it visits each shard: a value refreshed past the cutoff is not removed.
+// Entries that expire during the scan are left for the next call.
+//
+// PurgeExpired uses [evict.DeleteFunc]. If the wrapped cache does not support
+// it, nothing is removed and the error is [errors.ErrUnsupported].
+func (c *Cache[K, V]) PurgeExpired() (int, error) {
+	cutoff := c.clock.read()
+	return evict.DeleteFunc(c.cache, func(_ K, e Entry[V]) bool {
+		return e.deadline <= cutoff
+	})
 }
 
 // Len returns the number of entries in the cache, those that have expired

@@ -230,12 +230,34 @@ func (c *Cache[K, V]) Delete(key K) (value V, ok bool) {
 	s.mu.Lock()
 	if idx := s.slab.Find(hash, key); idx != 0 {
 		value, ok = s.slab.Nodes[idx].Value, true
-		s.slab.Unlink(idx)
-		s.slab.Remove(idx)
+		s.remove(idx)
 	}
 	s.mu.Unlock()
 
 	return value, ok
+}
+
+func (s *shard[K, V]) remove(idx uint32) {
+	s.slab.Unlink(idx)
+	s.slab.Remove(idx)
+}
+
+// DeleteFunc removes the entries for which del returns true and reports how
+// many it removed. del runs under one shard's lock at a time and must not
+// call back into the cache. The error is always nil.
+func (c *Cache[K, V]) DeleteFunc(del func(K, V) bool) (int, error) {
+	n := 0
+	for i := range c.shards {
+		n += c.shards[i].deleteFunc(del)
+	}
+	return n, nil
+}
+
+func (s *shard[K, V]) deleteFunc(del func(K, V) bool) int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.slab.DeleteFunc(queue, del, s.remove)
 }
 
 // Len returns the number of entries in the cache.
@@ -312,6 +334,7 @@ var (
 	_ = (*Cache[int, int]).Set
 	_ = (*Cache[int, int]).SetIfAbsent
 	_ = (*Cache[int, int]).Delete
+	_ = (*Cache[int, int]).DeleteFunc
 	_ = (*Cache[int, int]).Len
 	_ = (*Cache[int, int]).Clear
 	_ = (*Cache[int, int]).All

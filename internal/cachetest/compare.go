@@ -19,6 +19,7 @@ const (
 	Set
 	SetIfAbsent
 	Delete
+	DeleteFunc
 	Clear
 )
 
@@ -43,8 +44,10 @@ func RandomOps(rng *rand.Rand, keys, n int) iter.Seq[Op] {
 				op.Kind = Set
 			case p < 900:
 				op.Kind = SetIfAbsent
-			case p < 999:
+			case p < 998:
 				op.Kind = Delete
+			case p < 999:
+				op.Kind = DeleteFunc
 			default:
 				op.Kind = Clear
 			}
@@ -74,7 +77,11 @@ func BytesOps(data []byte) iter.Seq[Op] {
 				op.Kind = Delete
 			default:
 				// One byte in eight would be too many.
-				if op.Kind = Delete; b == 255 {
+				op.Kind = Delete
+				switch b {
+				case 254:
+					op.Kind = DeleteFunc
+				case 255:
 					op.Kind = Clear
 				}
 			}
@@ -137,6 +144,19 @@ func Compare(t *testing.T, got, want evict.Cache[int, int], ops iter.Seq[Op]) {
 			wv, wok := want.Delete(op.Key)
 			if gv != wv || gok != wok {
 				t.Fatalf("step %d: Delete(%d) = %d, %t, want %d, %t", step, op.Key, gv, gok, wv, wok)
+			}
+		case DeleteFunc:
+			del := func(k, v int) bool { return (k+v)%8 == op.Key%8 }
+			n, err := evict.DeleteFunc(got, del)
+			removed := 0
+			for _, e := range entries(want) {
+				if del(e.key, e.value) {
+					want.Delete(e.key)
+					removed++
+				}
+			}
+			if n != removed || err != nil {
+				t.Fatalf("step %d: DeleteFunc = %d, %v, want %d, nil", step, n, err, removed)
 			}
 		case Clear:
 			got.Clear()

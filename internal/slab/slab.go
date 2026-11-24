@@ -251,6 +251,22 @@ func (s *Slab[K, V]) Reset() {
 	s.resetLists()
 }
 
+// DeleteFunc visits the entries in the list at head and calls remove on those
+// for which del returns true. remove must unlink and remove just that node.
+// The caller holds the shard lock.
+func (s *Slab[K, V]) DeleteFunc(head uint32, del func(K, V) bool, remove func(uint32)) int {
+	n := 0
+	for idx := s.Nodes[head].Next; idx != head; {
+		next := s.Nodes[idx].Next // remove reuses the link.
+		if e := &s.Nodes[idx]; del(e.Key, e.Value) {
+			remove(idx)
+			n++
+		}
+		idx = next
+	}
+	return n
+}
+
 // PushFront links node idx in as the first node of the list at head.
 func (s *Slab[K, V]) PushFront(head, idx uint32) {
 	nodes := s.Nodes
