@@ -62,9 +62,7 @@ func main() {
 ```
 
 Every package implements [`evict.Cache`](https://pkg.go.dev/github.com/floatdrop/evict#Cache);
-`sieve`, `s3fifo` and `tinylfu` also have `GetMany`. All built-in policies support
-[`evict.DeleteFunc`](https://pkg.go.dev/github.com/floatdrop/evict#DeleteFunc) to test and
-remove entries under the same shard lock. The predicate must not call back into the cache.
+`sieve`, `s3fifo` and `tinylfu` also have `GetMany`.
 
 ### Statistics
 
@@ -87,11 +85,8 @@ cache.Set("a", 1)                        // Expires in a minute,
 cache.SetWithTTL("b", 2, 10*time.Second) // and this one in ten seconds.
 ```
 
-An expired entry is a miss, but still takes up room and counts toward `Len` until removed.
-To free that room on your own schedule, call `n, err := cache.PurgeExpired()`. It scans one
-shard at a time and removes entries that were due when the call began. It returns the number
-removed, or `errors.ErrUnsupported` if a custom backing cache does not support `DeleteFunc`.
-There is no background sweep.
+Expired entries are misses but still count toward `Len`. Call `cache.PurgeExpired()` to
+remove them on demand.
 
 Reads still count with the policy, even for expired entries. They look at a copy of the time
 that a timer updates every 10 ms, and at the time itself near a deadline. A `Get` that hits
@@ -170,7 +165,6 @@ own.
 
 - **No sizes in bytes or weights.** Capacity counts entries; set it from a typical entry size.
 - **No loader** that fetches a missing key once for all the callers that ask for it.
-- **No cleanup of expired entries**; see [Expiry](#expiry).
 - **Overwrites do not scale with CPUs**; otter's do ([Benchmarks](#benchmarks)).
 
 For any of these, use [otter](https://github.com/maypok86/otter).
