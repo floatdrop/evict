@@ -93,6 +93,20 @@ Reads still count with the policy, even for expired entries. They look at a copy
 that a timer updates every 10 ms, and at the time itself near a deadline. A `Get` that hits
 took 11–15% longer through the wrapper, and a `Set` 17 ns longer (`tinylfu`, Apple M3 Max).
 
+### Loading
+
+```go
+// db.User(ctx, id) reads a user from the database.
+users := load.Wrap(tinylfu.New[string, User](10_000), db.User)
+
+u, err := users.Fetch(ctx, "42") // Loads 42 if the cache does not hold it.
+```
+
+`Fetch` calls for one key at the same time share a single load, and errors are not stored. A
+`Set` or `Delete` through the wrapper during a load keeps it from storing what it read
+before the change. A `Fetch` that hits took 20–23% longer than a `Get`, and a `Set` 10 ns
+longer on one CPU and 60% longer on eight (`tinylfu`, Apple M3 Max).
+
 ## Benchmarks
 
 <p>
@@ -163,7 +177,6 @@ Every package takes `WithShards`. `s3fifo` also has options for tuning its queue
 ## What it does not do
 
 - **No sizes in bytes or weights.** Capacity counts entries; set it from a typical entry size.
-- **No loader** that fetches a missing key once for all the callers that ask for it.
 - **No background expiry**: call `PurgeExpired` yourself ([Expiry](#expiry)).
 - **Overwrites do not scale with CPUs**; otter's do ([Benchmarks](#benchmarks)).
 
