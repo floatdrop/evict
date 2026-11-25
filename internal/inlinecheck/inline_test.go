@@ -26,7 +26,8 @@ import (
 
 // hot matches the functions that every operation on a cache goes through.
 var hot = regexp.MustCompile(`/(lru|sieve|s3fifo|tinylfu|stats|expire|load)\.\(\*(Cache|shard)\[.*\]\)\.(Get|GetMany|Peek|Set|SetWithTTL|set|SetIfAbsent|add|evict|Delete|look|victim|promote|asked|Fetch)$|` +
-	`/c?slab\.\(\*Slab\[.*\]\)\.(Find|Lookup|Insert|Replace|Remove)$`)
+	`/c?slab\.\(\*Slab\[.*\]\)\.(Find|Lookup|Insert|Replace|Remove)$|` +
+	`/ref\.\(\*Ref\[.*\]\)\.(Acquire|Release|Drop)$`)
 
 // slow matches the calls that must not show up in them: functions that are
 // small enough to be inlined, and are, as long as the compiler knows them.
@@ -168,6 +169,15 @@ func TestHotPathsAreInlined(t *testing.T) {
 	}
 	if !found {
 		t.Error("the compiler's output has no code for load.Cache.Fetch")
+	}
+	for _, method := range []string{"Acquire", "Release", "Drop"} {
+		found := false
+		for name := range seen {
+			found = found || strings.Contains(name, "/ref.(*Ref[") && strings.HasSuffix(name, ")."+method)
+		}
+		if !found {
+			t.Errorf("the compiler's output has no code for ref.Ref.%s", method)
+		}
 	}
 	for _, want := range [][2]string{
 		{"sieve.(*Cache[", "Get"},

@@ -44,6 +44,8 @@
 // any of them, [github.com/floatdrop/evict/expire] gives their entries a time
 // to live, and [github.com/floatdrop/evict/load] fills them from a source,
 // with one load for the goroutines that ask for a key at the same time.
+// [github.com/floatdrop/evict/ref] counts the users of values that have to be
+// released, so that the caches can share them out.
 package evict
 
 import "iter"
@@ -69,9 +71,10 @@ type Cache[K comparable, V any] interface {
 	// entry straight back.
 	//
 	// Whatever an entry holds on to can thus be released when Set returns
-	// it, whichever way it left. That goes for the key as well: when an
-	// entry is replaced, the cache keeps the key it was just given and
-	// returns the one it had.
+	// it, whichever way it left, once no goroutine that got it from the
+	// cache still uses it; package ref keeps count of those. That goes for
+	// the key as well: when an entry is replaced, the cache keeps the key it
+	// was just given and returns the one it had.
 	Set(key K, value V) (oldKey K, oldValue V, displaced bool)
 
 	// SetIfAbsent stores value under key unless the cache holds key

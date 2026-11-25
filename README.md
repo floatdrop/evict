@@ -111,6 +111,28 @@ to `Wrap`.
 A `Fetch` that hits took 20–23% longer than a `Get`, and a `Set` 10 ns longer on one CPU and
 60% longer on eight (`tinylfu`, Apple M3 Max).
 
+### Values that have to be released
+
+```go
+cache := tinylfu.New[string, *ref.Ref[*os.File]](1000)
+
+r := ref.New(f, func(f *os.File) { f.Close() })
+if _, old, displaced := cache.Set(name, r); displaced {
+	old.Drop() // Closes the old file once no reader has it.
+}
+
+if r, f, ok := ref.Get(cache, name); ok {
+	defer r.Release()
+	// ... use f ...
+}
+```
+
+A goroutine that got a value from `Get` may still use it when `Set` hands it back. `ref`
+counts the readers and releases the value when the last one lets go; a reader that comes
+too late reads a miss. Every read writes the value's count: a `ref.Get` took 30–42% longer
+than a `Get` over many keys, and 200–400 ns against 1.1 ns on eight CPUs that all read one
+key.
+
 ## Benchmarks
 
 <p>
