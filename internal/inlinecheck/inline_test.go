@@ -147,7 +147,7 @@ func TestHotPathsAreInlined(t *testing.T) {
 			}
 		}
 	}
-	for _, pkg := range []string{"sieve", "s3fifo", "tinylfu", "stats", "expire"} {
+	for _, pkg := range []string{"lru", "sieve", "s3fifo", "tinylfu", "stats", "expire", "load"} {
 		found := false
 		for name := range seen {
 			found = found || strings.Contains(name, "/"+pkg+".(*Cache[") && strings.HasSuffix(name, ").GetMany")

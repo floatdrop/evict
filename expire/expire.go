@@ -116,7 +116,6 @@ func (e Entry[V]) Value() V { return e.value }
 // the cache it wraps are, as they are for every cache in this module.
 type Cache[K comparable, V any] struct {
 	cache evict.Cache[K, Entry[V]]
-	many  manyGetter[K, Entry[V]] // cache, if it has a GetMany
 	clock *clock
 	ttl   time.Duration
 
@@ -129,12 +128,6 @@ type Cache[K comparable, V any] struct {
 	// from the fields that readers look at, since they are written to.
 	locks *[stripes]sync.Mutex
 	seed  maphash.Seed
-}
-
-// manyGetter is a cache that looks up several keys at once, as sieve, s3fifo
-// and tinylfu do.
-type manyGetter[K comparable, V any] interface {
-	GetMany(keys []K, values []V, found []bool)
 }
 
 // batch is as many entries as GetMany looks up at once: as many as the caches
@@ -232,9 +225,8 @@ func Wrap[K comparable, V any](cache evict.Cache[K, Entry[V]], ttl time.Duration
 
 func wrap[K comparable, V any](cache evict.Cache[K, Entry[V]], ttl time.Duration, clock *clock) *Cache[K, V] {
 	clock.begin()
-	many, _ := cache.(manyGetter[K, Entry[V]])
 	return &Cache[K, V]{
-		cache: cache, many: many, clock: clock, ttl: ttl,
+		cache: cache, clock: clock, ttl: ttl,
 		locks: new([stripes]sync.Mutex), seed: maphash.MakeSeed(),
 	}
 }
@@ -263,18 +255,10 @@ func (c *Cache[K, V]) Get(key K) (value V, ok bool) {
 // values or found is shorter than keys. values and found may each be keys
 // itself, but must not otherwise overlap it.
 //
-// If the cache has a GetMany of its own, as sieve, s3fifo and tinylfu do,
-// GetMany uses it: for a cache that is too large for the CPU's caches it is
-// faster than Get for each key. Otherwise it calls Get for each key.
+// It looks the keys up with the GetMany of the cache, in batches of its own.
 func (c *Cache[K, V]) GetMany(keys []K, values []V, found []bool) {
 	if len(values) < len(keys) || len(found) < len(keys) {
 		panic("expire: GetMany: values and found must be at least as long as keys")
-	}
-	if c.many == nil {
-		for i, key := range keys {
-			values[i], found[i] = c.Get(key)
-		}
-		return
 	}
 
 	b, _ := c.batches.Get().(*batch[V])
@@ -284,7 +268,7 @@ func (c *Cache[K, V]) GetMany(keys []K, values []V, found []bool) {
 	for len(keys) > 0 {
 		n := min(len(keys), len(b))
 		entries := b[:n]
-		c.many.GetMany(keys[:n], entries, found[:n])
+		c.cache.GetMany(keys[:n], entries, found[:n])
 		for i := range entries {
 			if found[i] && !c.expired(entries[i].deadline) {
 				values[i] = entries[i].value

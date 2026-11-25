@@ -387,6 +387,12 @@ func (c *Cache[K, V]) forgetAll() {
 // eviction policy. It does not load.
 func (c *Cache[K, V]) Get(key K) (value V, ok bool) { return c.cache.Get(key) }
 
+// GetMany does what Get does for each of keys: it does not load. See
+// [evict.Cache].
+func (c *Cache[K, V]) GetMany(keys []K, values []V, found []bool) {
+	c.cache.GetMany(keys, values, found)
+}
+
 // Peek returns the value stored under key without telling the eviction policy
 // about it. It does not load.
 func (c *Cache[K, V]) Peek(key K) (value V, ok bool) { return c.cache.Peek(key) }

@@ -814,8 +814,8 @@ func TestLag(t *testing.T) {
 }
 
 // GetMany has to find what Peek finds, among entries of which some expired,
-// with batches of every size, whether the cache has a GetMany of its own or
-// not.
+// with batches of every size, whether the GetMany of the cache looks keys up
+// one by one or in batches.
 func TestGetMany(t *testing.T) {
 	t.Parallel()
 

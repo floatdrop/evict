@@ -60,6 +60,18 @@ type Cache[K comparable, V any] interface {
 	// the eviction policy.
 	Get(key K) (value V, ok bool)
 
+	// GetMany does what Get does for each of keys, one after the other,
+	// and stores the value it finds for keys[i] in values[i] and whether
+	// it found one in found[i]. It panics if values or found is shorter
+	// than keys. values and found may each be keys itself, but must not
+	// otherwise overlap it.
+	//
+	// sieve, s3fifo and tinylfu load what a batch of keys needs from memory
+	// at once: for a cache too large for the CPU's caches, a key takes
+	// about half the time it takes with Get. lru takes the lock of a shard
+	// once for the keys in a row that fall in it.
+	GetMany(keys []K, values []V, found []bool)
+
 	// Peek returns the value stored under key without telling the eviction
 	// policy about it.
 	Peek(key K) (value V, ok bool)

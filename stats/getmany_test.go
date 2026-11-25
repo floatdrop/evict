@@ -26,7 +26,8 @@ func (b *batcher) GetMany(keys, values []int, found []bool) {
 }
 
 // GetMany has to find what Peek finds, and count a hit or a miss for every
-// key, whether the cache has a GetMany of its own or not.
+// key, whether the GetMany of the cache looks keys up one by one or in
+// batches.
 func TestGetMany(t *testing.T) {
 	t.Parallel()
 
@@ -72,7 +73,7 @@ func TestGetMany(t *testing.T) {
 	}
 }
 
-// A cache that has a GetMany of its own is asked with it.
+// The wrapper asks the cache with its GetMany.
 func TestGetManyForwards(t *testing.T) {
 	t.Parallel()
 

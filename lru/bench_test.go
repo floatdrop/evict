@@ -170,3 +170,43 @@ func BenchmarkParallel(b *testing.B) {
 		}
 	})
 }
+
+// BenchmarkGetMany looks up 32 keys at a time, picked at random from 16,384
+// entries that are all there, on every CPU at once: with GetMany, and with
+// Get for each key. ns/key is the time per key.
+func BenchmarkGetMany(b *testing.B) {
+	const (
+		entries = 1 << 14
+		n       = 32
+	)
+	for _, shards := range []int{1, 0} {
+		c := lru.New[int, int](entries, lru.WithShards(shards))
+		for key := range entries {
+			c.Set(key, key)
+		}
+		seq := rand.New(rand.NewPCG(1, 2)).Perm(entries)
+		run := func(b *testing.B, many bool) {
+			b.Helper()
+			b.ReportAllocs()
+			b.RunParallel(func(pb *testing.PB) {
+				values, found := make([]int, n), make([]bool, n)
+				i := rand.Int() &^ (n - 1)
+				for pb.Next() {
+					keys := seq[i&(entries-1) : i&(entries-1)+n]
+					if many {
+						c.GetMany(keys, values, found)
+					} else {
+						for j, key := range keys {
+							values[j], found[j] = c.Get(key)
+						}
+					}
+					i += n
+				}
+			})
+			b.ReportMetric(float64(b.Elapsed().Nanoseconds())/float64(b.N*n), "ns/key")
+		}
+		name := "shards=" + strconv.Itoa(shards)
+		b.Run(name+"/GetMany", func(b *testing.B) { run(b, true) })
+		b.Run(name+"/Get", func(b *testing.B) { run(b, false) })
+	}
+}

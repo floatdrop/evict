@@ -21,6 +21,7 @@ const (
 	Delete
 	DeleteFunc
 	Clear
+	GetMany
 )
 
 // Op is one operation on a cache.
@@ -36,8 +37,10 @@ func RandomOps(rng *rand.Rand, keys, n int) iter.Seq[Op] {
 		for i := range n {
 			op := Op{Key: rng.IntN(keys), Value: i}
 			switch p := rng.IntN(1000); {
-			case p < 350:
+			case p < 300:
 				op.Kind = Get
+			case p < 350:
+				op.Kind = GetMany
 			case p < 450:
 				op.Kind = Peek
 			case p < 800:
@@ -65,8 +68,10 @@ func BytesOps(data []byte) iter.Seq[Op] {
 		for i, b := range data {
 			op := Op{Key: int(b & 31), Value: i}
 			switch b >> 5 {
-			case 0, 1:
+			case 0:
 				op.Kind = Get
+			case 1:
+				op.Kind = GetMany
 			case 2:
 				op.Kind = SetIfAbsent
 			case 3:
@@ -89,6 +94,17 @@ func BytesOps(data []byte) iter.Seq[Op] {
 				return
 			}
 		}
+	}
+}
+
+// GetEach is GetMany for a model: it calls Get for each of keys. It panics if
+// values or found is shorter than keys, as GetMany does.
+func GetEach[K comparable, V any](c interface{ Get(K) (V, bool) }, keys []K, values []V, found []bool) {
+	if len(values) < len(keys) || len(found) < len(keys) {
+		panic("cachetest: GetEach: values and found must be at least as long as keys")
+	}
+	for i, key := range keys {
+		values[i], found[i] = c.Get(key)
 	}
 }
 
@@ -134,6 +150,17 @@ func Compare(t *testing.T, got, want evict.Cache[int, int], ops iter.Seq[Op]) {
 			wv, wok := want.Get(op.Key)
 			if gv != wv || gok != wok {
 				t.Fatalf("step %d: Get(%d) = %d, %t, want %d, %t", step, op.Key, gv, gok, wv, wok)
+			}
+		case GetMany:
+			// Enough keys for the caches that look keys up in batches,
+			// with one of them twice.
+			keys := []int{op.Key, op.Key + 1, op.Key, op.Key + 2, op.Key + 3}
+			gv, gf := make([]int, len(keys)), make([]bool, len(keys))
+			wv, wf := make([]int, len(keys)), make([]bool, len(keys))
+			got.GetMany(keys, gv, gf)
+			want.GetMany(keys, wv, wf)
+			if !slices.Equal(gv, wv) || !slices.Equal(gf, wf) {
+				t.Fatalf("step %d: GetMany(%v) = %v, %v, want %v, %v", step, keys, gv, gf, wv, wf)
 			}
 		case Peek:
 			gv, gok := got.Peek(op.Key)

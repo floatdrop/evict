@@ -10,6 +10,7 @@ import (
 	"math/rand/v2"
 	"reflect"
 	"runtime"
+	"slices"
 	"strconv"
 	"sync"
 	"testing"
@@ -93,6 +94,7 @@ func Run(t *testing.T, f Factories) {
 	t.Run("Clear", func(t *testing.T) { t.Parallel(); testClear(t, f.Int) })
 	t.Run("All", func(t *testing.T) { t.Parallel(); testAll(t, f.Int) })
 	t.Run("DeleteFunc", func(t *testing.T) { t.Parallel(); testDeleteFunc(t, f.Int) })
+	t.Run("GetMany", func(t *testing.T) { t.Parallel(); testGetMany(t, f.Int) })
 	t.Run("Strings", func(t *testing.T) { t.Parallel(); testStrings(t, f.String) })
 	t.Run("Model", func(t *testing.T) { t.Parallel(); testModel(t, f.Int) })
 	t.Run("Concurrent", func(t *testing.T) { t.Parallel(); testConcurrent(t, f.Int) })
@@ -425,6 +427,55 @@ func testAll(t *testing.T, newCache Factory[int, int]) {
 	}
 }
 
+func testGetMany(t *testing.T, newCache Factory[int, int]) {
+	t.Helper()
+
+	for _, tt := range []struct{ capacity, shards int }{{0, 1}, {100, 1}, {100, 8}, {1000, 0}} {
+		c := newCache(tt.capacity, tt.shards)
+		for key := range tt.capacity {
+			c.Set(key, -key)
+		}
+		// Keys that are there and keys that are not, in an order that
+		// goes from shard to shard, more than a batch of the caches
+		// that look keys up in batches.
+		keys := rand.New(rand.NewPCG(1, 2)).Perm(tt.capacity + 100)
+		want := make([]int, len(keys))
+		wantFound := make([]bool, len(keys))
+		for i, key := range keys {
+			want[i], wantFound[i] = c.Peek(key)
+		}
+
+		values, found := make([]int, len(keys)), make([]bool, len(keys))
+		for i := range values {
+			values[i] = 7 // GetMany has to overwrite what it does not find.
+		}
+		c.GetMany(keys, values, found)
+		for i, key := range keys {
+			if values[i] != want[i] || found[i] != wantFound[i] {
+				t.Fatalf("capacity %d, %d shards: GetMany found %d, %t for %d, want %d, %t",
+					tt.capacity, tt.shards, values[i], found[i], key, want[i], wantFound[i])
+			}
+		}
+
+		// values may be keys itself.
+		aliased := slices.Clone(keys)
+		c.GetMany(aliased, aliased, found)
+		if !slices.Equal(aliased, want) {
+			t.Fatalf("capacity %d, %d shards: GetMany into its keys found %v, want %v", tt.capacity, tt.shards, aliased, want)
+		}
+
+		c.GetMany(nil, nil, nil)
+		func() {
+			defer func() {
+				if recover() == nil {
+					t.Errorf("capacity %d, %d shards: GetMany with too few values did not panic", tt.capacity, tt.shards)
+				}
+			}()
+			c.GetMany(keys, values[:len(keys)-1], found)
+		}()
+	}
+}
+
 func testDeleteFunc(t *testing.T, newCache Factory[int, int]) {
 	t.Helper()
 
@@ -704,13 +755,24 @@ func testConcurrent(t *testing.T, newCache Factory[int, int]) {
 			for g := range goroutines {
 				wg.Go(func() {
 					rng := rand.New(rand.NewPCG(uint64(g), 7))
+					batch, values, found := make([]int, 8), make([]int, 8), make([]bool, 8)
 					for range steps {
 						key := rng.IntN(keys)
 
 						switch op := rng.IntN(1000); {
-						case op < 500:
+						case op < 450:
 							if v, ok := c.Get(key); ok {
 								check("Get", key, v)
+							}
+						case op < 500:
+							for i := range batch {
+								batch[i] = (key + i) % keys
+							}
+							c.GetMany(batch, values, found)
+							for i, k := range batch {
+								if found[i] {
+									check("GetMany", k, values[i])
+								}
 							}
 						case op < 600:
 							if v, ok := c.Peek(key); ok {

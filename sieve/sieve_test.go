@@ -258,6 +258,8 @@ func (m *model) Delete(key int) (int, bool) {
 	return value, true
 }
 
+func (m *model) GetMany(keys, values []int, found []bool) { cachetest.GetEach(m, keys, values, found) }
+
 func (m *model) DeleteFunc(del func(int, int) bool) int { return cachetest.DeleteEach(m, del) }
 
 func (m *model) Len() int { return len(m.entries) }

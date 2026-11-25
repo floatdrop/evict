@@ -5,6 +5,7 @@ import (
 	"math/rand/v2"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/floatdrop/evict"
 	"github.com/floatdrop/evict/internal/cachetest"
@@ -178,6 +179,8 @@ func (m *model) Delete(key int) (int, bool) {
 	return value, true
 }
 
+func (m *model) GetMany(keys, values []int, found []bool) { cachetest.GetEach(m, keys, values, found) }
+
 func (m *model) DeleteFunc(del func(int, int) bool) int { return cachetest.DeleteEach(m, del) }
 
 func (m *model) Len() int { return len(m.entries) }
@@ -231,4 +234,32 @@ func FuzzAgainstModel(f *testing.F) {
 			cachetest.BytesOps(ops),
 		)
 	})
+}
+
+// A key that cannot be hashed makes GetMany panic with the lock of the key
+// before it held, which it lets go all the same.
+func TestGetManyPanicUnlocks(t *testing.T) {
+	t.Parallel()
+
+	c := lru.New[any, int](10, lru.WithShards(1))
+	c.Set(1, 1)
+	func() {
+		defer func() {
+			if recover() == nil {
+				t.Error("GetMany of a key that cannot be hashed did not panic")
+			}
+		}()
+		values, found := make([]int, 2), make([]bool, 2)
+		c.GetMany([]any{1, func() {}}, values, found)
+	}()
+	done := make(chan struct{})
+	go func() {
+		c.Get(1)
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(10 * time.Second):
+		t.Fatal("the shard stayed locked after GetMany panicked")
+	}
 }

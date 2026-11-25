@@ -101,16 +101,9 @@ func (s Snapshot) Sub(prev Snapshot) Snapshot {
 // the cache it wraps are, as they are for every cache in this module.
 type Cache[K comparable, V any] struct {
 	cache   evict.Cache[K, V]
-	many    manyGetter[K, V] // cache, if it has a GetMany
 	stripes []stripe
 	shift   uint8 // 64 minus log2 of the number of stripes
 	zero    bool  // the cache has no capacity, and hands every entry back
-}
-
-// manyGetter is a cache that looks up several keys at once, as sieve, s3fifo
-// and tinylfu do.
-type manyGetter[K comparable, V any] interface {
-	GetMany(keys []K, values []V, found []bool)
 }
 
 // A stripe holds the counts of the goroutines that pick it, in a cache line
@@ -139,10 +132,8 @@ func Wrap[K comparable, V any](cache evict.Cache[K, V]) *Cache[K, V] {
 	// Sixteen stripes per CPU make it unlikely that two goroutines that run
 	// at the same time pick the same one.
 	n := 1 << bits.Len(uint(16*runtime.GOMAXPROCS(0)-1))
-	many, _ := cache.(manyGetter[K, V])
 	return &Cache[K, V]{
 		cache:   cache,
-		many:    many,
 		stripes: make([]stripe, n),
 		shift:   uint8(64 - bits.TrailingZeros(uint(n))),
 		zero:    cache.Cap() == 0,
@@ -179,24 +170,15 @@ func (c *Cache[K, V]) Get(key K) (value V, ok bool) {
 	return value, ok
 }
 
-// GetMany looks up each of keys, stores the value it finds for keys[i] in
-// values[i] and whether it found one in found[i], and counts a hit or a miss
-// for each key. It panics if values or found is shorter than keys.
-//
-// If the cache has a GetMany of its own, as sieve, s3fifo and tinylfu do,
-// GetMany uses it: for a cache that is too large for the CPU's caches it is
-// faster than Get for each key. Otherwise it calls Get for each key.
+// GetMany looks up each of keys with the GetMany of the cache, stores the value
+// it finds for keys[i] in values[i] and whether it found one in found[i], and
+// counts a hit or a miss for each key. It panics if values or found is shorter
+// than keys.
 func (c *Cache[K, V]) GetMany(keys []K, values []V, found []bool) {
 	if len(values) < len(keys) || len(found) < len(keys) {
 		panic("stats: GetMany: values and found must be at least as long as keys")
 	}
-	if c.many != nil {
-		c.many.GetMany(keys, values, found)
-	} else {
-		for i, key := range keys {
-			values[i], found[i] = c.cache.Get(key)
-		}
-	}
+	c.cache.GetMany(keys, values, found)
 
 	hits := 0
 	for _, ok := range found[:len(keys)] {

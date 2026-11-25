@@ -23,5 +23,8 @@ func Use(ctx context.Context, c *load.Cache[Key, Value], k Key, v Value) (Value,
 	c.Peek(k)
 	c.Get(k)
 	c.Delete(k)
+	var values [2]Value
+	var found [2]bool
+	c.GetMany([]Key{k, k}, values[:], found[:])
 	return c.Fetch(ctx, k)
 }

@@ -62,8 +62,8 @@ func main() {
 }
 ```
 
-Every package implements [`evict.Cache`](https://pkg.go.dev/github.com/floatdrop/evict#Cache);
-`sieve`, `s3fifo` and `tinylfu` also have `GetMany`.
+Every package implements [`evict.Cache`](https://pkg.go.dev/github.com/floatdrop/evict#Cache),
+`GetMany` included; `lru` takes a shard's lock once for the keys in a row that fall in it.
 
 ### Statistics
 
