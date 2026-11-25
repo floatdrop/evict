@@ -127,6 +127,23 @@ func BenchmarkSetIfAbsent(b *testing.B) {
 		}
 	})
 
+	// On every CPU at once, as goroutines that deduplicate requests do.
+	b.Run("present-parallel", func(b *testing.B) {
+		c := tinylfu.New[int, int](benchCapacity)
+		for key := range benchCapacity {
+			c.Set(key, key)
+		}
+
+		b.ReportAllocs()
+		b.RunParallel(func(pb *testing.PB) {
+			i := rand.Int()
+			for pb.Next() {
+				c.SetIfAbsent(i&(benchCapacity-1), i)
+				i++
+			}
+		})
+	})
+
 	b.Run("evict", func(b *testing.B) {
 		c := tinylfu.New[int, int](benchCapacity, tinylfu.WithShards(1))
 		for key := range benchCapacity {

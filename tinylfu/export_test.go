@@ -36,6 +36,13 @@ func (c *Cache[K, V]) Hold(key K) (release func(), ok bool) {
 	return pin.Unpin, true
 }
 
+// LockShard locks the shard of key and returns a function that unlocks it.
+func (c *Cache[K, V]) LockShard(key K) (unlock func()) {
+	s := &c.shards[uint32(maphash.Comparable(c.seed, key)>>32)&c.mask]
+	s.mu.Lock()
+	return s.mu.Unlock
+}
+
 // Waits returns how often a writer to the cache has had to wait for a reader
 // to let go of an entry.
 func (c *Cache[K, V]) Waits() (waits uint64) {

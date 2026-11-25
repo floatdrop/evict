@@ -537,13 +537,21 @@ func (s *shard[K, V]) set(h uint64, key K, value V) (oldKey K, oldValue V, displ
 // key's shard evicted to make room, if any. A cache without capacity hands the
 // new entry straight back as evicted.
 //
-// Looking for key and storing value happen at once, under the lock of the
-// key's shard: of the goroutines that call SetIfAbsent for one key at the
-// same time, one stores its value and the others get it back as actual,
-// unless it has left the cache in between.
+// A key that the cache holds is found without a lock, as Get finds it. One
+// that the lookup does not find is looked for again and stored at once, under
+// the lock of the key's shard: of the goroutines that call SetIfAbsent for one
+// key at the same time, one stores its value and the others get it back as
+// actual, unless it has left the cache in between.
 func (c *Cache[K, V]) SetIfAbsent(key K, value V) (actual V, present bool, oldKey K, oldValue V, evicted bool) {
 	h := maphash.Comparable(c.seed, key)
 	s := &c.shards[uint32(h>>32)&c.mask]
+
+	if v, ok, _ := s.slab.Lookup(uint32(h), key, maxFrequency, false); ok {
+		if s.slab.Overdue() {
+			s.help()
+		}
+		return v, true, oldKey, oldValue, false
+	}
 
 	s.mu.Lock()
 	if idx := s.slab.Find(uint32(h), key); idx != 0 {

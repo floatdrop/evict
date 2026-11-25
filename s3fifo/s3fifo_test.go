@@ -1150,3 +1150,48 @@ func FuzzAgainstModel(f *testing.F) {
 		)
 	})
 }
+
+// SetIfAbsent finds a key that is there without the lock of its shard, and
+// counts the read as Get does.
+func TestSetIfAbsentPresentWithoutLock(t *testing.T) {
+	t.Parallel()
+
+	c := s3fifo.New[int, int](10)
+	c.Set(1, 1)
+	unlock := c.LockShard(1)
+	done := make(chan bool, 1)
+	go func() {
+		actual, present, _, _, _ := c.SetIfAbsent(1, 2)
+		done <- actual == 1 && present
+	}()
+	select {
+	case ok := <-done:
+		if !ok {
+			t.Error("SetIfAbsent of a key that is there did not return its value")
+		}
+	case <-time.After(10 * time.Second):
+		t.Error("SetIfAbsent of a key that is there waited for the lock of its shard")
+	}
+	unlock()
+	if reads, ok := c.Reads(1); !ok || reads != 1 {
+		t.Errorf("Reads(1) = %d, %t, want the read counted", reads, ok)
+	}
+}
+
+// A SetIfAbsent that finds no slot to read in finds a key that is there under
+// the lock, and counts the read all the same.
+func TestSetIfAbsentPresentLocked(t *testing.T) {
+	t.Parallel()
+
+	c := s3fifo.New[int, int](10)
+	c.Set(1, 1)
+	release := c.OccupyReaders(0)
+	actual, present, _, _, _ := c.SetIfAbsent(1, 2)
+	release()
+	if actual != 1 || !present {
+		t.Errorf("SetIfAbsent = %d, %t, want 1, true", actual, present)
+	}
+	if reads, ok := c.Reads(1); !ok || reads != 1 {
+		t.Errorf("Reads(1) = %d, %t, want the read counted", reads, ok)
+	}
+}
