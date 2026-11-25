@@ -5,7 +5,7 @@
 // the entry at the back goes. That makes LRU a good fit for workloads in which
 // what was used a moment ago is likely to be used again, and a poor one for
 // workloads with scans, where a burst of entries that are touched only once
-// pushes out everything else. See the twoq and s3fifo packages for policies
+// pushes out everything else. See the s3fifo and tinylfu packages for policies
 // that cope with those.
 package lru
 

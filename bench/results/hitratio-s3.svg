@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 380" width="640" height="380" role="img" aria-labelledby="title desc">
 <title id="title">S3</title>
-<desc id="desc">Line chart of Hit ratio, % by Cache capacity, entries for evict/lru, evict/twoq, evict/sieve, evict/s3fifo, evict/tinylfu, otter, golang-lru/2q, optimal. The numbers are in the table that goes with it.</desc>
+<desc id="desc">Line chart of Hit ratio, % by Cache capacity, entries for evict/lru, evict/sieve, evict/s3fifo, evict/tinylfu, otter, golang-lru/2q, optimal. The numbers are in the table that goes with it.</desc>
 <style>
 text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
 .title { font-size: 15px; font-weight: 600; }
@@ -19,7 +19,6 @@ text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
 .ref { stroke: #898781; }
 .mark { stroke: #fcfcfb; }
 .s0 { stroke: #2a78d6; } .m0 { fill: #2a78d6; }
-.s1 { stroke: #eb6834; } .m1 { fill: #eb6834; }
 .s2 { stroke: #1baf7a; } .m2 { fill: #1baf7a; }
 .s3 { stroke: #eda100; } .m3 { fill: #eda100; }
 .s7 { stroke: #e34948; } .m7 { fill: #e34948; }
@@ -35,7 +34,6 @@ text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
   .ref { stroke: #898781; }
   .mark { stroke: #1a1a19; }
   .s0 { stroke: #3987e5; } .m0 { fill: #3987e5; }
-  .s1 { stroke: #d95926; } .m1 { fill: #d95926; }
   .s2 { stroke: #199e70; } .m2 { fill: #199e70; }
   .s3 { stroke: #c98500; } .m3 { fill: #c98500; }
   .s7 { stroke: #e66767; } .m7 { fill: #e66767; }
@@ -47,13 +45,12 @@ text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
 <text class="title" x="20" y="28">S3</text>
 <text class="unit" x="20" y="46">Hit ratio, %</text>
 <path class="line s0" d="M20,66 h24"/><circle class="mark m0" cx="32" cy="66" r="4"/><text class="legend" x="50" y="70">evict/lru</text>
-<path class="line s1" d="M131,66 h24"/><path class="mark m1" d="M139.4,62.4L146.6,62.4L146.6,69.6L139.4,69.6Z"/><text class="legend" x="161" y="70">evict/twoq</text>
-<path class="line s2" d="M249,66 h24"/><path class="mark m2" d="M261,61.2L265.6,69.4L256.4,69.4Z"/><text class="legend" x="279" y="70">evict/sieve</text>
-<path class="line s3" d="M374,66 h24"/><path class="mark m3" d="M386,61L391,66L386,71L381,66Z"/><text class="legend" x="404" y="70">evict/s3fifo</text>
-<path class="line s7" d="M20,86 h24"/><path class="mark m7" d="M30,81.6L34,81.6L36.4,84L36.4,88L34,90.4L30,90.4L27.6,88L27.6,84Z"/><text class="legend" x="50" y="90">evict/tinylfu</text>
-<path class="line s4" d="M159,86 h24"/><path class="mark m4" d="M171,90.8L175.6,82.6L166.4,82.6Z"/><text class="legend" x="189" y="90">otter</text>
-<path class="line s6" d="M242,86 h24"/><path class="mark m6" d="M251.7,82L256.3,82L258.6,86L256.3,90L251.7,90L249.4,86Z"/><text class="legend" x="272" y="90">golang-lru/2q</text>
-<path class="ref" d="M381,86 h24"/><text class="legend" x="411" y="90">optimal</text>
+<path class="line s2" d="M131,66 h24"/><path class="mark m2" d="M143,61.2L147.6,69.4L138.4,69.4Z"/><text class="legend" x="161" y="70">evict/sieve</text>
+<path class="line s3" d="M256,66 h24"/><path class="mark m3" d="M268,61L273,66L268,71L263,66Z"/><text class="legend" x="286" y="70">evict/s3fifo</text>
+<path class="line s7" d="M388,66 h24"/><path class="mark m7" d="M398,61.6L402,61.6L404.4,64L404.4,68L402,70.4L398,70.4L395.6,68L395.6,64Z"/><text class="legend" x="418" y="70">evict/tinylfu</text>
+<path class="line s4" d="M527,66 h24"/><path class="mark m4" d="M539,70.8L543.6,62.6L534.4,62.6Z"/><text class="legend" x="557" y="70">otter</text>
+<path class="line s6" d="M20,86 h24"/><path class="mark m6" d="M29.7,82L34.3,82L36.6,86L34.3,90L29.7,90L27.4,86Z"/><text class="legend" x="50" y="90">golang-lru/2q</text>
+<path class="ref" d="M159,86 h24"/><text class="legend" x="189" y="90">optimal</text>
 <path class="axis" d="M52,328 h568"/><text class="tick" x="44" y="332" text-anchor="end">0</text>
 <path class="grid" d="M52,283.2 h568"/><text class="tick" x="44" y="287.2" text-anchor="end">20</text>
 <path class="grid" d="M52,238.4 h568"/><text class="tick" x="44" y="242.4" text-anchor="end">40</text>
@@ -70,7 +67,6 @@ text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
 <text class="tick" x="620" y="346" text-anchor="middle">800K</text>
 <text class="tick" x="336" y="368" text-anchor="middle">Cache capacity, entries</text>
 <path class="line s0" d="M52,322.8L133.1,317.6L214.3,311L295.4,301L376.6,277L457.7,250.4L538.9,224.9L620,201.2"/>
-<path class="line s1" d="M52,307.5L133.1,290.2L214.3,272L295.4,258.9L376.6,251.4L457.7,239.3L538.9,217.8L620,199.5"/>
 <path class="line s2" d="M52,305.3L133.1,287.8L214.3,274.4L295.4,262.2L376.6,244L457.7,224.3L538.9,203.9L620,185.2"/>
 <path class="line s3" d="M52,300.3L133.1,277.6L214.3,261.2L295.4,250.5L376.6,235.2L457.7,217.8L538.9,200.4L620,184"/>
 <path class="line s7" d="M52,302.8L133.1,276L214.3,252L295.4,231.2L376.6,212.6L457.7,195.3L538.9,181.4L620,169.5"/>
@@ -85,14 +81,6 @@ text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
 <g><title>evict/lru at 600K: 34.63</title><circle class="mark m0" cx="457.7" cy="250.4" r="4"/></g>
 <g><title>evict/lru at 700K: 46.04</title><circle class="mark m0" cx="538.9" cy="224.9" r="4"/></g>
 <g><title>evict/lru at 800K: 56.60</title><circle class="mark m0" cx="620" cy="201.2" r="4"/></g>
-<g><title>evict/twoq at 100K: 9.15</title><path class="mark m1" d="M48.4,303.9L55.6,303.9L55.6,311.1L48.4,311.1Z"/></g>
-<g><title>evict/twoq at 200K: 16.86</title><path class="mark m1" d="M129.5,286.6L136.7,286.6L136.7,293.8L129.5,293.8Z"/></g>
-<g><title>evict/twoq at 300K: 25.01</title><path class="mark m1" d="M210.7,268.4L217.9,268.4L217.9,275.6L210.7,275.6Z"/></g>
-<g><title>evict/twoq at 400K: 30.87</title><path class="mark m1" d="M291.8,255.3L299,255.3L299,262.5L291.8,262.5Z"/></g>
-<g><title>evict/twoq at 500K: 34.20</title><path class="mark m1" d="M373,247.8L380.2,247.8L380.2,255L373,255Z"/></g>
-<g><title>evict/twoq at 600K: 39.59</title><path class="mark m1" d="M454.1,235.7L461.3,235.7L461.3,242.9L454.1,242.9Z"/></g>
-<g><title>evict/twoq at 700K: 49.20</title><path class="mark m1" d="M535.3,214.2L542.5,214.2L542.5,221.4L535.3,221.4Z"/></g>
-<g><title>evict/twoq at 800K: 57.38</title><path class="mark m1" d="M616.4,195.9L623.6,195.9L623.6,203.1L616.4,203.1Z"/></g>
 <g><title>evict/sieve at 100K: 10.12</title><path class="mark m2" d="M52,300.5L56.6,308.7L47.4,308.7Z"/></g>
 <g><title>evict/sieve at 200K: 17.93</title><path class="mark m2" d="M133.1,283L137.7,291.2L128.5,291.2Z"/></g>
 <g><title>evict/sieve at 300K: 23.94</title><path class="mark m2" d="M214.3,269.6L218.9,277.8L209.7,277.8Z"/></g>

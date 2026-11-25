@@ -13,7 +13,6 @@ import (
 	"github.com/floatdrop/evict/sieve"
 	"github.com/floatdrop/evict/stats"
 	"github.com/floatdrop/evict/tinylfu"
-	"github.com/floatdrop/evict/twoq"
 )
 
 // A wrapped cache must still be a cache. One with a lock and one without get
@@ -172,7 +171,6 @@ func TestEveryPolicy(t *testing.T) {
 	const capacity = 100
 	policies := map[string]func() evict.Cache[float64, int]{
 		"lru":     func() evict.Cache[float64, int] { return lru.New[float64, int](capacity, lru.WithShards(4)) },
-		"twoq":    func() evict.Cache[float64, int] { return twoq.New[float64, int](capacity, twoq.WithShards(4)) },
 		"sieve":   func() evict.Cache[float64, int] { return sieve.New[float64, int](capacity, sieve.WithShards(4)) },
 		"s3fifo":  func() evict.Cache[float64, int] { return s3fifo.New[float64, int](capacity, s3fifo.WithShards(4)) },
 		"tinylfu": func() evict.Cache[float64, int] { return tinylfu.New[float64, int](capacity, tinylfu.WithShards(4)) },
@@ -192,7 +190,7 @@ func TestEveryPolicy(t *testing.T) {
 			}
 
 			// Some keys are read, so that the policies that promote entries
-			// have some to promote, and twoq some to remember.
+			// have some to promote.
 			// Every other key is written with SetIfAbsent, which counts no
 			// hit or miss.
 			added, gets := uint64(1), uint64(0)

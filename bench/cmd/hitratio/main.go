@@ -166,7 +166,7 @@ type input struct {
 
 // defaultCaches are the columns of the report: the caches of this module,
 // the ones they are compared with, and the best that any cache could do.
-var defaultCaches = []string{"evict/lru", "evict/twoq", "evict/sieve", "evict/s3fifo", "evict/tinylfu", "otter", "golang-lru/2q", report.Bound}
+var defaultCaches = []string{"evict/lru", "evict/sieve", "evict/s3fifo", "evict/tinylfu", "otter", "golang-lru/2q", report.Bound}
 
 func allPlayers() []player {
 	var players []player

@@ -194,7 +194,7 @@ func TestLegendFits(t *testing.T) {
 
 	c := Chart{Title: "crowded", X: []string{"1", "2"}}
 	for _, name := range []string{
-		"evict/lru", "evict/twoq", "evict/sieve", "evict/s3fifo", "otter", "golang-lru", "golang-lru/2q", "something new", Bound,
+		"evict/lru", "evict/tinylfu", "evict/sieve", "evict/s3fifo", "otter", "golang-lru", "golang-lru/2q", "something new", Bound,
 	} {
 		c.Series = append(c.Series, Series{Name: name, Values: []float64{1, 2}})
 	}

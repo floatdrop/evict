@@ -166,7 +166,7 @@ func TestSameEveryTime(t *testing.T) {
 
 	keys := trace.Zipf(1_000_000, 1.0001, 10, 50_000_000)
 	const capacity = 100_000
-	for _, name := range []string{"evict/lru", "evict/twoq", "evict/sieve", "evict/s3fifo"} {
+	for _, name := range []string{"evict/lru", "evict/sieve", "evict/s3fifo"} {
 		kind, ok := caches.Find[uint64, uint64](name)
 		if !ok || kind.Varies {
 			t.Fatalf("%s is not a cache that is the same every time", name)

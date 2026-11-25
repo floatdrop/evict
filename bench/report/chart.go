@@ -45,7 +45,6 @@ const reference = -1
 var (
 	slots = map[string]int{
 		"evict/lru":     0,
-		"evict/twoq":    1,
 		"evict/sieve":   2,
 		"evict/s3fifo":  3,
 		"otter":         4,

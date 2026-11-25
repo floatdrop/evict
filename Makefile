@@ -32,7 +32,6 @@ test: ## Run the tests with the race detector.
 fuzz: ## Fuzz every target for FUZZTIME (default 30s) each.
 	$(GO) test -run='^$$' -fuzz=FuzzSlab -fuzztime=$(FUZZTIME) ./internal/slab
 	$(GO) test -run='^$$' -fuzz=FuzzAgainstModel -fuzztime=$(FUZZTIME) ./lru
-	$(GO) test -run='^$$' -fuzz=FuzzAgainstModel -fuzztime=$(FUZZTIME) ./twoq
 	$(GO) test -run='^$$' -fuzz=FuzzAgainstModel -fuzztime=$(FUZZTIME) ./sieve
 	$(GO) test -run='^$$' -fuzz=FuzzAgainstModel -fuzztime=$(FUZZTIME) ./s3fifo
 	$(GO) test -run='^$$' -fuzz=FuzzAgainstModel -fuzztime=$(FUZZTIME) ./tinylfu

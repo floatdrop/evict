@@ -128,12 +128,10 @@ them.
 | [`tinylfu`](https://pkg.go.dev/github.com/floatdrop/evict/tinylfu)<br>[TinyLFU](https://arxiv.org/abs/1512.00727) over S3-FIFO | **in doubt**: the workload is unknown, or has loops or scans, and is read far more than written | Evicting writes are 8–13% slower than in `s3fifo`. Hit ratios vary between runs by up to 5.6 points. Where keys come back once or twice after the same while, `lru` can do far better ([docs](https://pkg.go.dev/github.com/floatdrop/evict/tinylfu)). |
 | [`s3fifo`](https://pkg.go.dev/github.com/floatdrop/evict/s3fifo)<br>[S3-FIFO](https://dl.acm.org/doi/10.1145/3600006.3613147) | you want the same results on every run, or the workload has no loops | On looping workloads it can fall as low as `lru`. Writes cost about twice what they do in `lru`. |
 | [`sieve`](https://pkg.go.dev/github.com/floatdrop/evict/sieve)<br>[SIEVE](https://www.usenix.org/conference/nsdi24/presentation/zhang-yazhuo) | reading through has to be as fast as possible, and you have checked your workload | It can collapse on loops: on one trace it answers under 1% of requests where `lru` answers 44% ([when not to use it](https://pkg.go.dev/github.com/floatdrop/evict/sieve#hdr-When_not_to_use_it)). |
-| [`twoq`](https://pkg.go.dev/github.com/floatdrop/evict/twoq)<br>[2Q](http://www.vldb.org/conf/1994/P439.PDF) | a quarter or more of the operations are writes, or one goroutine uses the cache | Reads take a lock; more memory than `lru`. |
-| [`lru`](https://pkg.go.dev/github.com/floatdrop/evict/lru)<br>least recently used | memory counts most, or you want behavior everyone knows | The lowest hit ratio of these five on 9 of the 11 traces; reads take a lock. |
+| [`lru`](https://pkg.go.dev/github.com/floatdrop/evict/lru)<br>least recently used | memory counts most, one goroutine uses it, or you want behavior everyone knows | The lowest hit ratio of these four on 9 of the 11 traces; reads take a lock. |
 
-Every package takes `WithShards`. `twoq` and `s3fifo` also have options for tuning their
-queues ([what that is worth for `s3fifo`](bench/results/tuning.md)); `tinylfu` tunes its
-own.
+Every package takes `WithShards`. `s3fifo` also has options for tuning its queues
+([what that is worth](bench/results/tuning.md)); `tinylfu` tunes its own.
 
 ## How it works
 

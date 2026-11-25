@@ -1,5 +1,5 @@
-// Package slab provides the storage shared by the caches in this module that
-// do all of their work under a lock: a fixed array of entries addressed by
+// Package slab provides the storage of the cache in this module that does all
+// of its work under a lock, lru: a fixed array of entries addressed by
 // 32-bit indices, an open-addressing hash index over those entries, and
 // intrusive doubly linked lists threaded through them.
 //

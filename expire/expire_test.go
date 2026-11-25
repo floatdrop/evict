@@ -20,7 +20,6 @@ import (
 	"github.com/floatdrop/evict/sieve"
 	"github.com/floatdrop/evict/stats"
 	"github.com/floatdrop/evict/tinylfu"
-	"github.com/floatdrop/evict/twoq"
 )
 
 // A wrapped cache must still be a cache, as long as nothing expires. One with
@@ -139,9 +138,6 @@ func warmClock(t *testing.T) {
 var policies = map[string]func() evict.Cache[string, expire.Entry[int]]{
 	"lru": func() evict.Cache[string, expire.Entry[int]] {
 		return lru.New[string, expire.Entry[int]](100, lru.WithShards(4))
-	},
-	"twoq": func() evict.Cache[string, expire.Entry[int]] {
-		return twoq.New[string, expire.Entry[int]](100, twoq.WithShards(4))
 	},
 	"sieve": func() evict.Cache[string, expire.Entry[int]] {
 		return sieve.New[string, expire.Entry[int]](100, sieve.WithShards(4))

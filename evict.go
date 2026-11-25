@@ -2,9 +2,6 @@
 // API and differ in how they choose what to evict:
 //
 //   - [github.com/floatdrop/evict/lru] evicts the least recently used entry.
-//   - [github.com/floatdrop/evict/twoq] implements 2Q, which keeps new entries
-//     apart from the ones that came back after they had been evicted, so that
-//     a burst of new entries cannot push out the proven ones.
 //   - [github.com/floatdrop/evict/sieve] implements SIEVE, a queue with lazy
 //     promotion, and reads from it without taking a lock.
 //   - [github.com/floatdrop/evict/s3fifo] implements S3-FIFO, which lets new
@@ -51,8 +48,8 @@ package evict
 import "iter"
 
 // Cache is the behaviour common to every cache in this module. It is
-// implemented by *lru.Cache, *twoq.Cache, *sieve.Cache, *s3fifo.Cache and
-// *tinylfu.Cache, and by the wrappers *stats.Cache and *expire.Cache.
+// implemented by *lru.Cache, *sieve.Cache, *s3fifo.Cache and *tinylfu.Cache,
+// and by the wrappers *stats.Cache and *expire.Cache.
 //
 // All methods are safe for concurrent use.
 type Cache[K comparable, V any] interface {

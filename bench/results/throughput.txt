@@ -9,10 +9,6 @@ BenchmarkGet/cache=evict/lru           	45669848	        25.12 ns/op	        39.
 BenchmarkGet/cache=evict/lru-2         	41109792	        31.20 ns/op	        32.05 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
 BenchmarkGet/cache=evict/lru-4         	51157708	        23.52 ns/op	        42.52 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
 BenchmarkGet/cache=evict/lru-8         	37517487	        31.13 ns/op	        32.13 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
-BenchmarkGet/cache=evict/twoq          	56935221	        21.15 ns/op	        47.29 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
-BenchmarkGet/cache=evict/twoq-2        	67586911	        17.43 ns/op	        57.36 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
-BenchmarkGet/cache=evict/twoq-4        	100000000	        11.40 ns/op	        87.71 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
-BenchmarkGet/cache=evict/twoq-8        	54218704	        22.26 ns/op	        44.93 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
 BenchmarkGet/cache=evict/sieve         	49196289	        24.94 ns/op	        40.10 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
 BenchmarkGet/cache=evict/sieve-2       	96080391	        12.39 ns/op	        80.73 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
 BenchmarkGet/cache=evict/sieve-4       	185952681	         6.421 ns/op	       155.7 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
@@ -41,10 +37,6 @@ BenchmarkSet/cache=evict/lru           	44639535	        29.34 ns/op	        34.
 BenchmarkSet/cache=evict/lru-2         	38929687	        27.77 ns/op	        36.01 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkSet/cache=evict/lru-4         	53568837	        24.48 ns/op	        40.84 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkSet/cache=evict/lru-8         	29130337	        41.55 ns/op	        24.07 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkSet/cache=evict/twoq          	53930868	        22.68 ns/op	        44.09 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkSet/cache=evict/twoq-2        	54846799	        22.13 ns/op	        45.18 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkSet/cache=evict/twoq-4        	81103000	        19.46 ns/op	        51.37 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkSet/cache=evict/twoq-8        	33604540	        36.04 ns/op	        27.75 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkSet/cache=evict/sieve         	26541846	        45.50 ns/op	        21.98 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkSet/cache=evict/sieve-2       	21243214	        60.19 ns/op	        16.61 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkSet/cache=evict/sieve-4       	20240112	        56.81 ns/op	        17.60 Mops/s	       0 B/op	       0 allocs/op
@@ -73,10 +65,6 @@ BenchmarkMixed/writes=1%/cache=evict/lru           	43680110	        26.20 ns/op
 BenchmarkMixed/writes=1%/cache=evict/lru-2         	47263011	        25.78 ns/op	        38.79 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=1%/cache=evict/lru-4         	58406594	        21.58 ns/op	        46.35 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=1%/cache=evict/lru-8         	33441398	        39.93 ns/op	        25.05 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=1%/cache=evict/twoq          	59682562	        21.76 ns/op	        45.96 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=1%/cache=evict/twoq-2        	61659141	        21.74 ns/op	        45.99 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=1%/cache=evict/twoq-4        	58061120	        17.74 ns/op	        56.36 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=1%/cache=evict/twoq-8        	54885369	        22.20 ns/op	        45.05 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=1%/cache=evict/sieve         	48953532	        25.40 ns/op	        39.37 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=1%/cache=evict/sieve-2       	92847816	        13.64 ns/op	        73.31 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=1%/cache=evict/sieve-4       	157527216	         7.117 ns/op	       140.5 Mops/s	       0 B/op	       0 allocs/op
@@ -105,10 +93,6 @@ BenchmarkMixed/writes=10%/cache=evict/lru          	50245470	        24.33 ns/op
 BenchmarkMixed/writes=10%/cache=evict/lru-2        	45823388	        26.72 ns/op	        37.43 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=10%/cache=evict/lru-4        	54995619	        19.28 ns/op	        51.87 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=10%/cache=evict/lru-8        	42132981	        28.82 ns/op	        34.70 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=10%/cache=evict/twoq         	58474544	        21.53 ns/op	        46.44 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=10%/cache=evict/twoq-2       	72002340	        18.02 ns/op	        55.48 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=10%/cache=evict/twoq-4       	89787871	        14.44 ns/op	        69.24 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=10%/cache=evict/twoq-8       	51253210	        23.62 ns/op	        42.33 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=10%/cache=evict/sieve        	46260748	        26.17 ns/op	        38.22 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=10%/cache=evict/sieve-2      	69210139	        17.96 ns/op	        55.67 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=10%/cache=evict/sieve-4      	100000000	        12.00 ns/op	        83.37 Mops/s	       0 B/op	       0 allocs/op
@@ -137,10 +121,6 @@ BenchmarkMixed/writes=25%/cache=evict/lru          	45785725	        25.39 ns/op
 BenchmarkMixed/writes=25%/cache=evict/lru-2        	43945780	        29.57 ns/op	        33.82 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=25%/cache=evict/lru-4        	68517918	        18.41 ns/op	        54.31 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=25%/cache=evict/lru-8        	38487442	        31.33 ns/op	        31.92 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=25%/cache=evict/twoq         	55780765	        22.92 ns/op	        43.64 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=25%/cache=evict/twoq-2       	64264198	        22.73 ns/op	        44.00 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=25%/cache=evict/twoq-4       	77442462	        18.04 ns/op	        55.44 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=25%/cache=evict/twoq-8       	45308450	        26.80 ns/op	        37.32 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=25%/cache=evict/sieve        	40342066	        30.10 ns/op	        33.23 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=25%/cache=evict/sieve-2      	29207176	        34.97 ns/op	        28.59 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=25%/cache=evict/sieve-4      	54861009	        21.79 ns/op	        45.88 Mops/s	       0 B/op	       0 allocs/op
@@ -169,10 +149,6 @@ BenchmarkEvict/cache=evict/lru                     	19435886	        58.66 ns/op
 BenchmarkEvict/cache=evict/lru-2                   	26686336	        43.16 ns/op	        23.17 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkEvict/cache=evict/lru-4                   	43526755	        30.62 ns/op	        32.65 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkEvict/cache=evict/lru-8                   	36917254	        31.16 ns/op	        32.09 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkEvict/cache=evict/twoq                    	20073518	        59.32 ns/op	        16.86 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkEvict/cache=evict/twoq-2                  	28761946	        46.13 ns/op	        21.68 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkEvict/cache=evict/twoq-4                  	32943538	        32.87 ns/op	        30.42 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkEvict/cache=evict/twoq-8                  	35333997	        33.29 ns/op	        30.04 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkEvict/cache=evict/sieve                   	17487697	        69.81 ns/op	        14.32 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkEvict/cache=evict/sieve-2                 	17452471	        71.04 ns/op	        14.08 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkEvict/cache=evict/sieve-4                 	22417474	        54.17 ns/op	        18.46 Mops/s	       0 B/op	       0 allocs/op
@@ -201,10 +177,6 @@ BenchmarkReadThrough/capacity=16K/cache=evict/lru           	37404296	        33
 BenchmarkReadThrough/capacity=16K/cache=evict/lru-2         	40241841	        30.12 ns/op	        33.20 Mops/s	        83.97 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=16K/cache=evict/lru-4         	66690285	        21.08 ns/op	        47.43 Mops/s	        83.96 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=16K/cache=evict/lru-8         	41140153	        28.33 ns/op	        35.30 Mops/s	        83.97 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=16K/cache=evict/twoq          	38079824	        32.08 ns/op	        31.17 Mops/s	        85.57 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=16K/cache=evict/twoq-2        	40120136	        29.14 ns/op	        34.32 Mops/s	        85.57 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=16K/cache=evict/twoq-4        	56178238	        20.64 ns/op	        48.45 Mops/s	        85.56 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=16K/cache=evict/twoq-8        	43469598	        28.56 ns/op	        35.02 Mops/s	        85.54 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=16K/cache=evict/sieve         	36524212	        32.49 ns/op	        30.78 Mops/s	        87.76 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=16K/cache=evict/sieve-2       	43770327	        23.17 ns/op	        43.15 Mops/s	        87.81 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=16K/cache=evict/sieve-4       	73789578	        14.50 ns/op	        68.98 Mops/s	        87.80 hit%	       0 B/op	       0 allocs/op
@@ -233,10 +205,6 @@ BenchmarkReadThrough/capacity=1M/cache=evict/lru            	 7410841	       162
 BenchmarkReadThrough/capacity=1M/cache=evict/lru-2          	 9328864	       188.0 ns/op	         5.320 Mops/s	        88.42 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=1M/cache=evict/lru-4          	 9181520	       122.8 ns/op	         8.142 Mops/s	        88.45 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=1M/cache=evict/lru-8          	24292275	        55.31 ns/op	        18.08 Mops/s	        88.43 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=1M/cache=evict/twoq           	 6774002	       155.4 ns/op	         6.435 Mops/s	        88.80 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=1M/cache=evict/twoq-2         	 9634765	       127.3 ns/op	         7.855 Mops/s	        88.93 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=1M/cache=evict/twoq-4         	11906592	       104.7 ns/op	         9.547 Mops/s	        89.02 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=1M/cache=evict/twoq-8         	18423568	        62.99 ns/op	        15.88 Mops/s	        89.21 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=1M/cache=evict/sieve          	 6363988	       209.3 ns/op	         4.777 Mops/s	        89.67 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=1M/cache=evict/sieve-2        	14580904	        89.25 ns/op	        11.20 Mops/s	        89.81 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=1M/cache=evict/sieve-4        	20916308	        53.61 ns/op	        18.65 Mops/s	        89.89 hit%	       0 B/op	       0 allocs/op
@@ -274,10 +242,6 @@ BenchmarkGet/cache=evict/lru           	42157652	        25.01 ns/op	        39.
 BenchmarkGet/cache=evict/lru-2         	47276122	        25.31 ns/op	        39.51 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
 BenchmarkGet/cache=evict/lru-4         	73272561	        17.41 ns/op	        57.45 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
 BenchmarkGet/cache=evict/lru-8         	41822958	        28.85 ns/op	        34.66 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
-BenchmarkGet/cache=evict/twoq          	59210036	        20.42 ns/op	        48.96 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
-BenchmarkGet/cache=evict/twoq-2        	75388722	        15.92 ns/op	        62.81 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
-BenchmarkGet/cache=evict/twoq-4        	90982323	        11.17 ns/op	        89.54 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
-BenchmarkGet/cache=evict/twoq-8        	46108033	        26.38 ns/op	        37.90 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
 BenchmarkGet/cache=evict/sieve         	48458008	        25.03 ns/op	        39.95 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
 BenchmarkGet/cache=evict/sieve-2       	95599437	        12.35 ns/op	        80.97 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
 BenchmarkGet/cache=evict/sieve-4       	193932889	         9.085 ns/op	       110.1 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
@@ -306,10 +270,6 @@ BenchmarkSet/cache=evict/lru           	46008520	        26.23 ns/op	        38.
 BenchmarkSet/cache=evict/lru-2         	44009509	        27.24 ns/op	        36.71 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkSet/cache=evict/lru-4         	53730439	        20.32 ns/op	        49.21 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkSet/cache=evict/lru-8         	28765336	        42.19 ns/op	        23.70 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkSet/cache=evict/twoq          	52662663	        22.72 ns/op	        44.01 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkSet/cache=evict/twoq-2        	55965363	        21.46 ns/op	        46.60 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkSet/cache=evict/twoq-4        	70521691	        16.36 ns/op	        61.11 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkSet/cache=evict/twoq-8        	31504676	        38.32 ns/op	        26.10 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkSet/cache=evict/sieve         	27544152	        43.97 ns/op	        22.75 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkSet/cache=evict/sieve-2       	22551356	        53.40 ns/op	        18.73 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkSet/cache=evict/sieve-4       	23065482	        52.24 ns/op	        19.14 Mops/s	       0 B/op	       0 allocs/op
@@ -338,10 +298,6 @@ BenchmarkMixed/writes=1%/cache=evict/lru           	48453933	        24.43 ns/op
 BenchmarkMixed/writes=1%/cache=evict/lru-2         	47876478	        25.57 ns/op	        39.10 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=1%/cache=evict/lru-4         	71541951	        17.18 ns/op	        58.20 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=1%/cache=evict/lru-8         	41670404	        28.63 ns/op	        34.93 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=1%/cache=evict/twoq          	55181186	        21.87 ns/op	        45.73 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=1%/cache=evict/twoq-2        	69703278	        17.08 ns/op	        58.54 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=1%/cache=evict/twoq-4        	100000000	        16.65 ns/op	        60.05 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=1%/cache=evict/twoq-8        	54739218	        21.92 ns/op	        45.62 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=1%/cache=evict/sieve         	41188988	        26.16 ns/op	        38.22 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=1%/cache=evict/sieve-2       	84180498	        14.31 ns/op	        69.86 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=1%/cache=evict/sieve-4       	167935081	         7.181 ns/op	       139.3 Mops/s	       0 B/op	       0 allocs/op
@@ -370,10 +326,6 @@ BenchmarkMixed/writes=10%/cache=evict/lru          	46452135	        25.66 ns/op
 BenchmarkMixed/writes=10%/cache=evict/lru-2        	44881065	        28.45 ns/op	        35.16 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=10%/cache=evict/lru-4        	57202783	        23.51 ns/op	        42.53 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=10%/cache=evict/lru-8        	40778529	        29.71 ns/op	        33.66 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=10%/cache=evict/twoq         	55191231	        22.20 ns/op	        45.04 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=10%/cache=evict/twoq-2       	68528514	        24.63 ns/op	        40.60 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=10%/cache=evict/twoq-4       	37224307	        34.50 ns/op	        28.98 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=10%/cache=evict/twoq-8       	40860742	        29.08 ns/op	        34.39 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=10%/cache=evict/sieve        	42016009	        28.02 ns/op	        35.69 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=10%/cache=evict/sieve-2      	45398798	        24.89 ns/op	        40.17 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=10%/cache=evict/sieve-4      	46466976	        25.67 ns/op	        38.96 Mops/s	       0 B/op	       0 allocs/op
@@ -402,10 +354,6 @@ BenchmarkMixed/writes=25%/cache=evict/lru          	40739534	        28.46 ns/op
 BenchmarkMixed/writes=25%/cache=evict/lru-2        	26755032	        37.39 ns/op	        26.74 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=25%/cache=evict/lru-4        	57221421	        44.54 ns/op	        22.45 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=25%/cache=evict/lru-8        	26368410	        42.61 ns/op	        23.47 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=25%/cache=evict/twoq         	42707286	        26.27 ns/op	        38.07 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=25%/cache=evict/twoq-2       	47728345	        28.80 ns/op	        34.72 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=25%/cache=evict/twoq-4       	31113001	        38.13 ns/op	        26.23 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=25%/cache=evict/twoq-8       	34840507	        34.79 ns/op	        28.75 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=25%/cache=evict/sieve        	36968149	        34.05 ns/op	        29.36 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=25%/cache=evict/sieve-2      	44910966	        25.29 ns/op	        39.54 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=25%/cache=evict/sieve-4      	69264568	        44.62 ns/op	        22.41 Mops/s	       0 B/op	       0 allocs/op
@@ -434,10 +382,6 @@ BenchmarkEvict/cache=evict/lru                     	21196060	        56.28 ns/op
 BenchmarkEvict/cache=evict/lru-2                   	29156378	        41.42 ns/op	        24.14 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkEvict/cache=evict/lru-4                   	47866374	        26.20 ns/op	        38.17 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkEvict/cache=evict/lru-8                   	37713710	        31.93 ns/op	        31.32 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkEvict/cache=evict/twoq                    	20768371	        59.13 ns/op	        16.91 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkEvict/cache=evict/twoq-2                  	28065361	        42.51 ns/op	        23.52 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkEvict/cache=evict/twoq-4                  	44140297	        27.63 ns/op	        36.19 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkEvict/cache=evict/twoq-8                  	37049520	        33.01 ns/op	        30.29 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkEvict/cache=evict/sieve                   	17123348	        69.63 ns/op	        14.36 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkEvict/cache=evict/sieve-2                 	17307432	        70.75 ns/op	        14.13 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkEvict/cache=evict/sieve-4                 	21265629	        54.33 ns/op	        18.41 Mops/s	       0 B/op	       0 allocs/op
@@ -466,10 +410,6 @@ BenchmarkReadThrough/capacity=16K/cache=evict/lru           	36780481	        32
 BenchmarkReadThrough/capacity=16K/cache=evict/lru-2         	40989730	        28.93 ns/op	        34.57 Mops/s	        83.96 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=16K/cache=evict/lru-4         	56554200	        21.80 ns/op	        45.87 Mops/s	        83.96 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=16K/cache=evict/lru-8         	39893007	        27.74 ns/op	        36.05 Mops/s	        83.97 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=16K/cache=evict/twoq          	38227465	        33.62 ns/op	        29.74 Mops/s	        85.57 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=16K/cache=evict/twoq-2        	41009576	        29.03 ns/op	        34.44 Mops/s	        85.57 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=16K/cache=evict/twoq-4        	62501626	        25.21 ns/op	        39.67 Mops/s	        85.56 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=16K/cache=evict/twoq-8        	43302344	        27.23 ns/op	        36.72 Mops/s	        85.53 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=16K/cache=evict/sieve         	34925558	        31.97 ns/op	        31.28 Mops/s	        87.75 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=16K/cache=evict/sieve-2       	53384146	        22.71 ns/op	        44.04 Mops/s	        87.80 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=16K/cache=evict/sieve-4       	83283450	        14.48 ns/op	        69.08 Mops/s	        87.80 hit%	       0 B/op	       0 allocs/op
@@ -498,10 +438,6 @@ BenchmarkReadThrough/capacity=1M/cache=evict/lru            	 9479833	       139
 BenchmarkReadThrough/capacity=1M/cache=evict/lru-2          	12198080	        88.25 ns/op	        11.33 Mops/s	        88.44 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=1M/cache=evict/lru-4          	16915017	        63.93 ns/op	        15.64 Mops/s	        88.44 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=1M/cache=evict/lru-8          	35623416	        34.30 ns/op	        29.16 Mops/s	        88.43 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=1M/cache=evict/twoq           	 9201724	       131.8 ns/op	         7.588 Mops/s	        88.93 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=1M/cache=evict/twoq-2         	13110789	       101.1 ns/op	         9.888 Mops/s	        89.05 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=1M/cache=evict/twoq-4         	18019675	        64.86 ns/op	        15.42 Mops/s	        89.20 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=1M/cache=evict/twoq-8         	34371682	        35.99 ns/op	        27.79 Mops/s	        89.39 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=1M/cache=evict/sieve          	 9218391	       127.3 ns/op	         7.855 Mops/s	        89.72 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=1M/cache=evict/sieve-2        	16220289	        73.34 ns/op	        13.63 Mops/s	        89.84 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=1M/cache=evict/sieve-4        	22127887	        52.54 ns/op	        19.03 Mops/s	        89.93 hit%	       0 B/op	       0 allocs/op
@@ -539,10 +475,6 @@ BenchmarkGet/cache=evict/lru           	45209090	        24.85 ns/op	        40.
 BenchmarkGet/cache=evict/lru-2         	47142862	        25.91 ns/op	        38.60 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
 BenchmarkGet/cache=evict/lru-4         	71434243	        19.49 ns/op	        51.32 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
 BenchmarkGet/cache=evict/lru-8         	43806144	        28.40 ns/op	        35.21 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
-BenchmarkGet/cache=evict/twoq          	55076820	        21.74 ns/op	        45.99 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
-BenchmarkGet/cache=evict/twoq-2        	73993188	        16.68 ns/op	        59.95 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
-BenchmarkGet/cache=evict/twoq-4        	97709596	        11.10 ns/op	        90.10 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
-BenchmarkGet/cache=evict/twoq-8        	51734544	        23.64 ns/op	        42.29 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
 BenchmarkGet/cache=evict/sieve         	47878785	        25.33 ns/op	        39.48 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
 BenchmarkGet/cache=evict/sieve-2       	99089956	        11.88 ns/op	        84.20 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
 BenchmarkGet/cache=evict/sieve-4       	198834954	         8.902 ns/op	       112.3 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
@@ -571,10 +503,6 @@ BenchmarkSet/cache=evict/lru           	42210789	        28.31 ns/op	        35.
 BenchmarkSet/cache=evict/lru-2         	29379091	        34.59 ns/op	        28.91 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkSet/cache=evict/lru-4         	20815008	        61.97 ns/op	        16.14 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkSet/cache=evict/lru-8         	23277429	        47.20 ns/op	        21.18 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkSet/cache=evict/twoq          	48007041	        22.45 ns/op	        44.54 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkSet/cache=evict/twoq-2        	55970691	        21.76 ns/op	        45.95 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkSet/cache=evict/twoq-4        	61969866	        18.17 ns/op	        55.04 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkSet/cache=evict/twoq-8        	30059304	        38.82 ns/op	        25.76 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkSet/cache=evict/sieve         	25530782	        45.60 ns/op	        21.93 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkSet/cache=evict/sieve-2       	21851886	        56.28 ns/op	        17.77 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkSet/cache=evict/sieve-4       	20785369	        62.80 ns/op	        15.92 Mops/s	       0 B/op	       0 allocs/op
@@ -603,10 +531,6 @@ BenchmarkMixed/writes=1%/cache=evict/lru           	46453710	        26.12 ns/op
 BenchmarkMixed/writes=1%/cache=evict/lru-2         	46983970	        28.76 ns/op	        34.77 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=1%/cache=evict/lru-4         	60006421	        17.26 ns/op	        57.92 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=1%/cache=evict/lru-8         	40314056	        30.42 ns/op	        32.88 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=1%/cache=evict/twoq          	59531436	        20.21 ns/op	        49.48 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=1%/cache=evict/twoq-2        	67064395	        18.55 ns/op	        53.91 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=1%/cache=evict/twoq-4        	67910434	        15.67 ns/op	        63.82 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=1%/cache=evict/twoq-8        	52511143	        22.44 ns/op	        44.56 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=1%/cache=evict/sieve         	46566451	        24.91 ns/op	        40.14 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=1%/cache=evict/sieve-2       	86646508	        13.36 ns/op	        74.88 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=1%/cache=evict/sieve-4       	166597684	         7.218 ns/op	       138.5 Mops/s	       0 B/op	       0 allocs/op
@@ -635,10 +559,6 @@ BenchmarkMixed/writes=10%/cache=evict/lru          	46348076	        26.06 ns/op
 BenchmarkMixed/writes=10%/cache=evict/lru-2        	43865259	        26.59 ns/op	        37.61 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=10%/cache=evict/lru-4        	70752284	        25.12 ns/op	        39.81 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=10%/cache=evict/lru-8        	41640459	        39.90 ns/op	        25.07 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=10%/cache=evict/twoq         	38512404	        27.46 ns/op	        36.41 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=10%/cache=evict/twoq-2       	29901976	        39.79 ns/op	        25.13 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=10%/cache=evict/twoq-4       	37864246	        55.81 ns/op	        17.92 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=10%/cache=evict/twoq-8       	42797913	        56.35 ns/op	        17.74 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=10%/cache=evict/sieve        	35788134	       156.6 ns/op	         6.385 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=10%/cache=evict/sieve-2      	48736653	        70.75 ns/op	        14.13 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=10%/cache=evict/sieve-4      	46607068	        41.71 ns/op	        23.98 Mops/s	       0 B/op	       0 allocs/op
@@ -667,10 +587,6 @@ BenchmarkMixed/writes=25%/cache=evict/lru          	46851360	        25.49 ns/op
 BenchmarkMixed/writes=25%/cache=evict/lru-2        	46228820	        26.17 ns/op	        38.21 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=25%/cache=evict/lru-4        	68191988	        18.11 ns/op	        55.22 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=25%/cache=evict/lru-8        	27500884	        44.25 ns/op	        22.60 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=25%/cache=evict/twoq         	46280746	        24.43 ns/op	        40.94 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=25%/cache=evict/twoq-2       	65577202	        18.39 ns/op	        54.38 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=25%/cache=evict/twoq-4       	90996122	        12.92 ns/op	        77.42 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=25%/cache=evict/twoq-8       	36006030	        34.00 ns/op	        29.41 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=25%/cache=evict/sieve        	39614692	        30.29 ns/op	        33.01 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=25%/cache=evict/sieve-2      	46110320	        23.89 ns/op	        41.86 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=25%/cache=evict/sieve-4      	66823981	        16.76 ns/op	        59.67 Mops/s	       0 B/op	       0 allocs/op
@@ -699,10 +615,6 @@ BenchmarkEvict/cache=evict/lru                     	21542341	        55.40 ns/op
 BenchmarkEvict/cache=evict/lru-2                   	29603984	        40.50 ns/op	        24.69 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkEvict/cache=evict/lru-4                   	47276046	        25.77 ns/op	        38.81 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkEvict/cache=evict/lru-8                   	37329877	        31.99 ns/op	        31.26 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkEvict/cache=evict/twoq                    	20502218	        58.34 ns/op	        17.14 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkEvict/cache=evict/twoq-2                  	28612274	        42.18 ns/op	        23.71 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkEvict/cache=evict/twoq-4                  	47017184	        26.17 ns/op	        38.21 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkEvict/cache=evict/twoq-8                  	37120290	        31.81 ns/op	        31.43 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkEvict/cache=evict/sieve                   	16995522	        69.25 ns/op	        14.44 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkEvict/cache=evict/sieve-2                 	16910052	        70.08 ns/op	        14.27 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkEvict/cache=evict/sieve-4                 	22841950	        51.98 ns/op	        19.24 Mops/s	       0 B/op	       0 allocs/op
@@ -731,10 +643,6 @@ BenchmarkReadThrough/capacity=16K/cache=evict/lru           	37355684	        31
 BenchmarkReadThrough/capacity=16K/cache=evict/lru-2         	41010918	        28.61 ns/op	        34.95 Mops/s	        83.97 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=16K/cache=evict/lru-4         	57083959	        19.52 ns/op	        51.24 Mops/s	        83.97 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=16K/cache=evict/lru-8         	36077023	        31.91 ns/op	        31.34 Mops/s	        83.95 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=16K/cache=evict/twoq          	37662912	        31.56 ns/op	        31.68 Mops/s	        85.58 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=16K/cache=evict/twoq-2        	41272393	        28.74 ns/op	        34.79 Mops/s	        85.56 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=16K/cache=evict/twoq-4        	58229575	        22.38 ns/op	        44.68 Mops/s	        85.57 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=16K/cache=evict/twoq-8        	44807886	        27.00 ns/op	        37.04 Mops/s	        85.54 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=16K/cache=evict/sieve         	37054620	        31.86 ns/op	        31.39 Mops/s	        87.80 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=16K/cache=evict/sieve-2       	53348251	        22.10 ns/op	        45.25 Mops/s	        87.84 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=16K/cache=evict/sieve-4       	90770980	        13.52 ns/op	        73.95 Mops/s	        87.82 hit%	       0 B/op	       0 allocs/op
@@ -763,10 +671,6 @@ BenchmarkReadThrough/capacity=1M/cache=evict/lru            	 9140691	       121
 BenchmarkReadThrough/capacity=1M/cache=evict/lru-2          	12409273	        91.19 ns/op	        10.97 Mops/s	        88.44 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=1M/cache=evict/lru-4          	22329232	        57.73 ns/op	        17.32 Mops/s	        88.43 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=1M/cache=evict/lru-8          	33255928	        34.92 ns/op	        28.64 Mops/s	        88.44 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=1M/cache=evict/twoq           	 9613018	       127.0 ns/op	         7.873 Mops/s	        88.90 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=1M/cache=evict/twoq-2         	12548685	        97.43 ns/op	        10.26 Mops/s	        89.03 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=1M/cache=evict/twoq-4         	19511572	        59.61 ns/op	        16.78 Mops/s	        89.23 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=1M/cache=evict/twoq-8         	34055433	        35.34 ns/op	        28.30 Mops/s	        89.38 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=1M/cache=evict/sieve          	 9770886	       122.8 ns/op	         8.141 Mops/s	        89.73 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=1M/cache=evict/sieve-2        	17098390	        67.45 ns/op	        14.83 Mops/s	        89.85 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=1M/cache=evict/sieve-4        	30380162	        40.55 ns/op	        24.66 Mops/s	        89.99 hit%	       0 B/op	       0 allocs/op
@@ -804,10 +708,6 @@ BenchmarkGet/cache=evict/lru           	48298111	        24.62 ns/op	        40.
 BenchmarkGet/cache=evict/lru-2         	48115395	        24.97 ns/op	        40.04 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
 BenchmarkGet/cache=evict/lru-4         	66995128	        17.60 ns/op	        56.83 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
 BenchmarkGet/cache=evict/lru-8         	44402440	        27.56 ns/op	        36.29 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
-BenchmarkGet/cache=evict/twoq          	53428316	        22.50 ns/op	        44.44 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
-BenchmarkGet/cache=evict/twoq-2        	75071552	        15.95 ns/op	        62.68 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
-BenchmarkGet/cache=evict/twoq-4        	100000000	        11.35 ns/op	        88.11 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
-BenchmarkGet/cache=evict/twoq-8        	56736247	        21.09 ns/op	        47.42 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
 BenchmarkGet/cache=evict/sieve         	50960641	        23.67 ns/op	        42.25 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
 BenchmarkGet/cache=evict/sieve-2       	91066041	        12.87 ns/op	        77.73 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
 BenchmarkGet/cache=evict/sieve-4       	196004061	         6.138 ns/op	       162.9 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
@@ -836,10 +736,6 @@ BenchmarkSet/cache=evict/lru           	46029110	        26.17 ns/op	        38.
 BenchmarkSet/cache=evict/lru-2         	44713483	        27.13 ns/op	        36.86 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkSet/cache=evict/lru-4         	56212888	        21.82 ns/op	        45.83 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkSet/cache=evict/lru-8         	30339357	        40.09 ns/op	        24.94 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkSet/cache=evict/twoq          	52873917	        22.99 ns/op	        43.50 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkSet/cache=evict/twoq-2        	55930908	        21.66 ns/op	        46.16 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkSet/cache=evict/twoq-4        	72969398	        16.89 ns/op	        59.22 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkSet/cache=evict/twoq-8        	32615157	        37.17 ns/op	        26.90 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkSet/cache=evict/sieve         	27555642	        43.40 ns/op	        23.04 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkSet/cache=evict/sieve-2       	22614111	        54.58 ns/op	        18.32 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkSet/cache=evict/sieve-4       	24831631	        48.53 ns/op	        20.60 Mops/s	       0 B/op	       0 allocs/op
@@ -868,10 +764,6 @@ BenchmarkMixed/writes=1%/cache=evict/lru           	46606918	        24.52 ns/op
 BenchmarkMixed/writes=1%/cache=evict/lru-2         	47572873	        25.50 ns/op	        39.21 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=1%/cache=evict/lru-4         	57284478	        19.29 ns/op	        51.83 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=1%/cache=evict/lru-8         	38411164	        31.70 ns/op	        31.55 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=1%/cache=evict/twoq          	57269782	        21.13 ns/op	        47.33 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=1%/cache=evict/twoq-2        	73081606	        17.84 ns/op	        56.04 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=1%/cache=evict/twoq-4        	100000000	        17.64 ns/op	        56.69 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=1%/cache=evict/twoq-8        	56591870	        21.19 ns/op	        47.20 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=1%/cache=evict/sieve         	49160431	        25.24 ns/op	        39.63 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=1%/cache=evict/sieve-2       	82727240	        13.68 ns/op	        73.10 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=1%/cache=evict/sieve-4       	160174759	         7.462 ns/op	       134.0 Mops/s	       0 B/op	       0 allocs/op
@@ -900,10 +792,6 @@ BenchmarkMixed/writes=10%/cache=evict/lru          	48699157	        24.84 ns/op
 BenchmarkMixed/writes=10%/cache=evict/lru-2        	46375840	        26.12 ns/op	        38.28 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=10%/cache=evict/lru-4        	59701370	        22.95 ns/op	        43.57 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=10%/cache=evict/lru-8        	37779756	        30.89 ns/op	        32.38 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=10%/cache=evict/twoq         	56932971	        21.36 ns/op	        46.81 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=10%/cache=evict/twoq-2       	69261238	        17.80 ns/op	        56.18 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=10%/cache=evict/twoq-4       	100000000	        14.17 ns/op	        70.58 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=10%/cache=evict/twoq-8       	46224070	        25.72 ns/op	        38.88 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=10%/cache=evict/sieve        	42961604	        28.26 ns/op	        35.39 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=10%/cache=evict/sieve-2      	71185108	        16.87 ns/op	        59.27 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=10%/cache=evict/sieve-4      	100000000	        14.47 ns/op	        69.09 Mops/s	       0 B/op	       0 allocs/op
@@ -932,10 +820,6 @@ BenchmarkMixed/writes=25%/cache=evict/lru          	47779258	        25.50 ns/op
 BenchmarkMixed/writes=25%/cache=evict/lru-2        	35108506	        28.52 ns/op	        35.07 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=25%/cache=evict/lru-4        	58120760	        19.32 ns/op	        51.75 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=25%/cache=evict/lru-8        	34168360	        32.72 ns/op	        30.56 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=25%/cache=evict/twoq         	48725605	        25.73 ns/op	        38.87 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=25%/cache=evict/twoq-2       	65355621	        22.38 ns/op	        44.68 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=25%/cache=evict/twoq-4       	100000000	        16.93 ns/op	        59.08 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=25%/cache=evict/twoq-8       	42229110	        27.12 ns/op	        36.88 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=25%/cache=evict/sieve        	35091052	        32.24 ns/op	        31.01 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=25%/cache=evict/sieve-2      	40516872	        26.86 ns/op	        37.22 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=25%/cache=evict/sieve-4      	48642813	        23.15 ns/op	        43.20 Mops/s	       0 B/op	       0 allocs/op
@@ -964,10 +848,6 @@ BenchmarkEvict/cache=evict/lru                     	20319796	        56.88 ns/op
 BenchmarkEvict/cache=evict/lru-2                   	26379230	        45.83 ns/op	        21.82 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkEvict/cache=evict/lru-4                   	47819638	        27.00 ns/op	        37.04 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkEvict/cache=evict/lru-8                   	37290676	        31.69 ns/op	        31.55 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkEvict/cache=evict/twoq                    	20225414	        60.74 ns/op	        16.46 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkEvict/cache=evict/twoq-2                  	24515040	        46.10 ns/op	        21.69 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkEvict/cache=evict/twoq-4                  	33809403	        35.80 ns/op	        27.94 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkEvict/cache=evict/twoq-8                  	35621432	        34.50 ns/op	        28.98 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkEvict/cache=evict/sieve                   	15914353	        69.43 ns/op	        14.40 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkEvict/cache=evict/sieve-2                 	16379168	        72.99 ns/op	        13.70 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkEvict/cache=evict/sieve-4                 	22037184	        62.02 ns/op	        16.12 Mops/s	       0 B/op	       0 allocs/op
@@ -996,10 +876,6 @@ BenchmarkReadThrough/capacity=16K/cache=evict/lru           	38502364	        31
 BenchmarkReadThrough/capacity=16K/cache=evict/lru-2         	41594212	        29.18 ns/op	        34.27 Mops/s	        83.98 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=16K/cache=evict/lru-4         	66102346	        18.75 ns/op	        53.34 Mops/s	        83.96 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=16K/cache=evict/lru-8         	41092488	        28.36 ns/op	        35.26 Mops/s	        83.96 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=16K/cache=evict/twoq          	37996777	        32.71 ns/op	        30.57 Mops/s	        85.56 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=16K/cache=evict/twoq-2        	40397974	        29.96 ns/op	        33.37 Mops/s	        85.55 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=16K/cache=evict/twoq-4        	51601435	        23.36 ns/op	        42.80 Mops/s	        85.56 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=16K/cache=evict/twoq-8        	43581556	        27.89 ns/op	        35.85 Mops/s	        85.54 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=16K/cache=evict/sieve         	37275279	        31.82 ns/op	        31.43 Mops/s	        87.75 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=16K/cache=evict/sieve-2       	53266652	        23.00 ns/op	        43.48 Mops/s	        87.86 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=16K/cache=evict/sieve-4       	81680577	        16.10 ns/op	        62.11 Mops/s	        87.80 hit%	       0 B/op	       0 allocs/op
@@ -1028,10 +904,6 @@ BenchmarkReadThrough/capacity=1M/cache=evict/lru            	 9033292	       121
 BenchmarkReadThrough/capacity=1M/cache=evict/lru-2          	13740241	       108.3 ns/op	         9.237 Mops/s	        88.44 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=1M/cache=evict/lru-4          	23186444	        58.76 ns/op	        17.02 Mops/s	        88.44 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=1M/cache=evict/lru-8          	33554114	        35.67 ns/op	        28.04 Mops/s	        88.42 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=1M/cache=evict/twoq           	 9311892	       127.5 ns/op	         7.843 Mops/s	        88.92 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=1M/cache=evict/twoq-2         	13353486	        97.67 ns/op	        10.24 Mops/s	        89.07 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=1M/cache=evict/twoq-4         	16610518	        72.87 ns/op	        13.72 Mops/s	        89.17 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=1M/cache=evict/twoq-8         	33648594	        36.59 ns/op	        27.33 Mops/s	        89.38 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=1M/cache=evict/sieve          	 9499087	       136.6 ns/op	         7.318 Mops/s	        89.96 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=1M/cache=evict/sieve-2        	15994197	        80.66 ns/op	        12.40 Mops/s	        89.84 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=1M/cache=evict/sieve-4        	32350534	        49.88 ns/op	        20.05 Mops/s	        90.01 hit%	       0 B/op	       0 allocs/op
@@ -1069,10 +941,6 @@ BenchmarkGet/cache=evict/lru           	49713249	        23.48 ns/op	        42.
 BenchmarkGet/cache=evict/lru-2         	44794155	        27.27 ns/op	        36.67 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
 BenchmarkGet/cache=evict/lru-4         	66883725	        17.13 ns/op	        58.37 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
 BenchmarkGet/cache=evict/lru-8         	33951414	        36.66 ns/op	        27.28 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
-BenchmarkGet/cache=evict/twoq          	64579204	        19.51 ns/op	        51.26 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
-BenchmarkGet/cache=evict/twoq-2        	73540113	        17.30 ns/op	        57.82 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
-BenchmarkGet/cache=evict/twoq-4        	99926437	        12.78 ns/op	        78.23 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
-BenchmarkGet/cache=evict/twoq-8        	57627082	        21.91 ns/op	        45.65 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
 BenchmarkGet/cache=evict/sieve         	48739209	        24.69 ns/op	        40.50 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
 BenchmarkGet/cache=evict/sieve-2       	94273534	        12.69 ns/op	        78.77 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
 BenchmarkGet/cache=evict/sieve-4       	191898306	         6.272 ns/op	       159.4 Mops/s	       100.0 hit%	       0 B/op	       0 allocs/op
@@ -1101,10 +969,6 @@ BenchmarkSet/cache=evict/lru           	47189596	        25.46 ns/op	        39.
 BenchmarkSet/cache=evict/lru-2         	44282214	        27.72 ns/op	        36.07 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkSet/cache=evict/lru-4         	55587080	        21.41 ns/op	        46.72 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkSet/cache=evict/lru-8         	31825665	        38.20 ns/op	        26.18 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkSet/cache=evict/twoq          	51067179	        23.47 ns/op	        42.60 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkSet/cache=evict/twoq-2        	53633283	        22.52 ns/op	        44.41 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkSet/cache=evict/twoq-4        	72098230	        15.71 ns/op	        63.64 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkSet/cache=evict/twoq-8        	32238024	        36.42 ns/op	        27.46 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkSet/cache=evict/sieve         	27571258	        45.71 ns/op	        21.88 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkSet/cache=evict/sieve-2       	22793230	        57.27 ns/op	        17.46 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkSet/cache=evict/sieve-4       	22903928	        55.25 ns/op	        18.10 Mops/s	       0 B/op	       0 allocs/op
@@ -1133,10 +997,6 @@ BenchmarkMixed/writes=1%/cache=evict/lru           	49311015	        23.90 ns/op
 BenchmarkMixed/writes=1%/cache=evict/lru-2         	48401083	        25.17 ns/op	        39.73 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=1%/cache=evict/lru-4         	69819026	        19.95 ns/op	        50.14 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=1%/cache=evict/lru-8         	38972847	        30.26 ns/op	        33.05 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=1%/cache=evict/twoq          	58767596	        21.14 ns/op	        47.30 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=1%/cache=evict/twoq-2        	70776975	        22.45 ns/op	        44.54 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=1%/cache=evict/twoq-4        	86632953	        16.17 ns/op	        61.83 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=1%/cache=evict/twoq-8        	53055283	        21.81 ns/op	        45.85 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=1%/cache=evict/sieve         	43709808	        24.34 ns/op	        41.08 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=1%/cache=evict/sieve-2       	91595186	        13.44 ns/op	        74.41 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=1%/cache=evict/sieve-4       	170121099	         7.199 ns/op	       138.9 Mops/s	       0 B/op	       0 allocs/op
@@ -1165,10 +1025,6 @@ BenchmarkMixed/writes=10%/cache=evict/lru          	50533141	        24.14 ns/op
 BenchmarkMixed/writes=10%/cache=evict/lru-2        	46885224	        25.96 ns/op	        38.53 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=10%/cache=evict/lru-4        	70632590	        20.67 ns/op	        48.38 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=10%/cache=evict/lru-8        	33273332	        36.16 ns/op	        27.65 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=10%/cache=evict/twoq         	49465071	        20.90 ns/op	        47.86 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=10%/cache=evict/twoq-2       	67109870	        18.33 ns/op	        54.55 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=10%/cache=evict/twoq-4       	103652144	        11.79 ns/op	        84.83 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=10%/cache=evict/twoq-8       	50550349	        24.18 ns/op	        41.36 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=10%/cache=evict/sieve        	44714803	        27.47 ns/op	        36.40 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=10%/cache=evict/sieve-2      	69103362	        21.71 ns/op	        46.07 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=10%/cache=evict/sieve-4      	94118569	        13.08 ns/op	        76.43 Mops/s	       0 B/op	       0 allocs/op
@@ -1197,10 +1053,6 @@ BenchmarkMixed/writes=25%/cache=evict/lru          	44165480	        26.90 ns/op
 BenchmarkMixed/writes=25%/cache=evict/lru-2        	47038993	        25.97 ns/op	        38.51 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=25%/cache=evict/lru-4        	61843447	        18.89 ns/op	        52.93 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=25%/cache=evict/lru-8        	39522219	        29.99 ns/op	        33.35 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=25%/cache=evict/twoq         	48814386	        24.57 ns/op	        40.70 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=25%/cache=evict/twoq-2       	65200852	        18.76 ns/op	        53.30 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=25%/cache=evict/twoq-4       	88069082	        13.16 ns/op	        76.00 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkMixed/writes=25%/cache=evict/twoq-8       	47936564	        26.19 ns/op	        38.18 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=25%/cache=evict/sieve        	39956713	        30.11 ns/op	        33.21 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=25%/cache=evict/sieve-2      	50006770	        24.18 ns/op	        41.36 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkMixed/writes=25%/cache=evict/sieve-4      	66725203	        18.34 ns/op	        54.53 Mops/s	       0 B/op	       0 allocs/op
@@ -1229,10 +1081,6 @@ BenchmarkEvict/cache=evict/lru                     	21882452	        55.82 ns/op
 BenchmarkEvict/cache=evict/lru-2                   	29820609	        40.73 ns/op	        24.55 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkEvict/cache=evict/lru-4                   	42310132	        27.63 ns/op	        36.19 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkEvict/cache=evict/lru-8                   	36295626	        30.17 ns/op	        33.15 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkEvict/cache=evict/twoq                    	19837429	        61.37 ns/op	        16.30 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkEvict/cache=evict/twoq-2                  	26324328	        43.98 ns/op	        22.74 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkEvict/cache=evict/twoq-4                  	41249516	        29.74 ns/op	        33.63 Mops/s	       0 B/op	       0 allocs/op
-BenchmarkEvict/cache=evict/twoq-8                  	37058959	        32.55 ns/op	        30.72 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkEvict/cache=evict/sieve                   	16928947	        69.12 ns/op	        14.47 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkEvict/cache=evict/sieve-2                 	17186877	        70.51 ns/op	        14.18 Mops/s	       0 B/op	       0 allocs/op
 BenchmarkEvict/cache=evict/sieve-4                 	23171464	        60.82 ns/op	        16.44 Mops/s	       0 B/op	       0 allocs/op
@@ -1261,10 +1109,6 @@ BenchmarkReadThrough/capacity=16K/cache=evict/lru           	37250836	        31
 BenchmarkReadThrough/capacity=16K/cache=evict/lru-2         	38456145	        29.39 ns/op	        34.02 Mops/s	        83.97 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=16K/cache=evict/lru-4         	59398588	        19.18 ns/op	        52.13 Mops/s	        83.96 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=16K/cache=evict/lru-8         	41951318	        29.82 ns/op	        33.54 Mops/s	        83.94 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=16K/cache=evict/twoq          	37290386	        35.64 ns/op	        28.06 Mops/s	        85.57 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=16K/cache=evict/twoq-2        	40268118	        31.57 ns/op	        31.67 Mops/s	        85.55 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=16K/cache=evict/twoq-4        	52296030	        22.74 ns/op	        43.97 Mops/s	        85.56 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=16K/cache=evict/twoq-8        	42137296	        29.06 ns/op	        34.42 Mops/s	        85.54 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=16K/cache=evict/sieve         	36800548	        33.53 ns/op	        29.83 Mops/s	        87.79 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=16K/cache=evict/sieve-2       	52565102	        24.61 ns/op	        40.63 Mops/s	        87.85 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=16K/cache=evict/sieve-4       	55840249	        20.58 ns/op	        48.60 Mops/s	        87.78 hit%	       0 B/op	       0 allocs/op
@@ -1293,10 +1137,6 @@ BenchmarkReadThrough/capacity=1M/cache=evict/lru            	 8254524	       148
 BenchmarkReadThrough/capacity=1M/cache=evict/lru-2          	14618695	        89.88 ns/op	        11.13 Mops/s	        88.43 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=1M/cache=evict/lru-4          	18475584	        57.42 ns/op	        17.42 Mops/s	        88.44 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=1M/cache=evict/lru-8          	34451738	        34.68 ns/op	        28.83 Mops/s	        88.43 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=1M/cache=evict/twoq           	 8951392	       132.3 ns/op	         7.558 Mops/s	        88.88 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=1M/cache=evict/twoq-2         	12510354	       110.5 ns/op	         9.053 Mops/s	        89.05 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=1M/cache=evict/twoq-4         	15914090	        71.54 ns/op	        13.98 Mops/s	        89.15 hit%	       0 B/op	       0 allocs/op
-BenchmarkReadThrough/capacity=1M/cache=evict/twoq-8         	34480570	        36.94 ns/op	        27.07 Mops/s	        89.38 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=1M/cache=evict/sieve          	 8304397	       153.9 ns/op	         6.498 Mops/s	        89.70 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=1M/cache=evict/sieve-2        	16466778	        74.99 ns/op	        13.34 Mops/s	        89.83 hit%	       0 B/op	       0 allocs/op
 BenchmarkReadThrough/capacity=1M/cache=evict/sieve-4        	25451971	        45.01 ns/op	        22.22 Mops/s	        89.95 hit%	       0 B/op	       0 allocs/op

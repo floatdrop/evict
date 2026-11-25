@@ -118,10 +118,10 @@ func TestSharding(t *testing.T) {
 		"as on a machine with 8 CPUs",
 		"up to 64.",
 		"### Small\n",
-		"| capacity | evict/lru | evict/twoq | evict/sieve | evict/s3fifo | evict/tinylfu |\n",
+		"| capacity | evict/lru | evict/sieve | evict/s3fifo | evict/tinylfu |\n",
 		// A cache of 100 entries is in one piece either way. The last one
 		// is not the same on every replay even so.
-		"| 100 | 0.00 | 0.00 | 0.00 | 0.00 | ",
+		"| 100 | 0.00 | 0.00 | 0.00 | ",
 	} {
 		if !strings.Contains(md, want) {
 			t.Errorf("sharding.md lacks %q:\n%s", want, md)
