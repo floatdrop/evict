@@ -207,8 +207,6 @@ Every package takes `WithShards`. `s3fifo` also has options for tuning its queue
 - **Overwrites do not scale with CPUs.** From about 10% overwrites, otter is faster on 8 CPUs
   of the M3 Max and 16 of the Xeon ([Benchmarks](#benchmarks)).
 
-For any of these, use [otter](https://github.com/maypok86/otter).
-
 ## License
 
 [MIT](LICENSE)
