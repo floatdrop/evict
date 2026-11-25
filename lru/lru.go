@@ -50,9 +50,6 @@ type padded[K comparable, V any] struct {
 	_ [shards.Line + (shards.Line-unsafe.Sizeof(shard[K, V]{})%shards.Line)%shards.Line]byte
 }
 
-// queue is the list head of a shard's entries.
-const queue = 0
-
 // Option configures a [Cache].
 type Option func(*config)
 
@@ -100,7 +97,7 @@ func New[K comparable, V any](capacity int, opts ...Option) *Cache[K, V] {
 		capacity: capacity,
 	}
 	for i := range c.shards {
-		c.shards[i].slab.Init(shards.Capacity(capacity, n, i), 1)
+		c.shards[i].slab.Init(shards.Capacity(capacity, n, i))
 	}
 	return c
 }
@@ -117,7 +114,7 @@ func (c *Cache[K, V]) Get(key K) (value V, ok bool) {
 
 	s.mu.Lock()
 	if idx := s.slab.Find(hash, key); idx != 0 {
-		s.slab.MoveToFront(queue, idx)
+		s.slab.MoveToFront(idx)
 		value, ok = s.slab.Nodes[idx].Value, true
 	}
 	s.mu.Unlock()
@@ -166,7 +163,7 @@ func (s *shard[K, V]) set(hash uint32, key K, value V) (oldKey K, oldValue V, di
 		// equal: they may still differ in what they refer to, and the
 		// caller is told that the old one has left.
 		n.Key, n.Value = key, value
-		sl.MoveToFront(queue, idx)
+		sl.MoveToFront(idx)
 		return oldKey, oldValue, displaced
 	}
 	return s.add(hash, key, value)
@@ -190,7 +187,7 @@ func (c *Cache[K, V]) SetIfAbsent(key K, value V) (actual V, present bool, oldKe
 
 	s.mu.Lock()
 	if idx := s.slab.Find(hash, key); idx != 0 {
-		s.slab.MoveToFront(queue, idx)
+		s.slab.MoveToFront(idx)
 		actual = s.slab.Nodes[idx].Value
 		s.mu.Unlock()
 		return actual, true, oldKey, oldValue, false
@@ -211,14 +208,14 @@ func (s *shard[K, V]) add(hash uint32, key K, value V) (oldKey K, oldValue V, ev
 		if sl.Cap() == 0 {
 			return key, value, true
 		}
-		lru := sl.Nodes[queue].Prev
+		lru := sl.Nodes[slab.Head].Prev
 		n := &sl.Nodes[lru]
 		oldKey, oldValue, evicted = n.Key, n.Value, true
 		sl.Unlink(lru)
 		sl.Remove(lru)
 	}
 
-	sl.PushFront(queue, sl.Insert(hash, key, value))
+	sl.PushFront(sl.Insert(hash, key, value))
 	return oldKey, oldValue, evicted
 }
 
@@ -257,7 +254,7 @@ func (s *shard[K, V]) deleteFunc(del func(K, V) bool) int {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	return s.slab.DeleteFunc(queue, del, s.remove)
+	return s.slab.DeleteFunc(del, s.remove)
 }
 
 // Len returns the number of entries in the cache.
@@ -306,7 +303,7 @@ func (c *Cache[K, V]) All() iter.Seq2[K, V] {
 			s.mu.Lock()
 			nodes := s.slab.Nodes
 			entries = slices.Grow(entries[:0], s.slab.Len())
-			for idx := nodes[queue].Next; idx != queue; idx = nodes[idx].Next {
+			for idx := nodes[slab.Head].Next; idx != slab.Head; idx = nodes[idx].Next {
 				entries = append(entries, entry{nodes[idx].Key, nodes[idx].Value})
 			}
 			s.mu.Unlock()

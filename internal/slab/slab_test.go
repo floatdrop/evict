@@ -23,8 +23,8 @@ func checkIndex[K comparable, V any](t *testing.T, s *Slab[K, V], want map[K]V) 
 			continue
 		}
 		hash, idx := uint32(slot>>32), uint32(slot)
-		if idx < s.heads || idx >= s.fresh {
-			t.Fatalf("slot %d refers to node %d outside [%d, %d)", i, idx, s.heads, s.fresh)
+		if idx <= Head || idx >= s.fresh {
+			t.Fatalf("slot %d refers to node %d outside [%d, %d)", i, idx, Head+1, s.fresh)
 		}
 		if indexed[idx] {
 			t.Fatalf("node %d is indexed twice", idx)
@@ -67,19 +67,19 @@ func checkIndex[K comparable, V any](t *testing.T, s *Slab[K, V], want map[K]V) 
 			t.Fatal("free list has a cycle")
 		}
 	}
-	if handedOut := int(s.fresh - s.heads); handedOut != free+len(want) {
+	if handedOut := int(s.fresh - (Head + 1)); handedOut != free+len(want) {
 		t.Fatalf("%d nodes handed out, but %d free + %d in use", handedOut, free, len(want))
 	}
 }
 
-// list returns the keys of the list at head, front to back, after checking
-// that the back links mirror the forward links.
-func list[K comparable, V any](t *testing.T, s *Slab[K, V], head uint32) []K {
+// list returns the keys of the list, front to back, after checking that the
+// back links mirror the forward links.
+func list[K comparable, V any](t *testing.T, s *Slab[K, V]) []K {
 	t.Helper()
 
 	var keys []K
-	prev := head
-	for idx := s.Nodes[head].Next; idx != head; idx = s.Nodes[idx].Next {
+	prev := uint32(Head)
+	for idx := s.Nodes[Head].Next; idx != Head; idx = s.Nodes[idx].Next {
 		if s.Nodes[idx].Prev != prev {
 			t.Fatalf("node %d has Prev %d, want %d", idx, s.Nodes[idx].Prev, prev)
 		}
@@ -89,8 +89,8 @@ func list[K comparable, V any](t *testing.T, s *Slab[K, V], head uint32) []K {
 			t.Fatal("list has a cycle")
 		}
 	}
-	if s.Nodes[head].Prev != prev {
-		t.Fatalf("head %d has Prev %d, want %d", head, s.Nodes[head].Prev, prev)
+	if s.Nodes[Head].Prev != prev {
+		t.Fatalf("Head has Prev %d, want %d", s.Nodes[Head].Prev, prev)
 	}
 	return keys
 }
@@ -143,26 +143,24 @@ func TestIndexSize(t *testing.T) {
 func TestInit(t *testing.T) {
 	t.Parallel()
 
-	for _, tt := range []struct{ capacity, heads int }{{0, 1}, {1, 1}, {3, 3}, {1000, 2}, {5, maxHeads}} {
+	for _, capacity := range []int{0, 1, 3, 1000} {
 		var s Slab[int, int]
-		s.Init(tt.capacity, tt.heads)
+		s.Init(capacity)
 
-		if s.Cap() != tt.capacity {
-			t.Errorf("Init(%d, %d): Cap() = %d", tt.capacity, tt.heads, s.Cap())
+		if s.Cap() != capacity {
+			t.Errorf("Init(%d): Cap() = %d", capacity, s.Cap())
 		}
 		if s.Len() != 0 {
-			t.Errorf("Init(%d, %d): Len() = %d", tt.capacity, tt.heads, s.Len())
+			t.Errorf("Init(%d): Len() = %d", capacity, s.Len())
 		}
-		if got, want := uint(len(s.slots)), indexSize(tt.capacity); got != want {
-			t.Errorf("Init(%d, %d): %d slots, want %d", tt.capacity, tt.heads, got, want)
+		if got, want := uint(len(s.slots)), indexSize(capacity); got != want {
+			t.Errorf("Init(%d): %d slots, want %d", capacity, got, want)
 		}
-		for head := range uint32(tt.heads) {
-			if got := list(t, &s, head); len(got) != 0 {
-				t.Errorf("Init(%d, %d): list %d = %v, want empty", tt.capacity, tt.heads, head, got)
-			}
+		if got := list(t, &s); len(got) != 0 {
+			t.Errorf("Init(%d): list = %v, want empty", capacity, got)
 		}
 		if got := s.Find(42, 42); got != 0 {
-			t.Errorf("Init(%d, %d): Find on empty slab = %d", tt.capacity, tt.heads, got)
+			t.Errorf("Init(%d): Find on empty slab = %d", capacity, got)
 		}
 	}
 }
@@ -171,13 +169,11 @@ func TestInitPanics(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name            string
-		capacity, heads int
+		name     string
+		capacity int
 	}{
-		{"no heads", 8, 0},
-		{"too many heads", 8, maxHeads + 1},
-		{"negative capacity", -1, 1},
-		{"capacity too large", MaxCapacity + 1, 1},
+		{"negative capacity", -1},
+		{"capacity too large", MaxCapacity + 1},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -185,7 +181,7 @@ func TestInitPanics(t *testing.T) {
 
 			mustPanic(t, "Init", func() {
 				var s Slab[int, int]
-				s.Init(tt.capacity, tt.heads)
+				s.Init(tt.capacity)
 			})
 		})
 	}
@@ -195,7 +191,7 @@ func TestInsertFindRemove(t *testing.T) {
 	t.Parallel()
 
 	var s Slab[string, int]
-	s.Init(4, 1)
+	s.Init(4)
 	want := map[string]int{}
 
 	a := s.Insert(1, "a", 10)
@@ -215,11 +211,10 @@ func TestInsertFindRemove(t *testing.T) {
 	if got := s.Find(3, "c"); got != 0 {
 		t.Errorf(`Find("c") = %d, want 0`, got)
 	}
-	if n := &s.Nodes[b]; n.Key != "b" || n.Value != 20 || n.Meta != 0 {
-		t.Errorf("node b = {%q, %d, meta %d}", n.Key, n.Value, n.Meta)
+	if n := &s.Nodes[b]; n.Key != "b" || n.Value != 20 {
+		t.Errorf("node b = {%q, %d}", n.Key, n.Value)
 	}
 
-	s.Nodes[a].Meta = 7
 	s.Remove(a)
 	delete(want, "a")
 	checkIndex(t, &s, want)
@@ -227,16 +222,12 @@ func TestInsertFindRemove(t *testing.T) {
 		t.Errorf(`Find("a") after Remove = %d, want 0`, got)
 	}
 
-	// The node that was just released is the next one to be used, and it
-	// comes back with a clean Meta.
+	// The node that was just released is the next one to be used.
 	c := s.Insert(3, "c", 30)
 	want["c"] = 30
 	checkIndex(t, &s, want)
 	if c != a {
 		t.Errorf("Insert reused node %d, want %d", c, a)
-	}
-	if got := s.Nodes[c].Meta; got != 0 {
-		t.Errorf("Meta of reused node = %d, want 0", got)
 	}
 }
 
@@ -248,7 +239,7 @@ func TestFill(t *testing.T) {
 	const capacity = 1365 // 4095 slots, of which a third get used.
 
 	var s Slab[int, int]
-	s.Init(capacity, 2)
+	s.Init(capacity)
 	want := map[int]int{}
 
 	// Many keys share a hash, and the hashes crowd into one end of the index.
@@ -286,7 +277,7 @@ func TestMaxDisplacement(t *testing.T) {
 	t.Parallel()
 
 	var s Slab[int, int]
-	s.Init(40, 1) // 120 slots.
+	s.Init(40) // 120 slots.
 	size := uint32(len(s.slots))
 
 	if got := s.MaxDisplacement(); got != 0 {
@@ -315,7 +306,7 @@ func TestInsertIntoFullSlabPanics(t *testing.T) {
 	t.Parallel()
 
 	var s Slab[int, int]
-	s.Init(2, 1)
+	s.Init(2)
 	s.Insert(1, 1, 1)
 	s.Insert(2, 2, 2)
 	want := map[int]int{1: 1, 2: 2}
@@ -331,7 +322,7 @@ func TestInsertIntoFullSlabPanics(t *testing.T) {
 	checkIndex(t, &s, map[int]int{})
 
 	var empty Slab[int, int]
-	empty.Init(0, 1)
+	empty.Init(0)
 	mustPanic(t, "Insert into a slab without capacity", func() { empty.Insert(1, 1, 1) })
 }
 
@@ -339,17 +330,17 @@ func TestRemovePanics(t *testing.T) {
 	t.Parallel()
 
 	var s Slab[string, int]
-	s.Init(4, 1)
+	s.Init(4)
 	a := s.Insert(1, "a", 1)
 	b := s.Insert(1, "b", 2)
-	s.PushFront(0, a)
-	s.PushFront(0, b)
+	s.PushFront(a)
+	s.PushFront(b)
 	want := map[string]int{"a": 1, "b": 2}
 
 	// Node 0 is what Find returns for a key that is not there.
 	mustPanic(t, "Remove of node 0", func() { s.Remove(s.Find(9, "missing")) })
 	checkIndex(t, &s, want)
-	if got := list(t, &s, 0); !slices.Equal(got, []string{"b", "a"}) {
+	if got := list(t, &s); !slices.Equal(got, []string{"b", "a"}) {
 		t.Errorf("list = %v after the failed Remove, want [b a]", got)
 	}
 
@@ -384,7 +375,7 @@ func TestCollisions(t *testing.T) {
 
 	rng := rand.New(rand.NewPCG(1, 2))
 	var s Slab[int, int]
-	s.Init(capacity, 1)
+	s.Init(capacity)
 	want := map[int]int{}
 
 	for step := range 20_000 {
@@ -413,80 +404,138 @@ func TestCollisions(t *testing.T) {
 	checkIndex(t, &s, want)
 }
 
-func TestLists(t *testing.T) {
+func TestList(t *testing.T) {
 	t.Parallel()
 
-	const (
-		first  = 0
-		second = 1
-	)
-
 	var s Slab[string, int]
-	s.Init(8, 2)
+	s.Init(8)
 
 	idx := map[string]uint32{}
 	for i, key := range []string{"a", "b", "c", "d"} {
 		idx[key] = s.Insert(uint32(i), key, i)
-		s.PushFront(first, idx[key])
+		s.PushFront(idx[key])
 	}
-	expect := func(head uint32, want ...string) {
+	expect := func(want ...string) {
 		t.Helper()
-		if got := list(t, &s, head); !slices.Equal(got, want) {
-			t.Fatalf("list %d = %v, want %v", head, got, want)
+		if got := list(t, &s); !slices.Equal(got, want) {
+			t.Fatalf("list = %v, want %v", got, want)
 		}
 	}
-	expect(first, "d", "c", "b", "a")
-	expect(second)
+	expect("d", "c", "b", "a")
 
-	s.MoveToFront(first, idx["d"]) // Already first.
-	expect(first, "d", "c", "b", "a")
+	s.MoveToFront(idx["d"]) // Already first.
+	expect("d", "c", "b", "a")
 
-	s.MoveToFront(first, idx["a"]) // From the back.
-	expect(first, "a", "d", "c", "b")
+	s.MoveToFront(idx["a"]) // From the back.
+	expect("a", "d", "c", "b")
 
-	s.MoveToFront(first, idx["c"]) // From the middle.
-	expect(first, "c", "a", "d", "b")
+	s.MoveToFront(idx["c"]) // From the middle.
+	expect("c", "a", "d", "b")
 
-	s.MoveToFront(first, idx["a"]) // From the second place.
-	expect(first, "a", "c", "d", "b")
+	s.MoveToFront(idx["a"]) // From the second place.
+	expect("a", "c", "d", "b")
 
-	if back := s.Nodes[first].Prev; back != idx["b"] {
+	if back := s.Nodes[Head].Prev; back != idx["b"] {
 		t.Fatalf("back of the list is node %d, want %d", back, idx["b"])
 	}
 
-	// Move nodes over to the second list.
-	s.Unlink(idx["a"])
-	s.PushFront(second, idx["a"])
+	// Unlink from the back, the middle and the front, and link back in.
 	s.Unlink(idx["b"])
-	s.PushFront(second, idx["b"])
-	expect(first, "c", "d")
-	expect(second, "b", "a")
-
-	s.MoveToFront(second, idx["a"])
-	expect(first, "c", "d")
-	expect(second, "a", "b")
-
+	expect("a", "c", "d")
 	s.Unlink(idx["c"])
+	expect("a", "d")
+	s.Unlink(idx["a"])
+	expect("d")
+	s.PushFront(idx["b"])
+	expect("b", "d")
+
+	s.Unlink(idx["b"])
 	s.Unlink(idx["d"])
-	expect(first)
-	expect(second, "a", "b")
+	expect()
 
 	// A list of one.
-	s.PushFront(first, idx["c"])
-	s.MoveToFront(first, idx["c"])
-	expect(first, "c")
+	s.PushFront(idx["c"])
+	s.MoveToFront(idx["c"])
+	expect("c")
+}
+
+func TestDeleteFunc(t *testing.T) {
+	t.Parallel()
+
+	keys := []string{"a", "b", "c", "d", "e"} // The list runs e, d, c, b, a.
+	tests := []struct {
+		name string
+		del  []string
+		want []string
+	}{
+		{"none", nil, []string{"e", "d", "c", "b", "a"}},
+		{"front", []string{"e"}, []string{"d", "c", "b", "a"}},
+		{"back", []string{"a"}, []string{"e", "d", "c", "b"}},
+		{"middle", []string{"c"}, []string{"e", "d", "b", "a"}},
+		{"front and back", []string{"e", "a"}, []string{"d", "c", "b"}},
+		{"two in front", []string{"e", "d"}, []string{"c", "b", "a"}},
+		{"all", keys, nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var s Slab[string, int]
+			s.Init(len(keys))
+			want := map[string]int{}
+			for i, key := range keys {
+				s.PushFront(s.Insert(uint32(i%2), key, i)) // Pairs of keys share a hash.
+				want[key] = i
+			}
+
+			var visited []string
+			n := s.DeleteFunc(func(key string, value int) bool {
+				if value != want[key] {
+					t.Errorf("DeleteFunc passed %q=%d, want %d", key, value, want[key])
+				}
+				visited = append(visited, key)
+				return slices.Contains(tt.del, key)
+			}, func(idx uint32) {
+				s.Unlink(idx)
+				s.Remove(idx)
+			})
+			for _, key := range tt.del {
+				delete(want, key)
+			}
+
+			if n != len(tt.del) {
+				t.Errorf("DeleteFunc returned %d, want %d", n, len(tt.del))
+			}
+			if !slices.Equal(visited, []string{"e", "d", "c", "b", "a"}) {
+				t.Errorf("DeleteFunc visited %v, want every entry front to back", visited)
+			}
+			checkIndex(t, &s, want)
+			if got := list(t, &s); !slices.Equal(got, tt.want) {
+				t.Fatalf("list = %v, want %v", got, tt.want)
+			}
+
+			// The nodes it released take new entries.
+			for i := range tt.del {
+				key := string(rune('v' + i))
+				s.PushFront(s.Insert(9, key, 10+i))
+				want[key] = 10 + i
+			}
+			checkIndex(t, &s, want)
+			if got := list(t, &s); len(got) != len(keys) {
+				t.Errorf("list = %v after refilling, want %d entries", got, len(keys))
+			}
+		})
+	}
 }
 
 func TestReset(t *testing.T) {
 	t.Parallel()
 
 	var s Slab[string, *int]
-	s.Init(8, 2)
+	s.Init(8)
 
 	for i, key := range []string{"a", "b", "c", "d", "e"} {
-		idx := s.Insert(uint32(i), key, new(i))
-		s.Nodes[idx].Meta = 1
-		s.PushFront(uint32(i%2), idx)
+		s.PushFront(s.Insert(uint32(i), key, new(i)))
 	}
 	b := s.Find(1, "b")
 	s.Unlink(b)
@@ -495,14 +544,12 @@ func TestReset(t *testing.T) {
 	s.Reset()
 
 	checkIndex(t, &s, map[string]*int{})
-	for head := range uint32(2) {
-		if got := list(t, &s, head); len(got) != 0 {
-			t.Errorf("list %d = %v after Reset, want empty", head, got)
-		}
+	if got := list(t, &s); len(got) != 0 {
+		t.Errorf("list = %v after Reset, want empty", got)
 	}
-	for i := range s.Nodes[2:] {
-		if n := &s.Nodes[2+i]; n.Key != "" || n.Value != nil || n.Meta != 0 {
-			t.Errorf("node %d is not cleared after Reset", 2+i)
+	for i := Head + 1; i < len(s.Nodes); i++ {
+		if n := &s.Nodes[i]; n.Key != "" || n.Value != nil || n.Prev != 0 || n.Next != 0 {
+			t.Errorf("node %d is not cleared after Reset", i)
 		}
 	}
 
@@ -519,17 +566,17 @@ func TestReset(t *testing.T) {
 // itself.
 func TestNoAllocs(t *testing.T) {
 	var s Slab[string, []byte]
-	s.Init(64, 1)
+	s.Init(64)
 	value := []byte("value")
 
 	keys := []string{"a", "b", "c", "d", "e", "f", "g", "h"}
 	allocs := testing.AllocsPerRun(1000, func() {
 		for i, key := range keys {
-			s.PushFront(0, s.Insert(uint32(i%3), key, value))
+			s.PushFront(s.Insert(uint32(i%3), key, value))
 		}
 		for i, key := range keys {
 			idx := s.Find(uint32(i%3), key)
-			s.MoveToFront(0, idx)
+			s.MoveToFront(idx)
 			s.Unlink(idx)
 			s.Remove(idx)
 		}
@@ -540,9 +587,9 @@ func TestNoAllocs(t *testing.T) {
 	}
 }
 
-// FuzzSlab interprets its input as a sequence of operations on a slab with
-// two lists and checks the slab against a map and two slices after every
-// step. Keys share few hashes, so collisions are the norm.
+// FuzzSlab interprets its input as a sequence of operations on a slab and
+// checks the slab against a map and a slice after every step. Keys share few
+// hashes, so collisions are the norm.
 func FuzzSlab(f *testing.F) {
 	f.Add(uint8(5), []byte{0, 1, 2, 3, 0, 1, 2, 3})
 	f.Add(uint8(1), []byte{255, 254, 253, 255, 254, 253, 7, 7, 7})
@@ -553,9 +600,9 @@ func FuzzSlab(f *testing.F) {
 		capacity := int(size % 48)
 
 		var s Slab[byte, int]
-		s.Init(capacity, 2)
+		s.Init(capacity)
 		want := map[byte]int{}
-		lists := [2][]byte{}
+		var order []byte
 
 		for step, op := range ops {
 			key := op & 31
@@ -566,41 +613,30 @@ func FuzzSlab(f *testing.F) {
 			case action == 7 && key == 31:
 				s.Reset()
 				clear(want)
-				lists = [2][]byte{}
+				order = nil
 
 			case idx == 0:
 				if len(want) == capacity {
 					continue
 				}
-				head := uint32(action & 1)
-				s.PushFront(head, s.Insert(hash, key, step))
+				s.PushFront(s.Insert(hash, key, step))
 				want[key] = step
-				lists[head] = slices.Insert(lists[head], 0, key)
+				order = slices.Insert(order, 0, key)
 
 			case action < 4:
-				// Move the entry to the front of the list it is in.
-				head := uint32(0)
-				if slices.Contains(lists[1], key) {
-					head = 1
-				}
-				s.MoveToFront(head, idx)
-				l := lists[head]
-				lists[head] = slices.Insert(slices.DeleteFunc(l, func(k byte) bool { return k == key }), 0, key)
+				s.MoveToFront(idx)
+				order = slices.Insert(slices.DeleteFunc(order, func(k byte) bool { return k == key }), 0, key)
 
 			default:
 				s.Unlink(idx)
 				s.Remove(idx)
 				delete(want, key)
-				for head := range lists {
-					lists[head] = slices.DeleteFunc(lists[head], func(k byte) bool { return k == key })
-				}
+				order = slices.DeleteFunc(order, func(k byte) bool { return k == key })
 			}
 
 			checkIndex(t, &s, want)
-			for head := range lists {
-				if got := list(t, &s, uint32(head)); !slices.Equal(got, lists[head]) {
-					t.Fatalf("step %d: list %d = %v, want %v", step, head, got, lists[head])
-				}
+			if got := list(t, &s); !slices.Equal(got, order) {
+				t.Fatalf("step %d: list = %v, want %v", step, got, order)
 			}
 		}
 	})

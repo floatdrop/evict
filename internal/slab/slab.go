@@ -1,7 +1,7 @@
 // Package slab provides the storage of the cache in this module that does all
 // of its work under a lock, lru: a fixed array of entries addressed by
-// 32-bit indices, an open-addressing hash index over those entries, and
-// intrusive doubly linked lists threaded through them.
+// 32-bit indices, an open-addressing hash index over those entries, and an
+// intrusive doubly linked list threaded through them.
 //
 // Nothing in a [Slab] is a Go pointer unless a key or a value is one, so the
 // garbage collector has nothing to trace beyond what the caller stores, and no
@@ -20,21 +20,19 @@ package slab
 // which has three slots for every entry, addressable with 32 bits.
 const MaxCapacity = 1 << 30
 
-// maxHeads is the largest number of list heads [Slab.Init] accepts.
-const maxHeads = 1 << 8
+// Head is the node that heads the list. It never holds an entry: its Next is
+// the first node of the list and its Prev the last, and it is linked to itself
+// when the list is empty.
+const Head = 0
 
 // Node is one entry of a [Slab].
 type Node[K comparable, V any] struct {
-	// Prev and Next link the node into a circular list. For a list head they
-	// are the last and the first node of the list, and the head itself when
-	// the list is empty.
+	// Prev and Next link the node into the list, which is circular through
+	// [Head].
 	Prev, Next uint32
 
 	// hash is what the node is indexed under.
 	hash uint32
-
-	// Meta belongs to the owner of the slab. Insert resets it to zero.
-	Meta uint32
 
 	Key   K
 	Value V
@@ -42,12 +40,10 @@ type Node[K comparable, V any] struct {
 
 // Slab is a fixed set of nodes that can be found by key.
 //
-// The first nodes are list heads, as many as [Slab.Init] was asked for. They
-// never hold an entry; the owner hands their indices to the list methods.
-// Because there is always at least one, index 0 never refers to an entry and
-// serves as "no node".
+// The first node is [Head]. Because it never holds an entry, index 0 never
+// refers to one and serves as "no node".
 type Slab[K comparable, V any] struct {
-	// Nodes holds the list heads followed by the entries.
+	// Nodes holds Head followed by the entries.
 	Nodes []Node[K, V]
 
 	// slots is the hash index: a linear-probing table of size slots. A slot
@@ -58,7 +54,6 @@ type Slab[K comparable, V any] struct {
 	slots []uint64
 	size  uint32
 
-	heads uint32 // number of list heads
 	free  uint32 // most recently removed node, linked through Next; 0 if none
 	fresh uint32 // lowest index that was never handed out
 	count uint32 // entries in use
@@ -70,33 +65,29 @@ type Slab[K comparable, V any] struct {
 // slot, which is what ends an unsuccessful probe.
 func indexSize(capacity int) uint { return max(3*uint(capacity), 1) }
 
-// Init readies the slab for capacity entries and the given number of list
-// heads, and leaves every list empty. It panics unless capacity lies in
-// [0, MaxCapacity] and there are between 1 and 256 heads.
-func (s *Slab[K, V]) Init(capacity, heads int) {
-	if heads < 1 || heads > maxHeads || capacity < 0 || capacity > MaxCapacity {
-		panic("slab: invalid capacity or number of list heads")
+// Init readies the slab for capacity entries and leaves the list empty. It
+// panics unless capacity lies in [0, MaxCapacity].
+func (s *Slab[K, V]) Init(capacity int) {
+	if capacity < 0 || capacity > MaxCapacity {
+		panic("slab: invalid capacity")
 	}
 
-	s.Nodes = make([]Node[K, V], heads+capacity)
+	s.Nodes = make([]Node[K, V], 1+capacity)
 	s.slots = make([]uint64, indexSize(capacity))
 	s.size = uint32(len(s.slots))
-	s.heads = uint32(heads)
-	s.resetLists()
+	s.resetList()
 }
 
-func (s *Slab[K, V]) resetLists() {
-	for i := range s.heads {
-		s.Nodes[i].Prev, s.Nodes[i].Next = i, i
-	}
-	s.free, s.fresh, s.count = 0, s.heads, 0
+func (s *Slab[K, V]) resetList() {
+	s.Nodes[Head].Prev, s.Nodes[Head].Next = Head, Head
+	s.free, s.fresh, s.count = 0, Head+1, 0
 }
 
 // Len returns the number of entries in the slab.
 func (s *Slab[K, V]) Len() int { return int(s.count) }
 
 // Cap returns the number of entries the slab can hold.
-func (s *Slab[K, V]) Cap() int { return len(s.Nodes) - int(s.heads) }
+func (s *Slab[K, V]) Cap() int { return len(s.Nodes) - 1 }
 
 // Find returns the index of the node that holds key, or 0 if there is none.
 // The hash must be the one the key was inserted with.
@@ -120,8 +111,7 @@ func (s *Slab[K, V]) Find(hash uint32, key K) uint32 {
 }
 
 // Insert stores an entry in an unused node, indexes it under hash, and returns
-// the index of the node. The node is not part of any list yet, and its Meta
-// is zero.
+// the index of the node. The node is not in the list yet.
 //
 // The caller must have established that key is absent. Insert panics if the
 // slab is full.
@@ -139,7 +129,6 @@ func (s *Slab[K, V]) Insert(hash uint32, key K, value V) uint32 {
 
 	n := &s.Nodes[idx]
 	n.hash = hash
-	n.Meta = 0
 	n.Key = key
 	n.Value = value
 	s.count++
@@ -159,7 +148,7 @@ func (s *Slab[K, V]) Insert(hash uint32, key K, value V) uint32 {
 
 // Remove drops the entry in node idx from the index, releases its key and
 // value, and makes the node available to Insert again. The caller must have
-// unlinked the node from its list. Remove panics if the node holds no entry.
+// unlinked the node from the list. Remove panics if the node holds no entry.
 func (s *Slab[K, V]) Remove(idx uint32) {
 	n := &s.Nodes[idx]
 	s.unindex(n.hash, idx)
@@ -243,20 +232,20 @@ func (s *Slab[K, V]) MaxDisplacement() int {
 	return int(longest)
 }
 
-// Reset removes every entry and empties every list.
+// Reset removes every entry and empties the list.
 func (s *Slab[K, V]) Reset() {
 	// Nodes past fresh were never written.
 	clear(s.Nodes[:s.fresh])
 	clear(s.slots)
-	s.resetLists()
+	s.resetList()
 }
 
-// DeleteFunc visits the entries in the list at head and calls remove on those
-// for which del returns true. remove must unlink and remove just that node.
-// The caller holds the shard lock.
-func (s *Slab[K, V]) DeleteFunc(head uint32, del func(K, V) bool, remove func(uint32)) int {
+// DeleteFunc visits the entries in the list and calls remove on those for
+// which del returns true. remove must unlink and remove just that node. The
+// caller holds the shard lock.
+func (s *Slab[K, V]) DeleteFunc(del func(K, V) bool, remove func(uint32)) int {
 	n := 0
-	for idx := s.Nodes[head].Next; idx != head; {
+	for idx := s.Nodes[Head].Next; idx != Head; {
 		next := s.Nodes[idx].Next // remove reuses the link.
 		if e := &s.Nodes[idx]; del(e.Key, e.Value) {
 			remove(idx)
@@ -267,16 +256,16 @@ func (s *Slab[K, V]) DeleteFunc(head uint32, del func(K, V) bool, remove func(ui
 	return n
 }
 
-// PushFront links node idx in as the first node of the list at head.
-func (s *Slab[K, V]) PushFront(head, idx uint32) {
+// PushFront links node idx in as the first node of the list.
+func (s *Slab[K, V]) PushFront(idx uint32) {
 	nodes := s.Nodes
-	first := nodes[head].Next
-	nodes[idx].Prev, nodes[idx].Next = head, first
+	first := nodes[Head].Next
+	nodes[idx].Prev, nodes[idx].Next = Head, first
 	nodes[first].Prev = idx
-	nodes[head].Next = idx
+	nodes[Head].Next = idx
 }
 
-// Unlink takes node idx out of the list it is in.
+// Unlink takes node idx out of the list.
 func (s *Slab[K, V]) Unlink(idx uint32) {
 	nodes := s.Nodes
 	prev, next := nodes[idx].Prev, nodes[idx].Next
@@ -284,20 +273,19 @@ func (s *Slab[K, V]) Unlink(idx uint32) {
 	nodes[next].Prev = prev
 }
 
-// MoveToFront makes node idx, which must be in the list at head, the first
-// node of that list.
-func (s *Slab[K, V]) MoveToFront(head, idx uint32) {
+// MoveToFront makes node idx, which must be in the list, its first node.
+func (s *Slab[K, V]) MoveToFront(idx uint32) {
 	// This is Unlink followed by PushFront, written out so that it is
 	// small enough to be inlined: it runs on every hit of an LRU cache.
 	nodes := s.Nodes
-	first := nodes[head].Next
+	first := nodes[Head].Next
 	if first == idx {
 		return
 	}
 	n := &nodes[idx]
 	nodes[n.Prev].Next = n.Next
 	nodes[n.Next].Prev = n.Prev
-	n.Prev, n.Next = head, first
+	n.Prev, n.Next = Head, first
 	nodes[first].Prev = idx
-	nodes[head].Next = idx
+	nodes[Head].Next = idx
 }

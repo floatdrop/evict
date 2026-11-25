@@ -1,7 +1,8 @@
 // Package cslab is the concurrent sibling of package slab. It stores entries
 // the same way, in a fixed array of nodes with a hash index and intrusive
-// lists, and adds one ability: goroutines can look entries up and read them
-// while another goroutine changes the slab, without taking a lock.
+// lists, of which it keeps several where slab keeps one, and adds one ability:
+// goroutines can look entries up and read them while another goroutine
+// changes the slab, without taking a lock.
 //
 // # How reading without a lock is safe
 //
