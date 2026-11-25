@@ -1013,6 +1013,11 @@ func TestReadersHelp(t *testing.T) {
 		t.Parallel()
 		testReadersHelp(t, func(c *tinylfu.Cache[int, *cachetest.Blob], key int) { c.Peek(key) })
 	})
+	t.Run("SetIfAbsent", func(t *testing.T) {
+		t.Parallel()
+		// A SetIfAbsent that finds its key reads it as Get does.
+		testReadersHelp(t, func(c *tinylfu.Cache[int, *cachetest.Blob], _ int) { c.SetIfAbsent(-1, nil) })
+	})
 	t.Run("GetMany", func(t *testing.T) {
 		t.Parallel()
 		// Enough keys that GetMany loads ahead rather than call Get.
@@ -1091,6 +1096,11 @@ func testReadersHelp(t *testing.T, read func(c *tinylfu.Cache[int, *cachetest.Bl
 	if got := alive(len(refs)); got < held {
 		t.Fatalf("%d values are alive, fewer than the %d that readers are looking at", got, held)
 	}
+
+	// An entry for the readers that read with SetIfAbsent to find. It goes
+	// in while the held readers still look, so that it cannot let go of
+	// what they look at.
+	c.Set(-1, nil)
 
 	// The readers move on, and nobody writes to the cache again.
 	close(moveOn)

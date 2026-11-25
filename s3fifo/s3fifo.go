@@ -116,12 +116,12 @@ import (
 // [Cache.All]. A Cache must be created with [New]; the zero value is of no
 // use.
 //
-// [Cache.Get], [Cache.GetMany] and [Cache.Peek] take no lock, with rare
-// exceptions: when a key is not found while an entry is on its way out of the
-// same shard, and when more goroutines read at the same moment than the cache
-// was made for, the read takes the lock of the shard to be sure. Writes are
-// spread over shards that are locked independently, and each shard evicts on
-// its own. See [WithShards].
+// [Cache.Get], [Cache.GetMany], [Cache.Peek] and a [Cache.SetIfAbsent] that
+// finds its key take no lock, with rare exceptions: when a key is not found
+// while an entry is on its way out of the same shard, and when more goroutines
+// read at the same moment than the cache was made for, the read takes the lock
+// of the shard to be sure. Writes are spread over shards that are locked
+// independently, and each shard evicts on its own. See [WithShards].
 type Cache[K comparable, V any] struct {
 	seed     maphash.Seed
 	mask     uint32 // number of shards minus one
