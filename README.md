@@ -85,8 +85,8 @@ cache.Set("a", 1)                        // Expires in a minute,
 cache.SetWithTTL("b", 2, 10*time.Second) // and this one in ten seconds.
 ```
 
-Expired entries are misses but still count toward `Len`. Call `cache.PurgeExpired()` to
-remove them on demand.
+Expired entries are misses but still count toward `Len`. Call `cache.PurgeExpired(nil)` to
+remove them, or pass a function that releases what they hold.
 
 Reads still count with the policy, even for expired entries. They look at a copy of the time
 that a timer updates every 10 ms, and at the time itself near a deadline. A `Get` that hits
@@ -165,6 +165,7 @@ own.
 
 - **No sizes in bytes or weights.** Capacity counts entries; set it from a typical entry size.
 - **No loader** that fetches a missing key once for all the callers that ask for it.
+- **No background expiry**: call `PurgeExpired` yourself ([Expiry](#expiry)).
 - **Overwrites do not scale with CPUs**; otter's do ([Benchmarks](#benchmarks)).
 
 For any of these, use [otter](https://github.com/maypok86/otter).

@@ -11,23 +11,24 @@
 //
 // An entry that has expired is not found: Get, Peek, GetMany and Delete report
 // it missing, All passes it over, and SetIfAbsent stores a new entry in its
-// place. It stays in the cache all the same, until it is evicted, replaced or
-// deleted, or the cache is cleared. Until then it takes up room and Len counts
-// it. Call [Cache.PurgeExpired] to remove expired entries on demand; the
+// place. It stays in the cache all the same, until it is evicted, replaced,
+// deleted or purged, or the cache is cleared. Until then it takes up room and
+// Len counts it. Call [Cache.PurgeExpired] to remove expired entries; the
 // cache does not run a background sweep.
 //
 // Set and SetIfAbsent hand an expired entry back when they push it out or
-// replace it, as they do any entry, so that what it holds on to can be
-// released. Delete, Clear and PurgeExpired do not hand back expired values.
-// Where values have to be released, the wrapped cache's Delete and All return
-// entries whether they have expired or not, and [Entry.Value] gives their values.
+// replace it, as they do any entry, and PurgeExpired hands those it removes to
+// a function of yours, so that what they hold on to can be released. Delete
+// and Clear do not. Where values have to be released, use the wrapped cache
+// for those: its Delete and All return entries whether they have expired or
+// not, and [Entry.Value] gives their values.
 //
 // A read that finds an expired entry leaves it there, for the Set that usually
 // follows: that replaces the entry in place, and the policy goes on treating
-// it as the entry it was, which it would not after a Delete. Reads count with
-// the policy, expired or not, so an entry that is still asked for but never set
-// again stays; delete its key when there is no new value for it. Expired or
-// not, there are never more entries than the capacity of the cache.
+// it as the entry it was, which it would not after a Delete or a purge. Reads
+// count with the policy, expired or not, so an entry that is still asked for
+// but never set again stays until it is deleted or purged. Expired or not,
+// there are never more entries than the capacity of the cache.
 //
 // # Time
 //
@@ -47,9 +48,10 @@
 // # Statistics
 //
 // Wrapped in stats, as stats.Wrap(expire.Wrap(...)), a cache counts a read of
-// an expired entry as a miss. The stats.Cache has no SetWithTTL: call that of
-// the expire.Cache, and the entries it evicts go uncounted. Wrapped the other
-// way around, a read of an expired entry counts as a hit.
+// an expired entry as a miss. The stats.Cache has no SetWithTTL or
+// PurgeExpired: call those of the expire.Cache, and the entries that
+// SetWithTTL evicts go uncounted. Wrapped the other way around, a read of an
+// expired entry counts as a hit.
 //
 // # Cost
 //
@@ -349,9 +351,9 @@ func (c *Cache[K, V]) SetWithTTL(key K, value V, ttl time.Duration) (oldKey K, o
 // expires in between. Those that find an expired entry take turns replacing
 // it, and look again first. The exception is a value stored just after one of
 // them has looked: by a Set of key, or by a SetIfAbsent that found no entry
-// because the expired one had just left the cache. That value is replaced and
-// handed back, with oldKey == key, so two goroutines may each be told that
-// they stored theirs.
+// because the expired one had just left the cache, which PurgeExpired makes
+// more likely. That value is replaced and handed back, with oldKey == key, so
+// two goroutines may each be told that they stored theirs.
 func (c *Cache[K, V]) SetIfAbsent(key K, value V) (actual V, present bool, oldKey K, oldValue V, evicted bool) {
 	e := Entry[V]{value: value, deadline: c.clock.deadline(c.ttl)}
 	a, present, oldKey, old, evicted := c.cache.SetIfAbsent(key, e)
@@ -415,11 +417,26 @@ func (c *Cache[K, V]) DeleteFunc(del func(K, V) bool) int {
 // PurgeExpired removes entries whose deadlines are at or before the time the
 // call began and returns the number removed. It checks the current entry as
 // it visits each shard: a value refreshed past the cutoff is not removed.
-// Entries that expire during the scan are left for the next call.
-func (c *Cache[K, V]) PurgeExpired() int {
+// Entries that expire during the scan are left for the next call. A key that
+// is set again after its entry was purged comes in as a new entry, as after
+// Delete.
+//
+// Unless removed is nil, PurgeExpired calls it with the key and the value of
+// each entry it removes, so that what they hold on to can be released. It
+// runs with a shard of the wrapped cache locked, as the del of DeleteFunc
+// does: it must not call back into the cache, and should return promptly;
+// collect what takes longer and deal with it after PurgeExpired returns. If
+// it panics, the entry it was called with stays.
+func (c *Cache[K, V]) PurgeExpired(removed func(K, V)) int {
 	cutoff := c.clock.read()
-	return c.cache.DeleteFunc(func(_ K, e Entry[V]) bool {
-		return e.deadline <= cutoff
+	return c.cache.DeleteFunc(func(k K, e Entry[V]) bool {
+		if e.deadline > cutoff {
+			return false
+		}
+		if removed != nil {
+			removed(k, e.value)
+		}
+		return true
 	})
 }
 
