@@ -25,7 +25,7 @@ import (
 )
 
 // hot matches the functions that every operation on a cache goes through.
-var hot = regexp.MustCompile(`/(lru|sieve|s3fifo|tinylfu|stats|expire)\.\(\*(Cache|shard)\[.*\]\)\.(Get|GetMany|Peek|Set|SetWithTTL|set|SetIfAbsent|add|evict|Delete|look|victim|promote|asked)$|` +
+var hot = regexp.MustCompile(`/(lru|sieve|s3fifo|tinylfu|stats|expire|load)\.\(\*(Cache|shard)\[.*\]\)\.(Get|GetMany|Peek|Set|SetWithTTL|set|SetIfAbsent|add|evict|Delete|look|victim|promote|asked|Fetch)$|` +
 	`/c?slab\.\(\*Slab\[.*\]\)\.(Find|Lookup|Insert|Replace|Remove)$`)
 
 // slow matches the calls that must not show up in them: functions that are
@@ -34,7 +34,8 @@ var slow = regexp.MustCompile(`^sync\.\(\*(RW)?Mutex\)\.|^sync/atomic\.|` +
 	`slab\.\(\*Slab\[.*\]\)\.(MoveToFront|PushFront|Unlink|Len|Cap|Overdue|Hash|pin|preferred|Touch|TouchNode)$|` +
 	`cslab\.\(\*Node\[.*\]\)\.(Meta|SetMeta)$|cslab\.\(\*Slot\)\.Unpin$|/s3fifo\.(tagOf|ghostOf)$|` +
 	`/tinylfu\.(tagOf|kept|keep|printOf|printIn)$|/tinylfu\.\(\*climber\)\.(hit|miss)$|` +
-	`/stats\.\(\*Cache\[.*\]\)\.stripe$|/expire\.\(\*Cache\[.*\]\)\.expired$`)
+	`/stats\.\(\*Cache\[.*\]\)\.stripe$|/expire\.\(\*Cache\[.*\]\)\.expired$|` +
+	`/load\.\(\*Cache\[.*\]\)\.stripe$|/load\.\(\*stripe\[.*\]\)\.forget$`)
 
 // read matches the functions that a read without a lock goes through, and
 // readSlow the calls that must not show up in them even where the compiler
@@ -134,7 +135,7 @@ func TestHotPathsAreInlined(t *testing.T) {
 	}
 
 	// The test is only worth something if it has looked at the right code.
-	for _, pkg := range []string{"lru", "sieve", "s3fifo", "tinylfu", "stats", "expire"} {
+	for _, pkg := range []string{"lru", "sieve", "s3fifo", "tinylfu", "stats", "expire", "load"} {
 		for _, method := range []string{"Get", "Set", "SetIfAbsent", "Peek", "Delete"} {
 			found := false
 			for name := range seen {
@@ -160,6 +161,13 @@ func TestHotPathsAreInlined(t *testing.T) {
 	}
 	if !found {
 		t.Error("the compiler's output has no code for expire.Cache.SetWithTTL")
+	}
+	found = false
+	for name := range seen {
+		found = found || strings.Contains(name, "/load.(*Cache[") && strings.HasSuffix(name, ").Fetch")
+	}
+	if !found {
+		t.Error("the compiler's output has no code for load.Cache.Fetch")
 	}
 	for _, want := range [][2]string{
 		{"sieve.(*Cache[", "Get"},

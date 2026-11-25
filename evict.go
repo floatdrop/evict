@@ -41,15 +41,16 @@
 //
 // This package holds what the caches have in common: the [Cache] interface.
 // [github.com/floatdrop/evict/stats] counts the hits, misses and evictions of
-// any of them, and [github.com/floatdrop/evict/expire] gives their entries a
-// time to live.
+// any of them, [github.com/floatdrop/evict/expire] gives their entries a time
+// to live, and [github.com/floatdrop/evict/load] fills them from a source,
+// with one load for the goroutines that ask for a key at the same time.
 package evict
 
 import "iter"
 
 // Cache is the behaviour common to every cache in this module. It is
 // implemented by *lru.Cache, *sieve.Cache, *s3fifo.Cache and *tinylfu.Cache,
-// and by the wrappers *stats.Cache and *expire.Cache.
+// and by the wrappers *stats.Cache, *expire.Cache and *load.Cache.
 //
 // All methods are safe for concurrent use.
 type Cache[K comparable, V any] interface {
