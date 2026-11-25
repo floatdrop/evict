@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -590,6 +591,231 @@ func TestPanicAsContextEnds(t *testing.T) {
 			t.Fatalf("Fetch = %d, %v, want a panic", v, err)
 		}()
 	}
+}
+
+type entry struct{ key, value int }
+
+// dropping wraps inner with WithDropped, and returns the entries that it has
+// been called with so far. finished gets a value when each load is over, after
+// what it dropped is in the list.
+func dropping(t *testing.T, inner evict.Cache[int, int], loader func(context.Context, int) (int, error)) (c *load.Cache[int, int], dropped *[]entry, finished chan struct{}) {
+	t.Helper()
+
+	dropped, finished = new([]entry), make(chan struct{}, 1)
+	c = load.WrapNotify(inner, loader, nil, func() { finished <- struct{}{} },
+		load.WithDropped(func(key, value int) {
+			// Another load of the key may hold its stripe for a moment,
+			// but this goroutine must not: then it would never let go.
+			for deadline := time.Now().Add(10 * time.Second); load.Held(c, key); time.Sleep(10 * time.Microsecond) {
+				if time.Now().After(deadline) {
+					t.Errorf("dropped(%d, %d) is called with the stripe of the key locked", key, value)
+					break
+				}
+			}
+			*dropped = append(*dropped, entry{key, value})
+		}))
+	return c, dropped, finished
+}
+
+func tenfold(_ context.Context, key int) (int, error) { return 10 * key, nil }
+
+// resizable is a cache whose capacity can drop to nothing, after which its Set
+// hands every entry straight back.
+type resizable struct {
+	evict.Cache[int, int]
+	none atomic.Bool
+}
+
+func (r *resizable) Cap() int {
+	if r.none.Load() {
+		return 0
+	}
+	return r.Cache.Cap()
+}
+
+func (r *resizable) Set(key, value int) (oldKey, oldValue int, displaced bool) {
+	if r.none.Load() {
+		return key, value, true
+	}
+	return r.Cache.Set(key, value)
+}
+
+// The entries that a load pushes out, and the values that no Fetch waited for,
+// go to WithDropped; what the Fetch calls get does not.
+func TestDropped(t *testing.T) {
+	t.Parallel()
+
+	t.Run("evicted", func(t *testing.T) {
+		t.Parallel()
+
+		c, dropped, finished := dropping(t, lru.New[int, int](1), tenfold)
+		c.Set(0, 0)
+		if v, err := c.Fetch(t.Context(), 1); v != 10 || err != nil {
+			t.Fatalf("Fetch = %d, %v, want 10, nil", v, err)
+		}
+		<-finished
+		if want := []entry{{0, 0}}; !slices.Equal(*dropped, want) {
+			t.Errorf("dropped %v, want the evicted %v", *dropped, want)
+		}
+	})
+
+	t.Run("expired", func(t *testing.T) {
+		t.Parallel()
+
+		e := expire.Wrap(lru.New[int, expire.Entry[int]](10), time.Hour)
+		c, dropped, finished := dropping(t, e, tenfold)
+		e.Set(1, 5)
+		e.SetWithTTL(1, 6, 0) // Replaces the entry with one that has expired.
+		if v, err := c.Fetch(t.Context(), 1); v != 10 || err != nil {
+			t.Fatalf("Fetch = %d, %v, want 10, nil", v, err)
+		}
+		<-finished
+		if want := []entry{{1, 6}}; !slices.Equal(*dropped, want) {
+			t.Errorf("dropped %v, want the expired %v that the load replaced", *dropped, want)
+		}
+	})
+
+	t.Run("no capacity", func(t *testing.T) {
+		t.Parallel()
+
+		c, dropped, finished := dropping(t, lru.New[int, int](0), tenfold)
+		if v, err := c.Fetch(t.Context(), 1); v != 10 || err != nil {
+			t.Fatalf("Fetch = %d, %v, want 10, nil", v, err)
+		}
+		<-finished
+		if len(*dropped) != 0 {
+			t.Errorf("dropped %v, the value that Fetch got", *dropped)
+		}
+	})
+
+	t.Run("given up", func(t *testing.T) {
+		t.Parallel()
+
+		g := newGated()
+		c, dropped, finished := dropping(t, lru.New[int, int](10), g.load)
+		ctx, cancel := context.WithCancel(t.Context())
+		quitter := fetch(ctx, c, 1)
+		until(t, "the load runs", func() bool { return load.Waiting(c, 1) == 1 && g.calls.Load() == 1 })
+		cancel()
+		<-quitter
+		close(g.gate) // The load returns its value all the same.
+		<-finished
+		if want := []entry{{1, 101}}; !slices.Equal(*dropped, want) {
+			t.Errorf("dropped %v, want the value nobody waited for, %v", *dropped, want)
+		}
+		if _, ok := c.Peek(1); ok {
+			t.Error("the value nobody waited for was stored")
+		}
+	})
+
+	t.Run("given up, then loaded again", func(t *testing.T) {
+		t.Parallel()
+
+		g := newGated()
+		c, dropped, finished := dropping(t, lru.New[int, int](10), g.load)
+		ctx, cancel := context.WithCancel(t.Context())
+		quitter := fetch(ctx, c, 1)
+		until(t, "the first load runs", func() bool { return load.Waiting(c, 1) == 1 && g.calls.Load() == 1 })
+		cancel()
+		<-quitter
+		stayer := fetch(t.Context(), c, 1)
+		until(t, "the second load runs", func() bool { return load.Waiting(c, 1) == 1 && g.calls.Load() == 2 })
+		close(g.gate)
+		if r := <-stayer; r.value != 102 || r.err != nil {
+			t.Fatalf("Fetch = %d, %v, want 102, nil", r.value, r.err)
+		}
+		<-finished
+		<-finished
+		if want := []entry{{1, 101}}; !slices.Equal(*dropped, want) {
+			t.Errorf("dropped %v, want the value of the first load, %v", *dropped, want)
+		}
+		if v, ok := c.Peek(1); !ok || v != 102 {
+			t.Errorf("Peek = %d, %t, want the value of the second load", v, ok)
+		}
+	})
+
+	t.Run("given up, failed", func(t *testing.T) {
+		t.Parallel()
+
+		gate := make(chan struct{})
+		c, dropped, finished := dropping(t, lru.New[int, int](10), func(context.Context, int) (int, error) {
+			<-gate
+			return 7, errors.New("no")
+		})
+		ctx, cancel := context.WithCancel(t.Context())
+		quitter := fetch(ctx, c, 1)
+		until(t, "the Fetch waits", func() bool { return load.Waiting(c, 1) == 1 })
+		cancel()
+		<-quitter
+		close(gate)
+		<-finished
+		if len(*dropped) != 0 {
+			t.Errorf("dropped %v from a load that failed", *dropped)
+		}
+	})
+
+	// A cache of somebody else's may change its capacity after Wrap.
+	t.Run("capacity changes", func(t *testing.T) {
+		t.Parallel()
+
+		inner := &resizable{Cache: lru.New[int, int](1)}
+		c, dropped, finished := dropping(t, inner, tenfold)
+		inner.none.Store(true)
+		if v, err := c.Fetch(t.Context(), 1); v != 10 || err != nil {
+			t.Fatalf("Fetch = %d, %v, want 10, nil", v, err)
+		}
+		<-finished
+		if len(*dropped) != 0 {
+			t.Errorf("dropped %v, the value that Fetch got from a cache that has lost its capacity", *dropped)
+		}
+
+		inner = &resizable{Cache: lru.New[int, int](1)}
+		inner.none.Store(true)
+		c, dropped, finished = dropping(t, inner, tenfold)
+		inner.none.Store(false)
+		c.Set(0, 0)
+		if _, err := c.Fetch(t.Context(), 2); err != nil {
+			t.Fatal(err)
+		}
+		<-finished
+		if want := []entry{{0, 0}}; !slices.Equal(*dropped, want) {
+			t.Errorf("dropped %v, want %v, evicted by a cache that has gained capacity", *dropped, want)
+		}
+	})
+
+	t.Run("taken out", func(t *testing.T) {
+		t.Parallel()
+
+		g := newGated()
+		c, dropped, finished := dropping(t, lru.New[int, int](10), g.load)
+		waiter := fetch(t.Context(), c, 1)
+		until(t, "the load runs", func() bool { return load.Waiting(c, 1) == 1 && g.calls.Load() == 1 })
+		c.Delete(1)
+		close(g.gate)
+		if r := <-waiter; r.value != 101 || r.err != nil {
+			t.Fatalf("Fetch = %d, %v, want 101, nil", r.value, r.err)
+		}
+		<-finished
+		if len(*dropped) != 0 {
+			t.Errorf("dropped %v, the value that Fetch got", *dropped)
+		}
+	})
+
+	t.Run("error", func(t *testing.T) {
+		t.Parallel()
+
+		c, dropped, finished := dropping(t, lru.New[int, int](1), func(context.Context, int) (int, error) {
+			return 7, errors.New("no")
+		})
+		c.Set(0, 0) // Storing would evict it.
+		if _, err := c.Fetch(t.Context(), 1); err == nil {
+			t.Fatal("Fetch did not return the loader's error")
+		}
+		<-finished
+		if len(*dropped) != 0 {
+			t.Errorf("dropped %v from a load that failed", *dropped)
+		}
+	})
 }
 
 // late is a cache that stores a key just after a Get has missed it, as the

@@ -20,9 +20,10 @@
 // context of the Fetch that started it, but not its deadline or its
 // cancellation. A Fetch whose context ends stops waiting and returns the
 // context's error. The load goes on for the others. When none is left, its
-// context is canceled, and a value that it gets all the same is not stored;
-// the next Fetch starts a load of its own, which may run alongside it. A
-// loader must not fetch the key it loads: it would wait for itself.
+// context is canceled, and a value that it gets all the same is not stored but
+// passed to the function of [WithDropped], if there is one. The next Fetch
+// starts a load of its own, which may run alongside it. A loader must not
+// fetch the key it loads: it would wait for itself.
 //
 // # Writes during a load
 //
@@ -33,8 +34,9 @@
 // or Clear start a load of their own. Writes to the wrapped cache itself do
 // not count.
 //
-// Storing a loaded value may evict an entry, which is not handed back as Set
-// hands it back.
+// Storing a loaded value may push an entry out of the wrapped cache, which no
+// Set hands back. [WithDropped] passes such entries to a function of yours, so
+// that what they hold on to can be released.
 //
 // # Panics
 //
@@ -100,6 +102,8 @@ type Cache[K comparable, V any] struct {
 	shift   uint8 // 64 minus log2 of the number of stripes
 	seed    maphash.Seed
 
+	dropped func(key K, value V) // see WithDropped; may be nil
+
 	// For tests: called, if not nil, when a load starts and when it is over.
 	started, finished func()
 }
@@ -154,13 +158,30 @@ func (e *PanicError) Unwrap() error {
 // errGoexit is what a load returns if its loader calls runtime.Goexit.
 var errGoexit = errors.New("load: the loader called runtime.Goexit")
 
+// An Option changes what [Wrap] makes.
+type Option[K comparable, V any] func(*Cache[K, V])
+
+// WithDropped has the Cache call dropped with the entries that would leave it
+// without anyone getting them, so that what they hold on to can be released:
+// the entry that storing a loaded value pushes out of the wrapped cache, which
+// a Set would have handed back, and the value of a load that no Fetch waited
+// for to the end, unless the load failed. It is called in the goroutine of the
+// load, with no lock of the Cache held, and may call back into the Cache.
+//
+// What leaves through the Cache's own methods is theirs to hand back, as
+// [evict.Cache] has it: Set and SetIfAbsent return what they push out, Delete
+// what it deletes, and Clear nothing.
+func WithDropped[K comparable, V any](dropped func(key K, value V)) Option[K, V] {
+	return func(c *Cache[K, V]) { c.dropped = dropped }
+}
+
 // Wrap returns a Cache that keeps its entries in cache, and fills it by calling
 // load with the key that a Fetch did not find. It panics if load is nil.
 //
 // Using cache directly as well is fine, but its writes do not keep a load
 // from storing a value that they have made out of date; see the package
 // documentation.
-func Wrap[K comparable, V any](cache evict.Cache[K, V], load func(ctx context.Context, key K) (V, error)) *Cache[K, V] {
+func Wrap[K comparable, V any](cache evict.Cache[K, V], load func(ctx context.Context, key K) (V, error), opts ...Option[K, V]) *Cache[K, V] {
 	if load == nil {
 		panic("load: Wrap: load must not be nil")
 	}
@@ -168,13 +189,17 @@ func Wrap[K comparable, V any](cache evict.Cache[K, V], load func(ctx context.Co
 	// keys wait for each other, as the shards of the caches do.
 	n := max(minStripes, 8*runtime.GOMAXPROCS(0))
 	log := bits.Len(uint(n - 1))
-	return &Cache[K, V]{
+	c := &Cache[K, V]{
 		cache:   cache,
 		load:    load,
 		stripes: make([]stripe[K, V], 1<<log),
 		shift:   uint8(64 - log),
 		seed:    maphash.MakeSeed(),
 	}
+	for _, opt := range opts {
+		opt(c)
+	}
+	return c
 }
 
 // stripe returns the stripe of a key with hash h. The callers hash the key
@@ -258,7 +283,10 @@ func (c *Cache[K, V]) run(ctx context.Context, s *stripe[K, V], key K, l *call[V
 				l.err = errGoexit
 			}
 		}
-		waiters := c.finish(s, key, l)
+		waiters, oldKey, oldValue, dropped := c.finish(s, key, l)
+		if dropped && c.dropped != nil {
+			c.dropped(oldKey, oldValue)
+		}
 		if c.finished != nil {
 			c.finished()
 		}
@@ -271,8 +299,10 @@ func (c *Cache[K, V]) run(ctx context.Context, s *stripe[K, V], key K, l *call[V
 }
 
 // finish stores what load l of key got, unless the load was taken out, wakes
-// up the Fetch calls that wait for it, and returns how many there are.
-func (c *Cache[K, V]) finish(s *stripe[K, V], key K, l *call[V]) int {
+// up the Fetch calls that wait for it, and returns how many there are. It also
+// returns the entry that has gone to nobody, if there is one: the one that the
+// store pushed out, or the loaded one if no Fetch waited for it.
+func (c *Cache[K, V]) finish(s *stripe[K, V], key K, l *call[V]) (waiters int, oldKey K, oldValue V, dropped bool) {
 	defer l.cancel()
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -281,13 +311,21 @@ func (c *Cache[K, V]) finish(s *stripe[K, V], key K, l *call[V]) int {
 	// out: else a panic could reach nobody.
 	defer close(l.done)
 
-	if s.loads[key] == l {
+	loaded := l.err == nil && l.panicked == nil
+	switch {
+	case s.loads[key] == l:
 		delete(s.loads, key)
-		if l.err == nil && l.panicked == nil {
-			c.cache.Set(key, l.value)
+		if loaded {
+			oldKey, oldValue, dropped = c.cache.Set(key, l.value)
+			// A cache without capacity hands back the loaded entry,
+			// which the Fetch calls that wait get. A cache of somebody
+			// else's may not always have had the capacity it has.
+			dropped = dropped && (oldKey != key || c.cache.Cap() != 0)
 		}
+	case loaded && l.waiters == 0:
+		oldKey, oldValue, dropped = key, l.value, true
 	}
-	return l.waiters
+	return l.waiters, oldKey, oldValue, dropped
 }
 
 // wait waits for load l of key, which belongs to stripe s, or for ctx to end.

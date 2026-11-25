@@ -9,9 +9,10 @@ import (
 
 // WrapNotify is Wrap with functions that are called whenever a load starts,
 // before the Fetch that starts it waits, and whenever one is over, once its
-// value has been stored or not. Either may be nil.
-func WrapNotify[K comparable, V any](cache evict.Cache[K, V], load func(context.Context, K) (V, error), started, finished func()) *Cache[K, V] {
-	c := Wrap(cache, load)
+// value has been stored or not, and dropped what went to nobody. Either may be
+// nil.
+func WrapNotify[K comparable, V any](cache evict.Cache[K, V], load func(context.Context, K) (V, error), started, finished func(), opts ...Option[K, V]) *Cache[K, V] {
+	c := Wrap(cache, load, opts...)
 	c.started, c.finished = started, finished
 	return c
 }

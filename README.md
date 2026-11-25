@@ -104,8 +104,12 @@ u, err := users.Fetch(ctx, "42") // Loads 42 if the cache does not hold it.
 
 `Fetch` calls for one key at the same time share a single load, and errors are not stored. A
 `Set` or `Delete` through the wrapper during a load keeps it from storing what it read
-before the change. A `Fetch` that hits took 20–23% longer than a `Get`, and a `Set` 10 ns
-longer on one CPU and 60% longer on eight (`tinylfu`, Apple M3 Max).
+before the change. What a load evicts, or loads after every caller gave up, reaches no `Set`
+or `Fetch` caller: to release it, pass `load.WithDropped(func(key string, u User) { ... })`
+to `Wrap`.
+
+A `Fetch` that hits took 20–23% longer than a `Get`, and a `Set` 10 ns longer on one CPU and
+60% longer on eight (`tinylfu`, Apple M3 Max).
 
 ## Benchmarks
 
