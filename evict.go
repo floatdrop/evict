@@ -67,9 +67,10 @@ type Cache[K comparable, V any] interface {
 	// otherwise overlap it.
 	//
 	// sieve, s3fifo and tinylfu load what a batch of keys needs from memory
-	// at once: for a cache too large for the CPU's caches, a key takes
-	// about half the time it takes with Get. lru takes the lock of a shard
-	// once for the keys in a row that fall in it.
+	// at once: for a cache too large for the CPU's caches, a key took about
+	// half the time it takes with Get, with 32 keys per call. For one key or
+	// a few, Get is faster. lru takes the lock of a shard once for the keys
+	// in a row that fall in it.
 	GetMany(keys []K, values []V, found []bool)
 
 	// Peek returns the value stored under key without telling the eviction

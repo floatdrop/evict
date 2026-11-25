@@ -464,7 +464,12 @@ func testGetMany(t *testing.T, newCache Factory[int, int]) {
 			t.Fatalf("capacity %d, %d shards: GetMany into its keys found %v, want %v", tt.capacity, tt.shards, aliased, want)
 		}
 
+		// Slices that are too short make GetMany panic before it writes
+		// anything, keys that it does not find included.
 		c.GetMany(nil, nil, nil)
+		for i := range found {
+			found[i] = true
+		}
 		func() {
 			defer func() {
 				if recover() == nil {
@@ -473,6 +478,9 @@ func testGetMany(t *testing.T, newCache Factory[int, int]) {
 			}()
 			c.GetMany(keys, values[:len(keys)-1], found)
 		}()
+		if slices.Contains(found, false) {
+			t.Errorf("capacity %d, %d shards: GetMany wrote found before it panicked", tt.capacity, tt.shards)
+		}
 	}
 }
 

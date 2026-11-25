@@ -972,6 +972,24 @@ func TestStats(t *testing.T) {
 	}
 }
 
+// GetMany reads with the GetMany of the cache, as Get reads with its Get, and
+// does not load.
+func TestGetMany(t *testing.T) {
+	t.Parallel()
+
+	s := stats.Wrap(lru.New[int, int](10))
+	c := load.Wrap[int, int](s, never[int, int])
+	c.Set(1, 10)
+	values, found := make([]int, 2), make([]bool, 2)
+	c.GetMany([]int{1, 2}, values, found)
+	if values[0] != 10 || !found[0] || found[1] {
+		t.Errorf("GetMany = %v, %v, want 10 found and 2 not", values, found)
+	}
+	if got := s.Stats(); got.Hits != 1 || got.Misses != 1 || c.Len() != 1 {
+		t.Errorf("stats = %+v, Len() = %d, want a hit, a miss and no load", got, c.Len())
+	}
+}
+
 // Wrapped around expire, a Fetch loads an expired key again.
 func TestExpire(t *testing.T) {
 	t.Parallel()

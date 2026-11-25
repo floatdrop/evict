@@ -125,46 +125,59 @@ func (c *Cache[K, V]) Get(key K) (value V, ok bool) {
 // GetMany does what Get does for each of keys, one after the other, and
 // stores the value it finds for keys[i] in values[i] and whether it found one
 // in found[i]. It panics if values or found is shorter than keys. values and
-// found may each be keys itself, but must not otherwise overlap it.
+// found may each be keys itself, but must not otherwise overlap it. A key that
+// cannot be hashed makes GetMany panic, as it makes Get panic, but possibly
+// before the keys just ahead of it have been looked up.
 //
-// Keys that follow each other in one shard are looked up under one taking of
-// its lock, which in a cache with a single shard is one for the whole call.
-// On an Apple M3 Max, with 16,384 entries and 32 keys per call, a key took
-// 10% less time than with Get on one CPU. On eight, it took 90% less with a
-// single shard, whose lock the readers took once per call instead of once per
-// key, and 3% less with the default number of shards.
+// GetMany takes up to 32 keys at a time, hashes them, and then looks up those
+// in a row that fall in one shard under one taking of its lock: in a cache
+// with a single shard, all 32. On an Apple M3 Max, with 16,384 entries and 32
+// keys per call, a key took 18% less time than with Get on one CPU. On eight,
+// it took 93% less with a single shard, whose lock the readers took once per
+// call instead of once per key, and 3% more with the default number of
+// shards, where keys in a row seldom share one.
 func (c *Cache[K, V]) GetMany(keys []K, values []V, found []bool) {
 	if len(values) < len(keys) || len(found) < len(keys) {
 		panic("lru: GetMany: values and found must be at least as long as keys")
 	}
 
-	// A key that cannot be hashed panics with the lock of the key before it
-	// held, which has to be let go all the same.
-	var held *padded[K, V]
-	defer func() {
-		if held != nil {
-			held.mu.Unlock()
+	// The keys are hashed before any lock is taken, which keeps the hashing
+	// out of the time that a lock is held, and a key that cannot be hashed
+	// from panicking with a lock held.
+	var hashes [getManyBatch]uint64
+	for len(keys) > 0 {
+		n := min(len(keys), getManyBatch)
+		for i, key := range keys[:n] {
+			hashes[i] = maphash.Comparable(c.seed, key)
 		}
-	}()
-	for i, key := range keys {
-		h := maphash.Comparable(c.seed, key)
-		s, hash := &c.shards[uint32(h>>32)&c.mask], uint32(h)
-		if s != held {
-			if held != nil {
-				held.mu.Unlock()
+
+		var held *padded[K, V]
+		for i, h := range hashes[:n] {
+			s := &c.shards[uint32(h>>32)&c.mask]
+			if s != held {
+				if held != nil {
+					held.mu.Unlock()
+				}
+				s.mu.Lock()
+				held = s
 			}
-			s.mu.Lock()
-			held = s
+			if idx := s.slab.Find(uint32(h), keys[i]); idx != 0 {
+				s.slab.MoveToFront(idx)
+				values[i], found[i] = s.slab.Nodes[idx].Value, true
+			} else {
+				var zero V
+				values[i], found[i] = zero, false
+			}
 		}
-		if idx := s.slab.Find(hash, key); idx != 0 {
-			s.slab.MoveToFront(idx)
-			values[i], found[i] = s.slab.Nodes[idx].Value, true
-		} else {
-			var zero V
-			values[i], found[i] = zero, false
-		}
+		held.mu.Unlock()
+
+		keys, values, found = keys[n:], values[n:], found[n:]
 	}
 }
+
+// getManyBatch is how many keys GetMany hashes before it looks them up, and
+// the most it looks up under one taking of a lock.
+const getManyBatch = 32
 
 // Peek returns the value stored under key without marking the entry as used.
 func (c *Cache[K, V]) Peek(key K) (value V, ok bool) {

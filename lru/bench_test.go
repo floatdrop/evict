@@ -179,14 +179,16 @@ func BenchmarkGetMany(b *testing.B) {
 		entries = 1 << 14
 		n       = 32
 	)
+	seq := rand.New(rand.NewPCG(1, 2)).Perm(entries)
 	for _, shards := range []int{1, 0} {
-		c := lru.New[int, int](entries, lru.WithShards(shards))
-		for key := range entries {
-			c.Set(key, key)
-		}
-		seq := rand.New(rand.NewPCG(1, 2)).Perm(entries)
 		run := func(b *testing.B, many bool) {
 			b.Helper()
+			// Made here, the cache has the shards that the number of CPUs
+			// that the benchmark runs on gives it by default.
+			c := lru.New[int, int](entries, lru.WithShards(shards))
+			for key := range entries {
+				c.Set(key, key)
+			}
 			b.ReportAllocs()
 			b.RunParallel(func(pb *testing.PB) {
 				values, found := make([]int, n), make([]bool, n)
