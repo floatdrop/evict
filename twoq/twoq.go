@@ -426,13 +426,13 @@ func (s *shard[K, V]) remove(idx uint32) {
 
 // DeleteFunc removes the entries for which del returns true and reports how
 // many it removed. del runs under one shard's lock at a time and must not
-// call back into the cache. The error is always nil.
-func (c *Cache[K, V]) DeleteFunc(del func(K, V) bool) (int, error) {
+// call back into the cache.
+func (c *Cache[K, V]) DeleteFunc(del func(K, V) bool) int {
 	n := 0
 	for i := range c.shards {
 		n += c.shards[i].deleteFunc(del)
 	}
-	return n, nil
+	return n
 }
 
 func (s *shard[K, V]) deleteFunc(del func(K, V) bool) int {

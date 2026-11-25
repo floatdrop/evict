@@ -92,6 +92,22 @@ func BytesOps(data []byte) iter.Seq[Op] {
 	}
 }
 
+// DeleteEach is DeleteFunc for a model: it goes over All and deletes the
+// entries that del matches one by one, which is as good as at once for a
+// cache that only one goroutine uses.
+func DeleteEach[K comparable, V any](c evict.Cache[K, V], del func(K, V) bool) int {
+	var keys []K
+	for k, v := range c.All() {
+		if del(k, v) {
+			keys = append(keys, k)
+		}
+	}
+	for _, k := range keys {
+		c.Delete(k)
+	}
+	return len(keys)
+}
+
 // Compare applies the operations to both caches and fails the test as soon as
 // they disagree: about what an operation returns, about how many entries
 // there are, or about the entries that All yields and their order.
@@ -147,16 +163,8 @@ func Compare(t *testing.T, got, want evict.Cache[int, int], ops iter.Seq[Op]) {
 			}
 		case DeleteFunc:
 			del := func(k, v int) bool { return (k+v)%8 == op.Key%8 }
-			n, err := evict.DeleteFunc(got, del)
-			removed := 0
-			for _, e := range entries(want) {
-				if del(e.key, e.value) {
-					want.Delete(e.key)
-					removed++
-				}
-			}
-			if n != removed || err != nil {
-				t.Fatalf("step %d: DeleteFunc = %d, %v, want %d, nil", step, n, err, removed)
+			if g, w := got.DeleteFunc(del), want.DeleteFunc(del); g != w {
+				t.Fatalf("step %d: DeleteFunc = %d, want %d", step, g, w)
 			}
 		case Clear:
 			got.Clear()

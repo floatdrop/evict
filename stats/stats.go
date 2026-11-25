@@ -245,11 +245,9 @@ func (c *Cache[K, V]) SetIfAbsent(key K, value V) (actual V, present bool, oldKe
 // Delete removes key and returns the value it had, and counts nothing.
 func (c *Cache[K, V]) Delete(key K) (value V, ok bool) { return c.cache.Delete(key) }
 
-// DeleteFunc applies [evict.DeleteFunc] to the wrapped cache and counts
-// nothing, just like [Cache.Delete].
-func (c *Cache[K, V]) DeleteFunc(del func(K, V) bool) (int, error) {
-	return evict.DeleteFunc(c.cache, del)
-}
+// DeleteFunc removes the entries for which del returns true, reports how many
+// it removed, and counts nothing.
+func (c *Cache[K, V]) DeleteFunc(del func(K, V) bool) int { return c.cache.DeleteFunc(del) }
 
 // Len returns the number of entries in the cache.
 func (c *Cache[K, V]) Len() int { return c.cache.Len() }

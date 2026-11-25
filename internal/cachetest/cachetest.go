@@ -437,7 +437,7 @@ func testDeleteFunc(t *testing.T, newCache Factory[int, int]) {
 		}
 		want := maps.Collect(c.All())
 		seen := map[int]int{}
-		n, err := evict.DeleteFunc(c, func(k, v int) bool {
+		n := c.DeleteFunc(func(k, v int) bool {
 			if _, ok := seen[k]; ok {
 				t.Errorf("DeleteFunc visited %d twice", k)
 			}
@@ -448,8 +448,8 @@ func testDeleteFunc(t *testing.T, newCache Factory[int, int]) {
 			t.Fatalf("DeleteFunc visited %v, want %v", seen, want)
 		}
 		maps.DeleteFunc(want, func(k, _ int) bool { return k%2 == 0 })
-		if removed := len(seen) - len(want); n != removed || err != nil {
-			t.Errorf("DeleteFunc = %d, %v, want %d, nil", n, err, removed)
+		if removed := len(seen) - len(want); n != removed {
+			t.Errorf("DeleteFunc = %d, want %d", n, removed)
 		}
 		if c.Len() != len(want) || !maps.Equal(maps.Collect(c.All()), want) {
 			t.Fatal("DeleteFunc did not leave just the nonmatching entries")
@@ -468,7 +468,7 @@ func testDeleteFunc(t *testing.T, newCache Factory[int, int]) {
 			}
 		}()
 		first := true
-		_, _ = evict.DeleteFunc(c, func(_, _ int) bool {
+		c.DeleteFunc(func(_, _ int) bool {
 			if !first {
 				panic(stop)
 			}
@@ -476,8 +476,8 @@ func testDeleteFunc(t *testing.T, newCache Factory[int, int]) {
 			return true
 		})
 	}()
-	if n, err := evict.DeleteFunc(c, func(_, _ int) bool { return true }); n != 1 || err != nil {
-		t.Errorf("DeleteFunc after panic = %d, %v, want 1, nil", n, err)
+	if n := c.DeleteFunc(func(_, _ int) bool { return true }); n != 1 {
+		t.Errorf("DeleteFunc after panic = %d, want 1", n)
 	}
 }
 
@@ -735,12 +735,11 @@ func testConcurrent(t *testing.T, newCache Factory[int, int]) {
 								t.Errorf("Len() = %d with capacity %d", n, tt.capacity)
 							}
 						case op < 996:
-							_, err := evict.DeleteFunc(c, func(k, v int) bool {
+							if n := c.DeleteFunc(func(k, v int) bool {
 								check("DeleteFunc", k, v)
 								return k == key
-							})
-							if err != nil {
-								t.Error(err)
+							}); n > 1 {
+								t.Errorf("DeleteFunc removed %d entries of key %d", n, key)
 							}
 						case op < 999:
 							n := 0
@@ -833,8 +832,8 @@ func testKeyIdentity(t *testing.T, newCache Factory[float64, int]) {
 		if a, present, _, _, _ := c.SetIfAbsent(nan, 5); present || a != 5 {
 			t.Errorf("%d shards: SetIfAbsent(NaN) = %d, %t, want 5 stored", shards, a, present)
 		}
-		if n, err := evict.DeleteFunc(c, func(k float64, _ int) bool { return math.IsNaN(k) }); n != 3 || err != nil || c.Len() != 1 {
-			t.Errorf("%d shards: DeleteFunc(NaN) = %d, %v, Len() = %d, want 3, nil, 1", shards, n, err, c.Len())
+		if n := c.DeleteFunc(func(k float64, _ int) bool { return math.IsNaN(k) }); n != 3 || c.Len() != 1 {
+			t.Errorf("%d shards: DeleteFunc(NaN) = %d, Len() = %d, want 3, 1", shards, n, c.Len())
 		}
 		for i := range 1000 {
 			c.Set(float64(i), i)
@@ -913,8 +912,8 @@ func letsGo[K comparable, V any](t *testing.T, newCache Factory[K, V], ghosts fl
 		key, value, blob := entry(0)
 		c.Set(key, value)
 		ref := weak.Make(blob)
-		if n, err := evict.DeleteFunc(c, func(K, V) bool { return true }); n != 1 || err != nil {
-			t.Fatalf("DeleteFunc = %d, %v, want 1, nil", n, err)
+		if n := c.DeleteFunc(func(K, V) bool { return true }); n != 1 {
+			t.Fatalf("DeleteFunc = %d, want 1", n)
 		}
 		if got := Alive([]weak.Pointer[Blob]{ref}, 0); got != 0 {
 			t.Error("DeleteFunc kept a removed entry alive")
