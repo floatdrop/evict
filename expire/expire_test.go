@@ -1,6 +1,7 @@
 package expire_test
 
 import (
+	"maps"
 	"math"
 	"math/rand/v2"
 	"runtime"
@@ -263,8 +264,18 @@ func TestPurgeExpired(t *testing.T) {
 			clock.Advance(time.Second)
 			clock.Lag(time.Second) // Purging must use the clock, not the readers' copy.
 
-			if n := c.PurgeExpired(); n != 2 {
+			removed := map[string]int{}
+			n := c.PurgeExpired(func(k string, v int) {
+				if _, ok := removed[k]; ok {
+					t.Errorf("PurgeExpired handed over %q twice", k)
+				}
+				removed[k] = v
+			})
+			if n != 2 {
 				t.Fatalf("PurgeExpired = %d, want 2", n)
+			}
+			if want := map[string]int{"due": 1, "zero": 0}; !maps.Equal(removed, want) {
+				t.Errorf("PurgeExpired handed over %v, want %v", removed, want)
 			}
 			if s := inner.Stats(); s.Len != 1 || s.Evictions != 0 || s.Hits != 0 || s.Misses != 0 {
 				t.Errorf("stats after purge = %+v, want one entry and no hits, misses or evictions", s)
@@ -272,7 +283,7 @@ func TestPurgeExpired(t *testing.T) {
 			if v, ok := c.Peek("later"); !ok || v != 2 {
 				t.Errorf("Peek(later) = %d, %t, want 2, true", v, ok)
 			}
-			if n := c.PurgeExpired(); n != 0 {
+			if n := c.PurgeExpired(nil); n != 0 {
 				t.Errorf("repeat PurgeExpired = %d, want 0", n)
 			}
 		})
@@ -429,7 +440,7 @@ func TestPurgeExpiredCutoff(t *testing.T) {
 		clock.Advance(time.Second)
 		c.Set("refresh", 4)
 	}
-	if n := c.PurgeExpired(); n != 1 {
+	if n := c.PurgeExpired(nil); n != 1 {
 		t.Fatalf("PurgeExpired = %d, want 1", n)
 	}
 	if v, ok := c.Peek("refresh"); !ok || v != 4 {
@@ -439,8 +450,36 @@ func TestPurgeExpiredCutoff(t *testing.T) {
 		t.Error("purge removed an entry that expired during the scan")
 	}
 	h.beforeScan = nil
-	if n := c.PurgeExpired(); n != 1 {
+	if n := c.PurgeExpired(nil); n != 1 {
 		t.Errorf("next PurgeExpired = %d, want 1", n)
+	}
+}
+
+// A panic in the function that PurgeExpired hands entries to stops the purge,
+// and the entry it was handed stays.
+func TestPurgeExpiredPanics(t *testing.T) {
+	t.Parallel()
+
+	clock := expire.NewClock()
+	inner := lru.New[string, expire.Entry[int]](2, lru.WithShards(1))
+	c := expire.WrapWith(inner, time.Second, clock)
+	c.Set("a", 1)
+	c.Set("b", 2)
+	clock.Advance(time.Second)
+	const stop = "stop the purge"
+	func() {
+		defer func() {
+			if p := recover(); p != stop {
+				t.Errorf("PurgeExpired panic = %v, want %q", p, stop)
+			}
+		}()
+		c.PurgeExpired(func(string, int) { panic(stop) })
+	}()
+	if inner.Len() != 2 {
+		t.Errorf("Len() = %d after a panic in the first call, want 2", inner.Len())
+	}
+	if n := c.PurgeExpired(nil); n != 2 {
+		t.Errorf("PurgeExpired after a panic = %d, want 2", n)
 	}
 }
 
@@ -918,7 +957,16 @@ func TestConcurrent(t *testing.T) {
 			wg.Go(func() {
 				for !done.Load() {
 					clock.Advance(time.Millisecond)
-					c.PurgeExpired()
+					calls := 0
+					n := c.PurgeExpired(func(k string, v int) {
+						calls++
+						if strconv.Itoa(v) != k {
+							t.Errorf("PurgeExpired handed over %q=%d", k, v)
+						}
+					})
+					if calls != n {
+						t.Errorf("PurgeExpired removed %d entries and handed over %d", n, calls)
+					}
 					time.Sleep(time.Microsecond)
 				}
 			})
@@ -966,6 +1014,10 @@ func TestConcurrent(t *testing.T) {
 			clock.Advance(time.Second)
 			for k, v := range c.All() {
 				t.Errorf("All yields %q=%d after every entry expired", k, v)
+			}
+			c.PurgeExpired(nil)
+			if c.Len() != 0 {
+				t.Errorf("Len() = %d after purging every entry", c.Len())
 			}
 		})
 	}
