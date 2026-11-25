@@ -337,6 +337,8 @@ func (m *model) Delete(key int) (int, bool) {
 	return value, ok
 }
 
+func (m *model) DeleteFunc(del func(int, int) bool) int { return cachetest.DeleteEach(m, del) }
+
 func (m *model) Len() int { return len(m.recent) + len(m.frequent) }
 func (m *model) Cap() int { return m.capacity }
 

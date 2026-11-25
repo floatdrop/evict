@@ -1,7 +1,6 @@
 package expire_test
 
 import (
-	"errors"
 	"math"
 	"math/rand/v2"
 	"runtime"
@@ -264,8 +263,8 @@ func TestPurgeExpired(t *testing.T) {
 			clock.Advance(time.Second)
 			clock.Lag(time.Second) // Purging must use the clock, not the readers' copy.
 
-			if n, err := c.PurgeExpired(); n != 2 || err != nil {
-				t.Fatalf("PurgeExpired = %d, %v, want 2, nil", n, err)
+			if n := c.PurgeExpired(); n != 2 {
+				t.Fatalf("PurgeExpired = %d, want 2", n)
 			}
 			if s := inner.Stats(); s.Len != 1 || s.Evictions != 0 || s.Hits != 0 || s.Misses != 0 {
 				t.Errorf("stats after purge = %+v, want one entry and no hits, misses or evictions", s)
@@ -273,8 +272,8 @@ func TestPurgeExpired(t *testing.T) {
 			if v, ok := c.Peek("later"); !ok || v != 2 {
 				t.Errorf("Peek(later) = %d, %t, want 2, true", v, ok)
 			}
-			if n, err := c.PurgeExpired(); n != 0 || err != nil {
-				t.Errorf("repeat PurgeExpired = %d, %v, want 0, nil", n, err)
+			if n := c.PurgeExpired(); n != 0 {
+				t.Errorf("repeat PurgeExpired = %d, want 0", n)
 			}
 		})
 	}
@@ -289,42 +288,17 @@ func TestDeleteFuncSkipsExpired(t *testing.T) {
 	c.Set("expired", 1)
 	clock.Advance(time.Second)
 	c.Set("live", 2)
-	n, err := c.DeleteFunc(func(k string, v int) bool {
+	n := c.DeleteFunc(func(k string, v int) bool {
 		if k != "live" || v != 2 {
 			t.Errorf("DeleteFunc visited %s=%d, want live=2", k, v)
 		}
 		return true
 	})
-	if n != 1 || err != nil {
-		t.Errorf("DeleteFunc = %d, %v, want 1, nil", n, err)
+	if n != 1 {
+		t.Errorf("DeleteFunc = %d, want 1", n)
 	}
 	if e, ok := inner.Peek("expired"); !ok || e.Value() != 1 || inner.Len() != 1 {
 		t.Error("DeleteFunc did not leave just the expired entry")
-	}
-}
-
-func TestPurgeExpiredUnsupported(t *testing.T) {
-	t.Parallel()
-
-	clock := expire.NewClock()
-	// Expose only the base interface, as an older third-party cache would.
-	inner := struct {
-		evict.Cache[int, expire.Entry[int]]
-	}{lru.New[int, expire.Entry[int]](2)}
-	c := expire.WrapWith(stats.Wrap(inner), time.Second, clock)
-	c.Set(1, 1)
-	if n, err := c.DeleteFunc(func(_, _ int) bool {
-		t.Error("unsupported DeleteFunc called the predicate")
-		return true
-	}); n != 0 || !errors.Is(err, errors.ErrUnsupported) {
-		t.Errorf("DeleteFunc = %d, %v, want 0, ErrUnsupported", n, err)
-	}
-	clock.Advance(time.Second)
-	if n, err := c.PurgeExpired(); n != 0 || !errors.Is(err, errors.ErrUnsupported) {
-		t.Errorf("PurgeExpired = %d, %v, want 0, ErrUnsupported", n, err)
-	}
-	if c.Len() != 1 {
-		t.Error("unsupported purge removed an entry")
 	}
 }
 
@@ -432,11 +406,11 @@ func (h *hooked) SetIfAbsent(key string, e expire.Entry[int]) (actual expire.Ent
 	return actual, present, oldKey, oldValue, evicted
 }
 
-func (h *hooked) DeleteFunc(del func(string, expire.Entry[int]) bool) (int, error) {
+func (h *hooked) DeleteFunc(del func(string, expire.Entry[int]) bool) int {
 	if h.beforeScan != nil {
 		h.beforeScan()
 	}
-	return evict.DeleteFunc(h.Cache, del)
+	return h.Cache.DeleteFunc(del)
 }
 
 // A refresh between taking the cutoff and scanning a shard must survive.
@@ -455,8 +429,8 @@ func TestPurgeExpiredCutoff(t *testing.T) {
 		clock.Advance(time.Second)
 		c.Set("refresh", 4)
 	}
-	if n, err := c.PurgeExpired(); n != 1 || err != nil {
-		t.Fatalf("PurgeExpired = %d, %v, want 1, nil", n, err)
+	if n := c.PurgeExpired(); n != 1 {
+		t.Fatalf("PurgeExpired = %d, want 1", n)
 	}
 	if v, ok := c.Peek("refresh"); !ok || v != 4 {
 		t.Error("purge removed the refreshed value")
@@ -465,8 +439,8 @@ func TestPurgeExpiredCutoff(t *testing.T) {
 		t.Error("purge removed an entry that expired during the scan")
 	}
 	h.beforeScan = nil
-	if n, err := c.PurgeExpired(); n != 1 || err != nil {
-		t.Errorf("next PurgeExpired = %d, %v, want 1, nil", n, err)
+	if n := c.PurgeExpired(); n != 1 {
+		t.Errorf("next PurgeExpired = %d, want 1", n)
 	}
 }
 
@@ -944,10 +918,7 @@ func TestConcurrent(t *testing.T) {
 			wg.Go(func() {
 				for !done.Load() {
 					clock.Advance(time.Millisecond)
-					if _, err := c.PurgeExpired(); err != nil {
-						t.Error(err)
-						return
-					}
+					c.PurgeExpired()
 					time.Sleep(time.Microsecond)
 				}
 			})

@@ -403,11 +403,11 @@ func (c *Cache[K, V]) Delete(key K) (value V, ok bool) {
 }
 
 // DeleteFunc calls del only for entries that have not expired, removing those
-// for which it returns true. Expired entries are left for [Cache.PurgeExpired].
-// It uses [evict.DeleteFunc] on the wrapped cache, with the same locking
-// restrictions and error if unsupported.
-func (c *Cache[K, V]) DeleteFunc(del func(K, V) bool) (int, error) {
-	return evict.DeleteFunc(c.cache, func(k K, e Entry[V]) bool {
+// for which it returns true, and reports how many it removed. Expired entries
+// are left for [Cache.PurgeExpired]. del runs with a shard of the wrapped
+// cache locked; see [evict.Cache].
+func (c *Cache[K, V]) DeleteFunc(del func(K, V) bool) int {
+	return c.cache.DeleteFunc(func(k K, e Entry[V]) bool {
 		return !c.expired(e.deadline) && del(k, e.value)
 	})
 }
@@ -416,12 +416,9 @@ func (c *Cache[K, V]) DeleteFunc(del func(K, V) bool) (int, error) {
 // call began and returns the number removed. It checks the current entry as
 // it visits each shard: a value refreshed past the cutoff is not removed.
 // Entries that expire during the scan are left for the next call.
-//
-// PurgeExpired uses [evict.DeleteFunc]. If the wrapped cache does not support
-// it, nothing is removed and the error is [errors.ErrUnsupported].
-func (c *Cache[K, V]) PurgeExpired() (int, error) {
+func (c *Cache[K, V]) PurgeExpired() int {
 	cutoff := c.clock.read()
-	return evict.DeleteFunc(c.cache, func(_ K, e Entry[V]) bool {
+	return c.cache.DeleteFunc(func(_ K, e Entry[V]) bool {
 		return e.deadline <= cutoff
 	})
 }

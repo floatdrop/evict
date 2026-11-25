@@ -29,7 +29,7 @@
 //
 // Keys are compared with ==, as in a map. A key that is not equal to itself,
 // which is to say one with a NaN in it, can be set but not found again: its
-// entry stays until it is evicted, removed by [DeleteFunc], or the cache is
+// entry stays until it is evicted, removed by DeleteFunc, or the cache is
 // cleared.
 //
 // # Capacity and shards
@@ -48,10 +48,7 @@
 // time to live.
 package evict
 
-import (
-	"errors"
-	"iter"
-)
+import "iter"
 
 // Cache is the behaviour common to every cache in this module. It is
 // implemented by *lru.Cache, *twoq.Cache, *sieve.Cache, *s3fifo.Cache and
@@ -98,6 +95,16 @@ type Cache[K comparable, V any] interface {
 	// Delete removes key and returns the value it had.
 	Delete(key K) (value V, ok bool)
 
+	// DeleteFunc removes the entries for which del returns true and reports
+	// how many it removed. It visits one shard at a time, without recording
+	// accesses, and tests and removes each entry at once with respect to
+	// writes to its key; the pass as a whole is not a snapshot.
+	//
+	// del runs with the shard locked: it must not call back into the cache,
+	// and should return promptly. If it panics, the entries removed before
+	// stay removed.
+	DeleteFunc(del func(K, V) bool) int
+
 	// Len returns the number of entries in the cache. While the cache is
 	// being written to, the shards are counted one after the other and
 	// the sum may be one that the cache never held at any one moment.
@@ -123,25 +130,4 @@ type Cache[K comparable, V any] interface {
 	// or may not be seen; no entry is seen twice unless it is removed and
 	// added again.
 	All() iter.Seq2[K, V]
-}
-
-// DeleteFunc removes the entries for which del returns true and reports how
-// many it removed. A cache supports it by implementing the optional method
-//
-//	DeleteFunc(del func(K, V) bool) (int, error)
-//
-// Otherwise DeleteFunc returns zero and [errors.ErrUnsupported] without
-// calling del. Testing an entry and removing it must be atomic with respect to
-// writes to its key; the whole pass is not a snapshot.
-//
-// The built-in caches visit one shard at a time without recording accesses.
-// del runs under the shard lock: it must not call back into the cache and
-// should return promptly. If it panics, earlier deletions still stand.
-func DeleteFunc[K comparable, V any](cache Cache[K, V], del func(K, V) bool) (int, error) {
-	if c, ok := cache.(interface {
-		DeleteFunc(func(K, V) bool) (int, error)
-	}); ok {
-		return c.DeleteFunc(del)
-	}
-	return 0, errors.ErrUnsupported
 }
